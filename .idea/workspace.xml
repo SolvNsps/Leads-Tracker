@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="df5fb2f9-9c7b-435e-a8bd-7ee92de02116" name="Changes" comment="">
       <change afterPath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/security/WebSecurity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/leads-tracker/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/DTO/UserDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/DTO/UserDto.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/Response/UserRest.java" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/Response/UserRest.java" afterDir="false" />
@@ -101,7 +102,7 @@
       <option name="presentableId" value="Default" />
       <updated>1748452280571</updated>
       <workItem from="1748452285061" duration="6469000" />
-      <workItem from="1748502564001" duration="8855000" />
+      <workItem from="1748502564001" duration="10479000" />
     </task>
     <servers />
   </component>
