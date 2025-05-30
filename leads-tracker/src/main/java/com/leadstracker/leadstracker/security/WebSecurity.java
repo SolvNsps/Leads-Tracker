@@ -45,6 +45,7 @@ public class WebSecurity {
                 .authorizeHttpRequests((authz) -> authz
                         .requestMatchers(HttpMethod.POST, "/leads").permitAll()
                         .requestMatchers(HttpMethod.POST, "/leads/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/leads/**").permitAll()
                         .anyRequest().authenticated())
 
                 .authenticationManager(authenticationManager)

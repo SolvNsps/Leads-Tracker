@@ -45,5 +45,21 @@ public class UserController {
             return userRest;
     }
 
+    @PutMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE)
+    public UserRest updateUser(@PathVariable String id, @RequestBody UserDetails userDetails) throws Exception {
+        UserRest userRest = new UserRest();
+
+        UserDto userDto = new UserDto();
+        BeanUtils.copyProperties(userDetails, userDto);
+
+        UserDto updatedUser = userService.updateUser(id, userDto);
+        BeanUtils.copyProperties(updatedUser, userRest);
+
+        return userRest;
+    }
+
+
+
 
 }
