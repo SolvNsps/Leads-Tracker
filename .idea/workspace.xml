@@ -5,17 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="df5fb2f9-9c7b-435e-a8bd-7ee92de02116" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/security/WebSecurity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/78390d63-616d-4a04-9371-d6f605728cbe.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/78390d63-616d-4a04-9371-d6f605728cbe.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/leads-tracker" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/leads-tracker/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/DTO/UserDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/DTO/UserDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/Response/UserRest.java" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/Response/UserRest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/controller/UserController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/entities/UserEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/entities/UserEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/request/UserDetails.java" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/request/UserDetails.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/services/Implementations/UserServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker/src/main/java/com/leadstracker/leadstracker/services/Implementations/UserServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/leads-tracker/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/leads-tracker/src/main/resources/application.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,7 +22,7 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/leads-tracker" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
@@ -58,18 +50,21 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;OverrideImplement.generate.javadoc&quot;: &quot;true&quot;,
     &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
     &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
     &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
     &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;Spring Boot.LeadsTrackerApplication.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;ernest-branch&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;project.propVCSSupport.DirectoryMappings&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
   &quot;keyToStringList&quot;: {
@@ -103,7 +98,8 @@
       <option name="presentableId" value="Default" />
       <updated>1748452280571</updated>
       <workItem from="1748452285061" duration="6469000" />
-      <workItem from="1748502564001" duration="13914000" />
+      <workItem from="1748502564001" duration="24500000" />
+      <workItem from="1748594897314" duration="14294000" />
     </task>
     <servers />
   </component>

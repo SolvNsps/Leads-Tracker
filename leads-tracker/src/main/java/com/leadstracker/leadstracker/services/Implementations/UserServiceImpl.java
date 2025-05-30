@@ -1,16 +1,21 @@
 package com.leadstracker.leadstracker.services.Implementations;
 
 import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.services.UserService;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
 
 
 @Service
@@ -18,6 +23,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    Utils utils;
+
+    @Autowired
+    BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
     @Transactional
@@ -28,7 +39,9 @@ public class UserServiceImpl implements UserService {
         ModelMapper mapper = new ModelMapper();
         UserEntity userEntity = mapper.map(user, UserEntity.class);
 
-        userEntity.setUserId("UserId");
+        String publicUserId = utils.generateUserId(50);
+        userEntity.setUserId(publicUserId);
+        userEntity.setPassword(bCryptPasswordEncoder. encode(user.getPassword()));
 
         UserEntity savedUser = userRepository.save(userEntity);
 
@@ -37,7 +50,44 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return null;
+    public UserDto getUserByUserId(String userId) {
+        UserDto userDto = new UserDto();
+
+        UserEntity userEntity = userRepository.findByUserId(userId);
+
+        if (userEntity == null) {
+            throw new UsernameNotFoundException("User with ID: " + userId + "not found");
+        }
+        BeanUtils.copyProperties(userEntity, userDto);
+        return userDto;
+
+    }
+
+    /**
+     * @param email
+     * @return
+     */
+    @Override
+    public UserDto getUser(String email) {
+        UserEntity userEntity = userRepository.findByEmail(email);
+
+        if (userEntity == null) {
+            throw new UsernameNotFoundException(email);
+        }
+        UserDto returnUser = new UserDto();
+
+        BeanUtils.copyProperties(userEntity, returnUser);
+        return returnUser;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        UserEntity userEntity = userRepository.findByEmail(email);
+
+        if (userEntity == null) throw new UsernameNotFoundException(email);
+
+        return new User(userEntity.getEmail(), userEntity.getPassword(), true,
+                true, true, true, new ArrayList<>());
+
     }
 }

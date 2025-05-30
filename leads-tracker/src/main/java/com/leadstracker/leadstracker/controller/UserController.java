@@ -5,6 +5,7 @@ import com.leadstracker.leadstracker.Response.UserRest;
 import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.services.UserService;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,7 @@ public class UserController {
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE})
     public UserRest createUser(@RequestBody UserDetails userDetails) throws Exception {
-        System.out.println("Received: " + userDetails.getFirstName());
+
         UserRest userRest = new UserRest();
         ModelMapper mapper = new ModelMapper();
 
@@ -32,4 +33,17 @@ public class UserController {
         return userRest;
 
     }
+
+    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE)
+
+        public UserRest getUser(@PathVariable String id) throws Exception {
+            UserRest userRest = new UserRest();
+            UserDto userDto = userService.getUserByUserId(id);
+            BeanUtils.copyProperties(userDto, userRest);
+
+            return userRest;
+    }
+
+
 }
