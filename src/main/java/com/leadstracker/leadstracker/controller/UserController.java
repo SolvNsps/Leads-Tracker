@@ -20,41 +20,38 @@ public class UserController {
     UserService userService;
 
     @Autowired
-    ModelMapper mapper;
+    ModelMapper modelMapper;
 
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserRest> createUser(@RequestBody UserDetails userDetails) throws Exception {
-        UserDto userDto = mapper.map(userDetails, UserDto.class);
+        UserDto userDto = modelMapper.map(userDetails, UserDto.class);
+
         UserDto createdUser = userService.saveUser(userDto);
-        UserRest userRest = mapper.map(createdUser, UserRest.class);
+        UserRest userRest = modelMapper.map(createdUser, UserRest.class);
+
+        return ResponseEntity.ok(userRest);
+
+    }
+
+    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserRest> getUser(@PathVariable String id) throws Exception {
+
+        UserDto userDto = userService.getUserByUserId(id);
+        UserRest userRest = modelMapper.map(userDto, UserRest.class);
+
         return ResponseEntity.ok(userRest);
     }
 
-    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE,
-            consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserRest> updateUser(@PathVariable String id, @RequestBody UserDetails userDetails) throws Exception {
 
-        public UserRest getUser(@PathVariable String id) throws Exception {
-            UserRest userRest = new UserRest();
-            UserDto userDto = userService.getUserByUserId(id);
-            BeanUtils.copyProperties(userDto, userRest);
-
-            return userRest;
-    }
-
-    @PutMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE,
-            consumes = MediaType.APPLICATION_JSON_VALUE)
-    public UserRest updateUser(@PathVariable String id, @RequestBody UserDetails userDetails) throws Exception {
-        UserRest userRest = new UserRest();
-
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userDetails, userDto);
-
+        UserDto userDto = modelMapper.map(userDetails, UserDto.class);
         UserDto updatedUser = userService.updateUser(id, userDto);
-        BeanUtils.copyProperties(updatedUser, userRest);
 
-        return userRest;
+        UserRest userRest = modelMapper.map(updatedUser, UserRest.class);
+        return ResponseEntity.ok(userRest);
     }
 
 
