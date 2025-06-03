@@ -9,29 +9,27 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 
 
 @RestController
-@RequestMapping("/leads")
+@RequestMapping("/api/v1/leads")
 public class UserController {
 
     @Autowired
     UserService userService;
 
-    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE},
-            produces = {MediaType.APPLICATION_JSON_VALUE})
-    public UserRest createUser(@RequestBody UserDetails userDetails) throws Exception {
+    @Autowired
+    ModelMapper mapper;
 
-        UserRest userRest = new UserRest();
-        ModelMapper mapper = new ModelMapper();
 
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserRest> createUser(@RequestBody UserDetails userDetails) throws Exception {
         UserDto userDto = mapper.map(userDetails, UserDto.class);
-
         UserDto createdUser = userService.saveUser(userDto);
-        userRest = mapper.map(createdUser, UserRest.class);
-
-        return userRest;
-
+        UserRest userRest = mapper.map(createdUser, UserRest.class);
+        return ResponseEntity.ok(userRest);
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE,
