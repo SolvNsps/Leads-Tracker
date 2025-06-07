@@ -11,6 +11,9 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/v1/leads")
@@ -53,6 +56,19 @@ public class UserController {
         UserDto updatedUser = userService.updateUser(id, userDto);
         BeanUtils.copyProperties(updatedUser, userRest);
 
+        return userRest;
+    }
+@GetMapping
+    public List<UserRest> getAllUsers(@RequestParam(value = "page", defaultValue = "0")
+                                      int page, @RequestParam(value = "limit", defaultValue = "10") int limit) throws Exception {
+    List<UserRest> userRest = new ArrayList<>();
+
+        List<UserDto> userDtos = userService.getAllUsers(page, limit);
+        for (UserDto userDto : userDtos) {
+            UserRest userRest1 = new UserRest();
+            BeanUtils.copyProperties(userDto, userRest1);
+            userRest.add(userRest1);
+        }
         return userRest;
     }
 
