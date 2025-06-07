@@ -1,23 +1,17 @@
 package com.leadstracker.leadstracker.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Collection;
 
 
 @Entity(name = "users")
-//@Data                       // Generates getters, setters, toString, equals, and hashCode
-//@NoArgsConstructor          // No-arg constructor
-//@AllArgsConstructor         // All-args constructor
-//@Builder
+@Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
+
 public class UserEntity implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -34,7 +28,7 @@ public class UserEntity implements Serializable {
     @Column (nullable = false, length = 20)
     private String lastName;
 
-    @Column (nullable = false, length = 50)
+    @Column (nullable = false, length = 50, unique = true)
     private String email;
 
     @Column (nullable = false)
@@ -45,6 +39,11 @@ public class UserEntity implements Serializable {
     @Column (nullable = false,columnDefinition = "boolean default false")
     private boolean emailVerificationStatus;
 
+    @ManyToMany(cascade = CascadeType.PERSIST,  fetch = FetchType.EAGER)
+    @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "roles_id", referencedColumnName = "id"))
+    private Collection<RoleEntity> roles;
+
 
     public long getId() {
         return id;
@@ -54,44 +53,20 @@ public class UserEntity implements Serializable {
         this.id = id;
     }
 
-    public String getUserId() {
-        return userId;
+    public Collection<RoleEntity> getRoles() {
+        return roles;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setRoles(Collection<RoleEntity> roles) {
+        this.roles = roles;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public boolean isEmailVerificationStatus() {
+        return emailVerificationStatus;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+    public void setEmailVerificationStatus(boolean emailVerificationStatus) {
+        this.emailVerificationStatus = emailVerificationStatus;
     }
 
     public String getEmailVerificationToken() {
@@ -102,11 +77,43 @@ public class UserEntity implements Serializable {
         this.emailVerificationToken = emailVerificationToken;
     }
 
-    public boolean isEmailVerificationStatus() {
-        return emailVerificationStatus;
+    public String getPassword() {
+        return password;
     }
 
-    public void setEmailVerificationStatus(boolean emailVerificationStatus) {
-        this.emailVerificationStatus = emailVerificationStatus;
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }

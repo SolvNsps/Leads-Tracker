@@ -51,13 +51,10 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         SecretKey secretKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS512.getJcaName());
         Instant now = Instant.now();
 
-        User user = (User) authResult.getPrincipal();
-        List<String> roles = user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
 
-        String userName = user.getUsername();
+        String userName = ((UserPrincipal) authResult.getPrincipal()).getUsername();
         String token = Jwts.builder()
                 .setSubject(userName)
-                .claim("roles", roles)
                 .setExpiration(
                         Date.from(now.plusMillis(SecurityConstants.Expiration_Time_In_Seconds)))
                 .setIssuedAt(Date.from(now)).signWith(secretKey, SignatureAlgorithm.HS512).compact();

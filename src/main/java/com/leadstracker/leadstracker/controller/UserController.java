@@ -32,8 +32,7 @@ public class UserController {
         return ResponseEntity.ok(userRest);
     }
 
-    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE,
-            consumes = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/{id}")
 
         public UserRest getUser(@PathVariable String id) throws Exception {
             UserRest userRest = new UserRest();

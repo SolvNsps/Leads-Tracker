@@ -4,6 +4,7 @@ import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
@@ -106,8 +107,10 @@ public class UserServiceImpl implements UserService {
 
         if (userEntity == null) throw new UsernameNotFoundException(email);
 
-        return new User(userEntity.getEmail(), userEntity.getPassword(), true,
-                true, true, true, new ArrayList<>());
+        return new UserPrincipal(userEntity);
+
+//        return new User(userEntity.getEmail(), userEntity.getPassword(), true,
+//                true, true, true, new ArrayList<>());
 
     }
 }

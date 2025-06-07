@@ -1,5 +1,7 @@
 package com.leadstracker.leadstracker.security;
 
+import com.leadstracker.leadstracker.entities.UserEntity;
+import com.leadstracker.leadstracker.repositories.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
@@ -22,9 +24,11 @@ import java.util.Base64;
 import java.util.List;
 
 public class AuthorizationFilter extends BasicAuthenticationFilter {
+    private final UserRepository userRepository;
 
-    public AuthorizationFilter(AuthenticationManager authenticationManager) {
+    public AuthorizationFilter(AuthenticationManager authenticationManager, UserRepository userRepository) {
         super(authenticationManager);
+        this.userRepository = userRepository;
     }
 
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -60,35 +64,16 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
         JwtParser parser = Jwts.parser().setSigningKey(key).build();
 
         Claims claims = parser.parseClaimsJws(token).getBody(); //correct parsing
-        String subject = claims.getSubject();
+        String user = claims.getSubject();
 
-        if(subject == null) {
+        if(user == null) {
             return null;
         }
 
+        UserEntity userEntity = userRepository.findByEmail(user);
+        UserPrincipal userPrincipal = new UserPrincipal(userEntity);
 
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        Object rolesObject = claims.get("roles");
-
-        if(rolesObject instanceof List<?>) {
-            List<?> rolesList = (List<?>) rolesObject;
-            if (rolesList.isEmpty()) {
-                //assign default role if roles list is empty
-                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-            }
-            else {
-                for (Object role : rolesList) {
-                    authorities.add(new SimpleGrantedAuthority(role.toString()));
-                }
-            }
-
-        }
-
-        else {
-            //assign default role if "roles" claim is missing or not a list
-            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-        }
-        return new UsernamePasswordAuthenticationToken(subject, null, authorities);
+        return new UsernamePasswordAuthenticationToken(user, null, userPrincipal.getAuthorities());
     }
 }
 
