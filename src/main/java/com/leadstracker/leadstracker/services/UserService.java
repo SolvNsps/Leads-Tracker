@@ -15,4 +15,9 @@ public interface UserService extends UserDetailsService {
     UserDto updateUser(String userId, UserDto user);
 
     List<UserDto> getAllUsers(int page, int limit);
+
+    boolean initiatePasswordReset(String email);
+
+    void resetPassword(String token, String newPassword, String confirmNewPassword);
+
 }

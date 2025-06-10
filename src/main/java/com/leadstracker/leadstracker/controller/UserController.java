@@ -2,6 +2,7 @@ package com.leadstracker.leadstracker.controller;
 
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.Response.UserRest;
+import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
 import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.services.UserService;
 import org.modelmapper.ModelMapper;
@@ -72,7 +73,21 @@ public class UserController {
         return userRest;
     }
 
+    @PostMapping("/forgot-password-request")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        boolean result = userService.initiatePasswordReset(request.getEmail());
 
+        if (result) {
+            return ResponseEntity.ok("Password reset instructions have been sent to your email.");
+        } else {
+            return ResponseEntity.badRequest().body("No user found with the provided email.");
+        }
+    }
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ForgotPasswordRequest request) {
 
+        userService.resetPassword(request.getToken(), request.getNewPassword(), request.getConfirmNewPassword());
 
+        return ResponseEntity.ok("Password reset successful.");
+    }
 }

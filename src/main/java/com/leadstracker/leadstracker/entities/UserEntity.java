@@ -7,6 +7,7 @@ import lombok.Setter;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Date;
 
 
 @Entity(name = "users")
@@ -36,6 +37,13 @@ public class UserEntity implements Serializable {
 
     private String emailVerificationToken;
 
+
+
+    private String passwordResetToken;
+
+    @Column(name = "password_reset_expiration")
+    private Date passwordResetExpiration;
+
     @Column (nullable = false,columnDefinition = "boolean default false")
     private boolean emailVerificationStatus;
 
@@ -44,6 +52,21 @@ public class UserEntity implements Serializable {
             inverseJoinColumns = @JoinColumn(name = "roles_id", referencedColumnName = "id"))
     private Collection<RoleEntity> roles;
 
+    public String getPasswordResetToken() {
+        return passwordResetToken;
+    }
+
+    public void setPasswordResetToken(String passwordResetToken) {
+        this.passwordResetToken = passwordResetToken;
+    }
+
+    public Date getPasswordResetExpiration() {
+        return passwordResetExpiration;
+    }
+
+    public void setPasswordResetExpiration(Date passwordResetExpiration) {
+        this.passwordResetExpiration = passwordResetExpiration;
+    }
 
     public long getId() {
         return id;

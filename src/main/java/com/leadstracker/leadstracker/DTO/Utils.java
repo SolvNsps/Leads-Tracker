@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
 import java.util.Random;
+import java.util.UUID;
 
 @Component
 public class Utils {
@@ -22,6 +23,9 @@ public class Utils {
             randomString.append(alphabet.charAt(random.nextInt(alphabet.length())));
         }
         return new String(randomString);
+    }
+    public String generatePasswordResetToken() {
+        return UUID.randomUUID().toString();
     }
 
 }

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 
@@ -126,6 +127,48 @@ public class UserServiceImpl implements UserService {
         return returnUsers;
 
     }
+
+    @Override
+    public boolean initiatePasswordReset(String email) {
+        UserEntity user = userRepository.findByEmail(email);
+        if (user == null) {
+            return false;
+    }
+        String token = utils.generatePasswordResetToken();
+        user.setPasswordResetToken(token);
+        user.setPasswordResetExpiration(new Date(System.currentTimeMillis() + 3600000)); // 1 hour from now
+
+        userRepository.save(user);
+
+        // we'd send an email here with a link like:
+        // http://localhost:8080/reset-password?token=xyz123
+        // For now, we'll just log/print it.
+        System.out.println("Password reset link: http://localhost:8080/reset-password?token=" + token);
+
+        return true;
+    }
+
+    @Override
+    public void resetPassword(String token, String newPassword, String confirmNewPassword) {
+
+        UserEntity user = userRepository.findByPasswordResetToken(token);
+        if (user == null) {
+            throw new RuntimeException("Invalid or expired password reset token");
+        }
+
+        if (!newPassword.equals(confirmNewPassword)) {
+            throw new RuntimeException("Passwords do not match");
+        }
+
+        user.setPassword(bCryptPasswordEncoder.encode(newPassword));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetExpiration(null);
+
+        userRepository.save(user);
+
+
+    }
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
