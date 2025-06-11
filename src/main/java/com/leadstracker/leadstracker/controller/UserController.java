@@ -1,6 +1,9 @@
 package com.leadstracker.leadstracker.controller;
 
 import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.Response.OperationStatusModel;
+import com.leadstracker.leadstracker.Response.RequestOperationName;
+import com.leadstracker.leadstracker.Response.RequestOperationStatus;
 import com.leadstracker.leadstracker.Response.UserRest;
 import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.services.UserService;
@@ -58,7 +61,9 @@ public class UserController {
 
         return userRest;
     }
-@GetMapping
+
+
+    @GetMapping
     public List<UserRest> getAllUsers(@RequestParam(value = "page", defaultValue = "0")
                                       int page, @RequestParam(value = "limit", defaultValue = "10") int limit) throws Exception {
     List<UserRest> userRest = new ArrayList<>();
@@ -73,6 +78,20 @@ public class UserController {
     }
 
 
+//    Email verification endpoint
+    @PostMapping("/email-verification")
+    public OperationStatusModel verifyEmailToken(@RequestBody String token) {
+        OperationStatusModel operationStatusModel = new OperationStatusModel();
+        operationStatusModel.setOperationName(RequestOperationName.VERIFY_EMAIL.name());
 
+        boolean isVerified = userService.verifyEmailToken(token);
 
+        if (isVerified) {
+            operationStatusModel.setOperationResult(RequestOperationStatus.SUCCESS.name());
+        }
+        else {
+            operationStatusModel.setOperationResult(RequestOperationStatus.ERROR.name());
+        }
+        return operationStatusModel;
+    }
 }

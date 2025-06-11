@@ -67,6 +67,7 @@ public class InitialUsers {
             adminUser.setRoles(List.of(roleAdmin));
 
             userRepository.save(adminUser);
+
         }
 
     }

@@ -127,6 +127,28 @@ public class UserServiceImpl implements UserService {
 
     }
 
+//    /**
+////     * @param token
+////     * @return
+//     */
+    @Override
+    public boolean verifyEmailToken(String token) {
+        boolean returnUser = false;
+        UserEntity userEntity = userRepository.findUserByEmailVerificationToken(token);
+
+        if (userEntity != null) {
+            boolean hasTokenExpired = utils.hasTokenExpired(token);
+
+            if(!hasTokenExpired) {
+                userEntity.setEmailVerificationToken(null);
+                userEntity.setEmailVerificationStatus(Boolean.TRUE);
+                userRepository.save(userEntity);
+                returnUser = true;
+            }
+        }
+        return returnUser;
+    }
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         UserEntity userEntity = userRepository.findByEmail(email);

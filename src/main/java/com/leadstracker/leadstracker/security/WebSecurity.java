@@ -54,9 +54,10 @@ public class WebSecurity {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authz) -> authz
-                        .requestMatchers(HttpMethod.POST, "/api/v1/leads").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/leads/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, SecurityConstants.Create_User).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, SecurityConstants.Login).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/leads/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_Email).permitAll()
 
                         .anyRequest().authenticated())
 

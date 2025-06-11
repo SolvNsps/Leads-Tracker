@@ -8,6 +8,9 @@ public class SecurityConstants {
     public static final String Token_Prefix = "Bearer ";
     public static final String Token_Header = "Authorization";
     public static final String Token_Secret = "bvgshg73hue7739349nfewywfw9wldsa73waada13948uewjew2d4f5z0s6xv";
+    public static final String Verify_Email = "/api/v1/leads/email-verification";
+    public static final String Create_User = "/api/v1/leads";
+    public static final String Login = "/leads/login";
 
 
     public  static String getTokenSecret() {
