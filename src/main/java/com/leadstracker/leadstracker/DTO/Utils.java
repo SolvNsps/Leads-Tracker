@@ -24,6 +24,7 @@ public class Utils {
         }
         return new String(randomString);
     }
+
     public String generatePasswordResetToken() {
         return UUID.randomUUID().toString();
     }

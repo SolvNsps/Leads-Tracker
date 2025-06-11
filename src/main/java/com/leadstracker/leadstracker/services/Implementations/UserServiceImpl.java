@@ -12,12 +12,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -86,7 +88,6 @@ public class UserServiceImpl implements UserService {
         return returnUser;
     }
 
-
     @Override
     public UserDto updateUser(String userId, UserDto user) {
         UserDto userdto = new UserDto();
@@ -113,7 +114,6 @@ public class UserServiceImpl implements UserService {
         if (page > 0) {
             page -= 1;
         }
-
         Pageable pageableRequest = PageRequest.of(page, limit);
         Page<UserEntity> usersPage = userRepository.findAll(pageableRequest);
         List<UserEntity> users = usersPage.getContent();
@@ -125,7 +125,6 @@ public class UserServiceImpl implements UserService {
         }
 
         return returnUsers;
-
     }
 
     @Override
@@ -153,11 +152,14 @@ public class UserServiceImpl implements UserService {
 
         UserEntity user = userRepository.findByPasswordResetToken(token);
         if (user == null) {
-            throw new RuntimeException("Invalid or expired password reset token");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid password reset token");
+        }
+        if (user.getPasswordResetExpiration() == null || user.getPasswordResetExpiration().before(new Date())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password reset token has expired");
         }
 
         if (!newPassword.equals(confirmNewPassword)) {
-            throw new RuntimeException("Passwords do not match");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passwords do not match");
         }
 
         user.setPassword(bCryptPasswordEncoder.encode(newPassword));
@@ -165,10 +167,7 @@ public class UserServiceImpl implements UserService {
         user.setPasswordResetExpiration(null);
 
         userRepository.save(user);
-
-
     }
-
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {

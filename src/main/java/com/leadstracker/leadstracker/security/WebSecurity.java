@@ -56,6 +56,8 @@ public class WebSecurity {
                 .authorizeHttpRequests((authz) -> authz
                         .requestMatchers(HttpMethod.POST, "/api/v1/leads").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/leads/login").permitAll()
+                       .requestMatchers(HttpMethod.POST, "/api/v1/leads/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/leads/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/leads/**").permitAll()
 
                         .anyRequest().authenticated())

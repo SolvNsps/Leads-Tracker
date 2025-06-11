@@ -3,8 +3,10 @@ package com.leadstracker.leadstracker.controller;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.Response.UserRest;
 import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
+import com.leadstracker.leadstracker.request.ResetPassword;
 import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.services.UserService;
+import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,7 +76,8 @@ public class UserController {
     }
 
     @PostMapping("/forgot-password-request")
-    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        System.out.println("hitting endpoint");
         boolean result = userService.initiatePasswordReset(request.getEmail());
 
         if (result) {
@@ -84,10 +87,15 @@ public class UserController {
         }
     }
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPassword request) {
+        System.out.println(" hhvhvhgvv");
 
-        userService.resetPassword(request.getToken(), request.getNewPassword(), request.getConfirmNewPassword());
+        userService.resetPassword(
+                request.getToken(),
+                request.getNewPassword(),
+                request.getConfirmNewPassword());
 
         return ResponseEntity.ok("Password reset successful.");
     }
+
 }

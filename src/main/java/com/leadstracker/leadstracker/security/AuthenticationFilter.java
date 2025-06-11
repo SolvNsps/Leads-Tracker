@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -62,8 +63,13 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         UserService userService = (UserService) SpringApplicationContext.getBean("userServiceImpl");
         UserDto userDto = userService.getUser(userName);
 
-        response.addHeader(SecurityConstants.Token_Header, SecurityConstants.Token_Prefix + token);
-        response.addHeader("UserId", userDto.getUserId());
+        var map = Map.of("userId", userDto.getUserId(), "token", token);
+        var objectMapper = new ObjectMapper();
+        var body = objectMapper.writeValueAsString(map);
+
+        response.setContentType("application/json");
+        response.getWriter().write(body);
+        response.getWriter().flush();
   }
 
 }
