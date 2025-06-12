@@ -15,6 +15,7 @@ import java.util.Collection;
 public class UserEntity implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
+
     @Id
     @GeneratedValue
     private long id;

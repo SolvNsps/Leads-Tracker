@@ -1,5 +1,6 @@
 package com.leadstracker.leadstracker.services.Implementations;
 
+import com.leadstracker.leadstracker.DTO.AmazonSES;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.UserEntity;
@@ -30,6 +31,9 @@ public class UserServiceImpl implements UserService {
     UserRepository userRepository;
 
     @Autowired
+    AmazonSES amazonSES;
+
+    @Autowired
     Utils utils;
 
     @Autowired
@@ -47,10 +51,14 @@ public class UserServiceImpl implements UserService {
         String publicUserId = utils.generateUserId(50);
         userEntity.setUserId(publicUserId);
         userEntity.setPassword(bCryptPasswordEncoder. encode(user.getPassword()));
+        userEntity.setEmailVerificationStatus(false);
+        userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
 
         UserEntity savedUser = userRepository.save(userEntity);
 
         UserDto returnUser = mapper.map(savedUser, UserDto.class);
+
+        amazonSES.verifyEmail(returnUser);
         return returnUser;
     }
 
