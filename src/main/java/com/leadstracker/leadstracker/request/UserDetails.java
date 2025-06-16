@@ -1,14 +1,5 @@
 package com.leadstracker.leadstracker.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-//@Data                       // Generates getters, setters, toString, equals, and hashCode
-//@NoArgsConstructor          // No-arg constructor
-//@AllArgsConstructor         // All-args constructor
-//@Builder
 public class UserDetails {
     private String firstName;
     private String lastName;

@@ -16,5 +16,12 @@ public interface UserService extends UserDetailsService {
 
     List<UserDto> getAllUsers(int page, int limit);
 
+//<<<<<<< HEAD
     boolean verifyEmailToken(String token);
+//=======
+    boolean initiatePasswordReset(String email);
+
+    void resetPassword(String token, String newPassword, String confirmNewPassword);
+
+//>>>>>>> origin/jakes-branch
 }

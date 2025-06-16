@@ -5,17 +5,22 @@ import com.leadstracker.leadstracker.Response.OperationStatusModel;
 import com.leadstracker.leadstracker.Response.RequestOperationName;
 import com.leadstracker.leadstracker.Response.RequestOperationStatus;
 import com.leadstracker.leadstracker.Response.UserRest;
+import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
+import com.leadstracker.leadstracker.request.ResetPassword;
 import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.services.UserService;
+//import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -88,11 +93,47 @@ public class UserController {
 
         if (isVerified) {
             operationStatusModel.setOperationResult(RequestOperationStatus.SUCCESS.name());
-        }
-        else {
+        } else {
             operationStatusModel.setOperationResult(RequestOperationStatus.ERROR.name());
         }
         return operationStatusModel;
+
+    }
+
+
+    @PostMapping("/forgot-password-request")
+    public ResponseEntity<String> forgotPassword(@Validated @RequestBody ForgotPasswordRequest request) {
+        System.out.println("hitting endpoint");
+        boolean result = userService.initiatePasswordReset(request.getEmail());
+
+        if (result) {
+            return ResponseEntity.ok("Password reset instructions have been sent to your email.");
+        } else {
+            return ResponseEntity.badRequest().body("No user found with the provided email.");
+        }
+    }
+
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Validated @RequestBody ResetPassword request) {
+
+        try {
+            userService.resetPassword(
+                    request.getToken(),
+                    request.getNewPassword(),
+                    request.getConfirmNewPassword());
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Password reset successful.",
+                    "status", "SUCCESS"
+            ));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", e.getMessage(),
+                    "status", "FAILED"
+            ));
+        }
     }
 
 }

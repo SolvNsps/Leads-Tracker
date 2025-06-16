@@ -32,6 +32,9 @@ public class UserDto implements Serializable {
 
     private boolean emailVerificationStatus;
 
+//    default to true for new users
+    private boolean defaultPassword = true;
+
     public long getId() {
         return id;
     }
@@ -94,5 +97,13 @@ public class UserDto implements Serializable {
 
     public void setEmailVerificationStatus(boolean emailVerificationStatus) {
         this.emailVerificationStatus = emailVerificationStatus;
+    }
+
+    public boolean isDefaultPassword() {
+        return defaultPassword;
+    }
+
+    public void setDefaultPassword(boolean defaultPassword) {
+        this.defaultPassword = defaultPassword;
     }
 }

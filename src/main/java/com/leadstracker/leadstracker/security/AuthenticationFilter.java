@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -53,17 +54,33 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
 
         String userName = ((UserPrincipal) authResult.getPrincipal()).getUsername();
-        String token = Jwts.builder()
-                .setSubject(userName)
-                .setExpiration(
-                        Date.from(now.plusMillis(SecurityConstants.Expiration_Time_In_Seconds)))
-                .setIssuedAt(Date.from(now)).signWith(secretKey, SignatureAlgorithm.HS512).compact();
 
         UserService userService = (UserService) SpringApplicationContext.getBean("userServiceImpl");
         UserDto userDto = userService.getUser(userName);
 
-        response.addHeader(SecurityConstants.Token_Header, SecurityConstants.Token_Prefix + token);
-        response.addHeader("UserId", userDto.getUserId());
+        // Checking if password needs to be reset (first login with default password)
+        boolean passwordResetRequired = userDto.isDefaultPassword(); // You'll need to add this field to your UserDto/Entity
+
+        // Generate token (you might want to make this token short-lived if password reset is required)
+        long expirationTime = passwordResetRequired ?
+                SecurityConstants.Password_Reset_Expiration_Time : // Shorter expiration for reset cases
+                SecurityConstants.Expiration_Time_In_Seconds;      // Normal expiration
+
+        String token = Jwts.builder()
+                .setSubject(userName)
+                .setExpiration(
+                        Date.from(now.plusMillis(expirationTime)))
+                .setIssuedAt(Date.from(now)).signWith(secretKey, SignatureAlgorithm.HS512).compact();
+
+
+        var map = Map.of("userId", userDto.getUserId(),
+                "token", token, "passwordResetRequired", passwordResetRequired);
+        var objectMapper = new ObjectMapper();
+        var body = objectMapper.writeValueAsString(map);
+
+        response.setContentType("application/json");
+        response.getWriter().write(body);
+        response.getWriter().flush();
   }
 
 }

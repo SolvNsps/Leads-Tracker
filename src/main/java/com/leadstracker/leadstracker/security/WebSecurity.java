@@ -54,8 +54,11 @@ public class WebSecurity {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authz) -> authz
+
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Create_User).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Login).permitAll()
+                        .requestMatchers(HttpMethod.POST, SecurityConstants.Forgot_Password_Request).permitAll()
+                        .requestMatchers(HttpMethod.POST, SecurityConstants.Reset_Password).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/leads/**").permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_Email).permitAll()
 
@@ -77,7 +80,7 @@ public class WebSecurity {
         configuration.setAllowedOrigins(List.of("*"));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
-//        configuration.setAllowCredentials(true);
+
 
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

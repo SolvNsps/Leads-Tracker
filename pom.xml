@@ -121,6 +121,7 @@
 			<version>0.12.6</version>
 			<scope>runtime</scope>
 		</dependency>
+<!--<<<<<<< HEAD-->
 
 		<!-- https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-ses -->
 		<dependency>
@@ -130,6 +131,12 @@
 		</dependency>
 
 
+<!--=======-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+<!--&gt;>>>>>> origin/jakes-branch-->
 	</dependencies>
 
 	<build>

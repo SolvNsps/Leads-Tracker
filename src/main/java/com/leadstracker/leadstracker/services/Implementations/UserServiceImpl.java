@@ -5,22 +5,28 @@ import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.security.SecurityConstants;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.UserService;
+import io.jsonwebtoken.Jwts;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 
 
@@ -93,7 +99,6 @@ public class UserServiceImpl implements UserService {
         return returnUser;
     }
 
-
     @Override
     public UserDto updateUser(String userId, UserDto user) {
         UserDto userdto = new UserDto();
@@ -120,7 +125,6 @@ public class UserServiceImpl implements UserService {
         if (page > 0) {
             page -= 1;
         }
-
         Pageable pageableRequest = PageRequest.of(page, limit);
         Page<UserEntity> usersPage = userRepository.findAll(pageableRequest);
         List<UserEntity> users = usersPage.getContent();
@@ -132,12 +136,63 @@ public class UserServiceImpl implements UserService {
         }
 
         return returnUsers;
+    }
 
+    @Override
+    public boolean initiatePasswordReset(String email) {
+        UserEntity user = userRepository.findByEmail(email);
+        if (user == null) {
+            return false;
+    }
+        String token = utils.generatePasswordResetToken();
+        user.setPasswordResetToken(token);
+        user.setPasswordResetExpiration(new Date(System.currentTimeMillis() + 3600000)); // 1 hour from now
+
+        userRepository.save(user);
+
+        // we'd send an email here with a link like:
+        amazonSES.sendPasswordResetRequest();
+        // http://localhost:8080/reset-password?token=xyz123
+
+        System.out.println("Password reset link: http://localhost:8080/reset-password?token=" + token);
+
+        return true;
+    }
+
+    @Override
+    public void resetPassword(String token, String newPassword, String confirmNewPassword) {
+
+        // Validate token
+//        String email = Jwts.builder()
+//                .setSigningKey(Base64.getEncoder().encode(SecurityConstants.getTokenSecret().getBytes()))
+//                .build()
+//                .parseClaimsJws(token)
+//                .getBody()
+//                .getSubject();
+
+        UserEntity user = userRepository.findByPasswordResetToken(token);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid password reset token");
+        }
+        if (user.getPasswordResetExpiration() == null || user.getPasswordResetExpiration().before(new Date())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password reset token has expired");
+        }
+
+        if (!newPassword.equals(confirmNewPassword)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passwords do not match");
+        }
+
+        user.setPassword(bCryptPasswordEncoder.encode(newPassword));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetExpiration(null);
+        user.setDefaultPassword(false);
+
+        userRepository.save(user);
     }
 
 //    /**
-////     * @param token
-////     * @return
+//    * @param token
+//     * @return
 //     */
     @Override
     public boolean verifyEmailToken(String token) {
