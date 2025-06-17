@@ -1,7 +1,14 @@
 package com.leadstracker.leadstracker.security;
 
 import com.leadstracker.leadstracker.SpringApplicationContext;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.core.env.Environment;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
+import java.util.Date;
 
 public class SecurityConstants {
     public static final long Expiration_Time_In_Seconds = 864000000;    // 10 days
@@ -14,6 +21,19 @@ public class SecurityConstants {
     public static final String Login = "/leads/login";
     public static final String Forgot_Password_Request = "/api/v1/leads/forgot-password-request";
     public static final String Reset_Password = "/api/v1/leads/reset-password";
+    public static final String Verify_OTP = "/api/v1/leads/verify-otp";
+
+    public static String generateToken(String username, long expirationTimeMillis) {
+        byte[] secretKeyBytes = Base64.getEncoder().encode(getTokenSecret().getBytes());
+        SecretKey secretKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS512.getJcaName());
+
+        return Jwts.builder()
+                .setSubject(username)
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTimeMillis))
+                .setIssuedAt(new Date())
+                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .compact();
+    }
 
 
     public  static String getTokenSecret() {

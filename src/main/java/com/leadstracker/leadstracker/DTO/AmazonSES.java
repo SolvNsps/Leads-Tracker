@@ -33,7 +33,7 @@ public class AmazonSES {
             + "<p>Hi, $firstName!</p> "
             + "Someone has requested to reset your password with our project. If it were not you, please ignore it."
             + " otherwise please click on the link below to set a new password: "
-            + "<a href=http://localhost:8080/password-reset.html?token=$tokenValue>"
+            + "<a href=http://localhost:8080/reset-password.html?token=$tokenValue>"
             + " Click this link to reset password"
             + "</a><br/><br/>"
             + "Thank you!";
@@ -43,8 +43,26 @@ public class AmazonSES {
             + "Hi, $firstName! "
             + "Someone has requested to reset your password with our project. If it were not you, please ignore it."
             + " otherwise please open the link below in your window browser to set a new password"
-            + " http://localhost:8080/password-reset.html?token=$tokenValue>"
+            + " http://localhost:8080/reset-password.html?token=$tokenValue>"
             + "Thank you";
+
+    // OTP Email Subject
+    final String LOGIN_OTP_SUBJECT = "Your One-Time Password (OTP) for Leads Tracker";
+
+    // HTML body for OTP email
+    final String LOGIN_OTP_HTMLBODY = "<h1>Your Login OTP</h1>"
+            + "<p>Hi, $firstName!</p>"
+            + "<p>Your One-Time Password (OTP) for login is: <strong>$otp</strong></p>"
+            + "<p>This OTP is valid for 5 minutes. Do not share it with anyone.</p>"
+            + "<br/><p>Thank you,<br/>Leads Tracker Team</p>";
+
+    // Plain text body for OTP email
+    final String LOGIN_OTP_TEXTBODY = "Your Login OTP\n\n"
+            + "Hi, $firstName!\n\n"
+            + "Your One-Time Password (OTP) for login is: $otp\n\n"
+            + "This OTP is valid for 5 minutes. Do not share it with anyone.\n\n"
+            + "Thank you,\nLeads Tracker Team";
+
 
     public void verifyEmail(UserDto userDto) {
 
@@ -86,6 +104,30 @@ public class AmazonSES {
             returnUser = true;
         }
 
+    }
+
+
+    public void sendLoginOtpEmail(String firstName, String email, String otp) {
+        AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder
+                .standard().withRegion(Regions.US_EAST_1).build();
+
+        // Replace placeholders
+        String htmlBody = LOGIN_OTP_HTMLBODY.replace("$firstName", firstName).replace("$otp", otp);
+
+        String textBody = LOGIN_OTP_TEXTBODY.replace("$firstName", firstName).replace("$otp", otp);
+
+        // Build and send email
+        SendEmailRequest request = new SendEmailRequest()
+                .withDestination(new Destination().withToAddresses(email)).withMessage(new Message()
+                        .withBody(new Body().withHtml(new Content().withCharset("UTF-8")
+                                        .withData(htmlBody)).withText(new Content()
+                                .withCharset("UTF-8").withData(textBody)))
+                        .withSubject(new Content()
+                                .withCharset("UTF-8")
+                                .withData(LOGIN_OTP_SUBJECT))).withSource(FROM);
+
+        client.sendEmail(request);
+        System.out.println("OTP sent to " + email);
     }
 
 }

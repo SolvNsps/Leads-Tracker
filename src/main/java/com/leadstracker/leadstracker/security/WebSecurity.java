@@ -61,6 +61,7 @@ public class WebSecurity {
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Reset_Password).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/leads/**").permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_Email).permitAll()
+                        .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_OTP).permitAll()
 
                         .anyRequest().authenticated())
 

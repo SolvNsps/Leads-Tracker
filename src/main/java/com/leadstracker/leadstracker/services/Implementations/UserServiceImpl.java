@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -151,9 +152,9 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         // we'd send an email here with a link like:
-        amazonSES.sendPasswordResetRequest();
-        // http://localhost:8080/reset-password?token=xyz123
+        amazonSES.sendPasswordResetRequest(user.getFirstName(), user.getEmail(), user.getPasswordResetToken());
 
+        // http://localhost:8080/reset-password?token=xyz123
         System.out.println("Password reset link: http://localhost:8080/reset-password?token=" + token);
 
         return true;
@@ -212,6 +213,66 @@ public class UserServiceImpl implements UserService {
         return returnUser;
     }
 
+
+    //otp implementation
+    public void saveOtp(String email, String otp, Date expiryTime) {
+        UserEntity user = userRepository.findByEmail(email);
+
+        user.setOtp(otp);
+        user.setOtpExpiryDate(expiryTime);
+        userRepository.save(user);
+    }
+
+    public boolean validateOtp(String email, String otp) {
+        UserEntity user = userRepository.findByEmail(email);
+
+       //locking the account after some failed attempts
+        if(user.getOtpFailedAttempts() >= 5) {
+            throw new RuntimeException("Too many attempts");
+        }
+
+        if (user.getOtp() == null || !otp.equals(user.getOtp())) {
+            user.setOtpFailedAttempts(user.getOtpFailedAttempts() + 1);
+            userRepository.save(user);
+            return false;
+        }
+
+        if (new Date().after(user.getOtpExpiryDate())) {
+            throw new RuntimeException("OTP expired");
+        }
+
+        //resetting attempts on success
+        user.setOtpFailedAttempts(0);
+        user.setOtp(null);
+        userRepository.save(user);
+        return true;
+
+        //invalidating OTP after successful usage
+//        if (isValid) {
+//            user.setOtp(null);
+//            user.setOtpExpiryDate(null);
+//            userRepository.save(user);
+//        }
+//        return isValid;
+    }
+
+
+    //clearing expired OTPs
+    @Scheduled(fixedRate = 3600000) // Runs hourly
+    public void cleanupExpiredOtps() {
+        List<UserEntity> users = userRepository.findByOtpIsNotNull();
+        Date now = new Date();
+
+        users.forEach(user -> {
+            if (user.getOtpExpiryDate() != null &&
+                    now.after(user.getOtpExpiryDate())) {
+                user.setOtp(null);
+                user.setOtpExpiryDate(null);
+                userRepository.save(user);
+            }
+        });
+    }
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         UserEntity userEntity = userRepository.findByEmail(email);
@@ -219,9 +280,6 @@ public class UserServiceImpl implements UserService {
         if (userEntity == null) throw new UsernameNotFoundException(email);
 
         return new UserPrincipal(userEntity);
-
-//        return new User(userEntity.getEmail(), userEntity.getPassword(), true,
-//                true, true, true, new ArrayList<>());
 
     }
 }

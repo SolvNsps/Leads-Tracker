@@ -6,8 +6,10 @@ import com.leadstracker.leadstracker.Response.RequestOperationName;
 import com.leadstracker.leadstracker.Response.RequestOperationStatus;
 import com.leadstracker.leadstracker.Response.UserRest;
 import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
+import com.leadstracker.leadstracker.request.OtpVerificationRequest;
 import com.leadstracker.leadstracker.request.ResetPassword;
 import com.leadstracker.leadstracker.request.UserDetails;
+import com.leadstracker.leadstracker.security.SecurityConstants;
 import com.leadstracker.leadstracker.services.UserService;
 //import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
@@ -134,6 +136,25 @@ public class UserController {
                     "status", "FAILED"
             ));
         }
+    }
+
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@Validated @RequestBody OtpVerificationRequest request) {
+        // Validate OTP
+        boolean isValid = userService.validateOtp(request.getEmail(), request.getOtp());
+
+        if (!isValid) {
+            return ResponseEntity.status(401).body("Invalid OTP");
+        }
+
+        // OTP is valid! Generate JWT
+        String jwt = SecurityConstants.generateToken(request.getEmail(), SecurityConstants.Expiration_Time_In_Seconds);
+
+        return ResponseEntity.ok(Map.of(
+                "token", jwt,
+                "status", "LOGIN_SUCCESS"
+        ));
     }
 
 }

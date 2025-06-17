@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.leadstracker.leadstracker.DTO.AmazonSES;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.SpringApplicationContext;
 import com.leadstracker.leadstracker.request.UserLoginRequestModel;
@@ -23,10 +24,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -58,13 +56,33 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         UserService userService = (UserService) SpringApplicationContext.getBean("userServiceImpl");
         UserDto userDto = userService.getUser(userName);
 
+        // Generate a 6-digit OTP
+        String otp = String.format("%06d", new Random().nextInt(999999));
+
+        // Set OTP expiry (e.g., 5 minutes from now)
+       userService.saveOtp(userName, otp, new Date(System.currentTimeMillis() + 300000));
+
+        AmazonSES emailService = new AmazonSES();
+        emailService.sendLoginOtpEmail(userDto.getFirstName(), userName, otp);
+
+        // Return response
+        response.setContentType("application/json");
+        new ObjectMapper().writeValue(
+                response.getWriter(),
+                Map.of(
+                        "status", "OTP_SENT",
+                        "email", userName,
+                        "message", "OTP sent to registered email"
+                )
+        );
+
         // Checking if password needs to be reset (first login with default password)
         boolean passwordResetRequired = userDto.isDefaultPassword(); // You'll need to add this field to your UserDto/Entity
 
-        // Generate token (you might want to make this token short-lived if password reset is required)
+        // Generating token
         long expirationTime = passwordResetRequired ?
-                SecurityConstants.Password_Reset_Expiration_Time : // Shorter expiration for reset cases
-                SecurityConstants.Expiration_Time_In_Seconds;      // Normal expiration
+                SecurityConstants.Password_Reset_Expiration_Time :
+                SecurityConstants.Expiration_Time_In_Seconds;
 
         String token = Jwts.builder()
                 .setSubject(userName)

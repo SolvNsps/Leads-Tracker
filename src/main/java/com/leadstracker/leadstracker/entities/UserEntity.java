@@ -50,6 +50,13 @@ public class UserEntity implements Serializable {
     @Column(name = "default_password", nullable = false)
     private boolean defaultPassword = true;
 
+    private String otp;
+
+    private Date otpExpiryDate;
+
+    @Column(name = "otp_failed_attempts")
+    private Integer otpFailedAttempts = 0;
+
     @ManyToMany(cascade = CascadeType.PERSIST,  fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "roles_id", referencedColumnName = "id"))
@@ -150,4 +157,30 @@ public class UserEntity implements Serializable {
     public void setDefaultPassword(boolean defaultPassword) {
         this.defaultPassword = defaultPassword;
     }
+
+    public String getOtp() {
+        return otp;
+    }
+
+    public void setOtp(String otp) {
+        this.otp = otp;
+    }
+
+    public Date getOtpExpiryDate() {
+        return otpExpiryDate;
+    }
+
+    public void setOtpExpiryDate(Date otpExpiryDate) {
+        this.otpExpiryDate = otpExpiryDate;
+    }
+
+    public Integer getOtpFailedAttempts() {
+        return otpFailedAttempts;
+    }
+
+    public void setOtpFailedAttempts(Integer otpFailedAttempts) {
+        this.otpFailedAttempts = otpFailedAttempts;
+    }
+
+
 }
