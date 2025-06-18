@@ -62,6 +62,7 @@ public class WebSecurity {
                         .requestMatchers(HttpMethod.GET, "/api/v1/leads/**").permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_Email).permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_OTP).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, SecurityConstants.Delete_User).hasAnyRole("ADMIN")
 
                         .anyRequest().authenticated())
 

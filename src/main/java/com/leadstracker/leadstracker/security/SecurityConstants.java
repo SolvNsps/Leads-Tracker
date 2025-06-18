@@ -22,6 +22,7 @@ public class SecurityConstants {
     public static final String Forgot_Password_Request = "/api/v1/leads/forgot-password-request";
     public static final String Reset_Password = "/api/v1/leads/reset-password";
     public static final String Verify_OTP = "/api/v1/leads/verify-otp";
+    public static final String Delete_User = "/api/v1/leads/delete/{id}";
 
     public static String generateToken(String username, long expirationTimeMillis) {
         byte[] secretKeyBytes = Base64.getEncoder().encode(getTokenSecret().getBytes());

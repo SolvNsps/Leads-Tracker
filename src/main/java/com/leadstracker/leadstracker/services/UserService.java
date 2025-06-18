@@ -23,7 +23,7 @@ public interface UserService extends UserDetailsService {
 
     void resetPassword(String token, String newPassword, String confirmNewPassword);
 
-    Date validateOtp(String email, String otp);
+    boolean validateOtp(String email, String otp);
 
     void saveOtp(String email, String otp, Date expiryTime);
 
