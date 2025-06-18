@@ -1,0 +1,42 @@
+on:
+  workflow_dispatch:  # Allows manual triggering of the workflow
+  push:
+    branches:
+      - main  # or your default branch
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'  # Adjust based on your project
+
+    - name: Build with Maven
+      run: mvn clean package -DskipTests=false
+
+    - name: Deploy to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "target/*.jar"
+        target: "${{ secrets.DEPLOY_DIR || '/home/${{ secrets.EC2_USER }}/app' }}"
+
+    - name: SSH and Run App
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          pkill -f 'java -jar' || true
+          nohup java -jar ${{ secrets.DEPLOY_DIR || '/home/${{ secrets.EC2_USER }}/app' }}/*.jar > app.log 2>&1 &
+          echo "App deployed and running!"
