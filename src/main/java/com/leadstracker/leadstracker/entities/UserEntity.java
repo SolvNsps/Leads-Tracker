@@ -57,10 +57,10 @@ public class UserEntity implements Serializable {
     @Column(name = "otp_failed_attempts")
     private Integer otpFailedAttempts = 0;
 
-    @ManyToMany(cascade = CascadeType.PERSIST,  fetch = FetchType.EAGER)
+    @ManyToOne(cascade = CascadeType.PERSIST,  fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "roles_id", referencedColumnName = "id"))
-    private Collection<RoleEntity> roles;
+    private RoleEntity role;
 
     public String getPasswordResetToken() {
         return passwordResetToken;
@@ -86,12 +86,12 @@ public class UserEntity implements Serializable {
         this.id = id;
     }
 
-    public Collection<RoleEntity> getRoles() {
-        return roles;
+    public RoleEntity getRole() {
+        return role;
     }
 
-    public void setRoles(Collection<RoleEntity> roles) {
-        this.roles = roles;
+    public void setRole(RoleEntity role) {
+        this.role = role;
     }
 
     public boolean isEmailVerificationStatus() {

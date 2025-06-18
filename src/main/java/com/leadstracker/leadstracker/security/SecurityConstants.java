@@ -11,8 +11,8 @@ import java.util.Base64;
 import java.util.Date;
 
 public class SecurityConstants {
-    public static final long Expiration_Time_In_Seconds = 864000000;    // 10 days
-    public static final long Password_Reset_Expiration_Time = 3600000; // 1 hour for password reset
+    public static final long Expiration_Time_In_Seconds = 3600000;    // 1 hour
+    public static final long Password_Reset_Expiration_Time = 1800000; // 30 minutes for password reset
     public static final String Token_Prefix = "Bearer ";
     public static final String Token_Header = "Authorization";
     public static final String Token_Secret = "bvgshg73hue7739349nfewywfw9wldsa73waada13948uewjew2d4f5z0s6xv";

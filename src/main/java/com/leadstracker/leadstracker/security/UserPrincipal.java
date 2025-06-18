@@ -26,16 +26,15 @@ public class UserPrincipal implements UserDetails {
         List<AuthorityEntity> authorityEntities = new ArrayList<>();
 
         //getting user roles
-        Collection<RoleEntity> roles = userEntity.getRoles();
+        RoleEntity role = userEntity.getRole();
 
-        if (roles == null) {
-            return authorities;
-        }
-
-        roles.forEach(role -> {
+        if (role != null) {
+            // Adding the role itself as an authority (e.g., "ROLE_USER")
             authorities.add(new SimpleGrantedAuthority(role.getName()));
+
+            // Adding all permissions/authorities from the role
             authorityEntities.addAll(role.getAuthorities());
-        });
+        }
 
         authorityEntities.forEach(authorityEntity -> {
             authorities.add(new SimpleGrantedAuthority(authorityEntity.getName()));

@@ -141,20 +141,27 @@ public class UserController {
 
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@Validated @RequestBody OtpVerificationRequest request) {
-        // Validate OTP
+        // Validating OTP
         boolean isValid = userService.validateOtp(request.getEmail(), request.getOtp());
 
         if (!isValid) {
             return ResponseEntity.status(401).body("Invalid OTP");
         }
 
-        // OTP is valid! Generate JWT
+        // OTP is valid. Generating JWT
         String jwt = SecurityConstants.generateToken(request.getEmail(), SecurityConstants.Expiration_Time_In_Seconds);
 
         return ResponseEntity.ok(Map.of(
                 "token", jwt,
                 "status", "LOGIN_SUCCESS"
         ));
+    }
+
+
+    @DeleteMapping("delete/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable String id) {
+        userService.delete(id);
+        return ResponseEntity.ok("User deleted successfully.");
     }
 
 }

@@ -29,6 +29,8 @@ public class UserDto implements Serializable {
 
     private boolean emailVerificationStatus;
 
+    private String role;
+
 //    default to true for new users
     private boolean defaultPassword = true;
 
@@ -132,5 +134,13 @@ public class UserDto implements Serializable {
 
     public void setOtpFailedAttempts(Integer otpFailedAttempts) {
         this.otpFailedAttempts = otpFailedAttempts;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

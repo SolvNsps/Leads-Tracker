@@ -18,7 +18,7 @@ public class RoleEntity implements Serializable {
     @Column(nullable = false, length = 20)
     private String name;
 
-    @ManyToMany(mappedBy = "roles")
+    @OneToMany(mappedBy = "role")
     private Collection<UserEntity> users;
 
     @ManyToMany(cascade = CascadeType.PERSIST,  fetch = FetchType.EAGER)

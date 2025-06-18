@@ -3,7 +3,9 @@ package com.leadstracker.leadstracker.services.Implementations;
 import com.leadstracker.leadstracker.DTO.AmazonSES;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
+import com.leadstracker.leadstracker.entities.RoleEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
+import com.leadstracker.leadstracker.repositories.RoleRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.security.SecurityConstants;
 import com.leadstracker.leadstracker.security.UserPrincipal;
@@ -38,6 +40,9 @@ public class UserServiceImpl implements UserService {
     UserRepository userRepository;
 
     @Autowired
+    RoleRepository roleRepository;
+
+    @Autowired
     AmazonSES amazonSES;
 
     @Autowired
@@ -60,6 +65,9 @@ public class UserServiceImpl implements UserService {
         userEntity.setPassword(bCryptPasswordEncoder. encode(user.getPassword()));
         userEntity.setEmailVerificationStatus(false);
         userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
+
+        RoleEntity role = roleRepository.findByName(user.getRole());
+        userEntity.setRole(role);
 
         UserEntity savedUser = userRepository.save(userEntity);
 
@@ -147,12 +155,12 @@ public class UserServiceImpl implements UserService {
     }
         String token = utils.generatePasswordResetToken();
         user.setPasswordResetToken(token);
-        user.setPasswordResetExpiration(new Date(System.currentTimeMillis() + 3600000)); // 1 hour from now
+        user.setPasswordResetExpiration(new Date(System.currentTimeMillis() + 1800000)); //  30 minutes from now
 
         userRepository.save(user);
 
         // we'd send an email here with a link like:
-        amazonSES.sendPasswordResetRequest(user.getFirstName(), user.getEmail(), user.getPasswordResetToken());
+        amazonSES.sendPasswordResetRequest(user.getFirstName(), user.getEmail(), token);
 
         // http://localhost:8080/reset-password?token=xyz123
         System.out.println("Password reset link: http://localhost:8080/reset-password?token=" + token);
@@ -223,11 +231,21 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    /**
+     * @param userId
+     */
+    @Override
+    public void delete(String userId) {
+        UserEntity userEntity = userRepository.findByUserId(userId);
+        userRepository.delete(userEntity);
+    }
+
+
     public boolean validateOtp(String email, String otp) {
         UserEntity user = userRepository.findByEmail(email);
 
        //locking the account after some failed attempts
-        if(user.getOtpFailedAttempts() >= 5) {
+        if(user.getOtpFailedAttempts() > 3) {
             throw new RuntimeException("Too many attempts");
         }
 
@@ -248,6 +266,7 @@ public class UserServiceImpl implements UserService {
         return true;
 
         //invalidating OTP after successful usage
+
 //        if (isValid) {
 //            user.setOtp(null);
 //            user.setOtpExpiryDate(null);
@@ -258,7 +277,7 @@ public class UserServiceImpl implements UserService {
 
 
     //clearing expired OTPs
-    @Scheduled(fixedRate = 3600000) // Runs hourly
+    @Scheduled(fixedRate = 1800000) // for 30 minutes
     public void cleanupExpiredOtps() {
         List<UserEntity> users = userRepository.findByOtpIsNotNull();
         Date now = new Date();

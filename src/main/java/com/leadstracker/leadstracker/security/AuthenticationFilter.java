@@ -23,9 +23,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     public AuthenticationFilter(AuthenticationManager authenticationManager) {
@@ -57,15 +58,15 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         UserDto userDto = userService.getUser(userName);
 
         // Generate a 6-digit OTP
-        String otp = String.format("%06d", new Random().nextInt(999999));
+        String otp = String.format("%06d", new SecureRandom().nextInt(999999));
 
-        // Set OTP expiry (e.g., 5 minutes from now)
-       userService.saveOtp(userName, otp, new Date(System.currentTimeMillis() + 300000));
+        // Setting OTP expiry (3 minutes from now)
+       userService.saveOtp(userName, otp, new Date(System.currentTimeMillis() + 180000));
 
         AmazonSES emailService = new AmazonSES();
         emailService.sendLoginOtpEmail(userDto.getFirstName(), userName, otp);
 
-        // Return response
+        // Returning response
         response.setContentType("application/json");
         new ObjectMapper().writeValue(
                 response.getWriter(),
@@ -77,7 +78,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         );
 
         // Checking if password needs to be reset (first login with default password)
-        boolean passwordResetRequired = userDto.isDefaultPassword(); // You'll need to add this field to your UserDto/Entity
+        boolean passwordResetRequired = userDto.isDefaultPassword();
 
         // Generating token
         long expirationTime = passwordResetRequired ?

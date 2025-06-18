@@ -5,16 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-//@Data                       // Generates getters, setters, toString, equals, and hashCode
-//@NoArgsConstructor          // No-arg constructor
-//@AllArgsConstructor         // All-args constructor
-//@Builder
-
 public class UserRest {
     private String userId;
     private String firstName;
     private String lastName;
     private String email;
+    private String role;
 
     public String getUserId() {
         return userId;
@@ -46,5 +42,13 @@ public class UserRest {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

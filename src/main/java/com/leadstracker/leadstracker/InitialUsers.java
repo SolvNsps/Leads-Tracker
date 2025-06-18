@@ -50,7 +50,8 @@ public class InitialUsers {
         RoleEntity roleTeamLead =  createRole("ROLE_TEAM_LEAD",
                 Arrays.asList(readAuthority, writeAuthority, updateAuthority));
 
-        RoleEntity roleUser = createRole("ROLE_USER", Arrays.asList(readAuthority, writeAuthority));
+        RoleEntity roleTeamMember = createRole("ROLE_TEAM_MEMBER",
+                Arrays.asList(readAuthority, writeAuthority, updateAuthority));
 
         if (roleAdmin == null) {
             return;
@@ -63,11 +64,37 @@ public class InitialUsers {
             adminUser.setEmail("lordiatakyi99@gmail.com");
             adminUser.setUserId(utils.generateUserId(50));
             adminUser.setEmailVerificationStatus(true);
-            adminUser.setPassword(bCryptPasswordEncoder.encode("solv.admin"));
-            adminUser.setRoles(List.of(roleAdmin));
+            adminUser.setPassword(bCryptPasswordEncoder.encode("Xzibit5!"));
+            adminUser.setRole(roleAdmin);
 
             userRepository.save(adminUser);
 
+        }
+
+        if (userRepository.findByEmail("trenyce.nd@gmail.com") == null) {
+            UserEntity leadUser = new UserEntity();
+            leadUser.setFirstName("lead");
+            leadUser.setLastName("lead");
+            leadUser.setEmail("trenyce.nd@gmail.com");
+            leadUser.setUserId(utils.generateUserId(50));
+            leadUser.setEmailVerificationStatus(true);
+            leadUser.setPassword(bCryptPasswordEncoder.encode("3Ne.llie+"));
+            leadUser.setRole(roleTeamLead);
+
+            userRepository.save(leadUser);
+        }
+
+        if (userRepository.findByEmail("godsonsese04@gmail.com") == null) {
+            UserEntity teamMemberUser = new UserEntity();
+            teamMemberUser.setFirstName("teamMember");
+            teamMemberUser.setLastName("teamMember");
+            teamMemberUser.setEmail("godsonsese04@gmail.com");
+            teamMemberUser.setUserId(utils.generateUserId(50));
+            teamMemberUser.setEmailVerificationStatus(true);
+            teamMemberUser.setPassword(bCryptPasswordEncoder.encode("QA1@gods"));
+            teamMemberUser.setRole(roleTeamMember);
+
+            userRepository.save(teamMemberUser);
         }
 
     }
