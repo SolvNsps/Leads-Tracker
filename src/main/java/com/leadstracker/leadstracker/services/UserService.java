@@ -26,4 +26,6 @@ public interface UserService extends UserDetailsService {
     boolean validateOtp(String email, String otp);
 
     void saveOtp(String email, String otp, Date expiryTime);
+
+    void deleteUser(String id);
 }

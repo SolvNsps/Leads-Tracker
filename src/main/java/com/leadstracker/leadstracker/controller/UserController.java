@@ -155,5 +155,10 @@ public class UserController {
                 "status", "LOGIN_SUCCESS"
         ));
     }
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable String id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok("User deleted successfully.");
+    }
 
 }
