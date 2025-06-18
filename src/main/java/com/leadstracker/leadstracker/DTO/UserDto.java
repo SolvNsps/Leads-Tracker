@@ -7,11 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Date;
 
-//@Data                       // Generates getters, setters, toString, equals, and hashCode
-//@NoArgsConstructor          // No-arg constructor
-//@AllArgsConstructor         // All-args constructor
-//@Builder
 public class UserDto implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -31,6 +28,15 @@ public class UserDto implements Serializable {
     private String emailVerificationToken;
 
     private boolean emailVerificationStatus;
+
+//    default to true for new users
+    private boolean defaultPassword = true;
+
+    private String otp;
+
+    private Date otpExpiryDate;
+
+    private Integer otpFailedAttempts;
 
     public long getId() {
         return id;
@@ -94,5 +100,37 @@ public class UserDto implements Serializable {
 
     public void setEmailVerificationStatus(boolean emailVerificationStatus) {
         this.emailVerificationStatus = emailVerificationStatus;
+    }
+
+    public boolean isDefaultPassword() {
+        return defaultPassword;
+    }
+
+    public void setDefaultPassword(boolean defaultPassword) {
+        this.defaultPassword = defaultPassword;
+    }
+
+    public String getOtp() {
+        return otp;
+    }
+
+    public void setOtp(String otp) {
+        this.otp = otp;
+    }
+
+    public Date getOtpExpiryDate() {
+        return otpExpiryDate;
+    }
+
+    public void setOtpExpiryDate(Date otpExpiryDate) {
+        this.otpExpiryDate = otpExpiryDate;
+    }
+
+    public Integer getOtpFailedAttempts() {
+        return otpFailedAttempts;
+    }
+
+    public void setOtpFailedAttempts(Integer otpFailedAttempts) {
+        this.otpFailedAttempts = otpFailedAttempts;
     }
 }
