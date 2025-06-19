@@ -37,8 +37,10 @@ public class UserServiceImpl implements UserService {
     @Autowired
     UserRepository userRepository;
 
-    @Autowired
-    AmazonSES amazonSES;
+
+private AmazonSES amazonSES;
+//    @Autowired
+//    AmazonSES amazonSES;
 
     @Autowired
     Utils utils;
