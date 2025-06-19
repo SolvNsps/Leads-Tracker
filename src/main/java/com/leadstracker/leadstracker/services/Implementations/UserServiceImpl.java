@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService {
     RoleRepository roleRepository;
 
     @Autowired
-    AmazonSES amazonSES;
+    private AmazonSES amazonSES;
 
     @Autowired
     Utils utils;
@@ -231,15 +231,6 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    /**
-     * @param userId
-     */
-    @Override
-    public void delete(String userId) {
-        UserEntity userEntity = userRepository.findByUserId(userId);
-        userRepository.delete(userEntity);
-    }
-
 
     public boolean validateOtp(String email, String otp) {
         UserEntity user = userRepository.findByEmail(email);
@@ -300,5 +291,10 @@ public class UserServiceImpl implements UserService {
 
         return new UserPrincipal(userEntity);
 
+    }
+    @Override
+    public void deleteUser(String userId) {
+        UserEntity userEntity = userRepository.findByUserId(userId);
+        userRepository.delete(userEntity);
     }
 }

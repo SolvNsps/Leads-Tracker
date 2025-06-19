@@ -50,6 +50,13 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+<!--			/ &lt;!&ndash; Match this to your Spring Boot version &ndash;&gt;-->
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 			<version>RELEASE</version>
@@ -127,6 +134,11 @@
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-ses</artifactId>
 			<version>1.12.783</version>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 
 

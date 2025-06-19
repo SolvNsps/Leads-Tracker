@@ -27,6 +27,6 @@ public interface UserService extends UserDetailsService {
 
     void saveOtp(String email, String otp, Date expiryTime);
 
-    void delete(String id);
+    void deleteUser(String id);
 
 }

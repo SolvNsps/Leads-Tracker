@@ -24,6 +24,7 @@ public class SecurityConstants {
     public static final String Verify_OTP = "/api/v1/leads/verify-otp";
     public static final String Delete_User = "/api/v1/leads/delete/{id}";
 
+
     public static String generateToken(String username, long expirationTimeMillis) {
         byte[] secretKeyBytes = Base64.getEncoder().encode(getTokenSecret().getBytes());
         SecretKey secretKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS512.getJcaName());
