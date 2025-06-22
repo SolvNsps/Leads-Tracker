@@ -1,4 +1,4 @@
-package com.leadstracker.leadstracker;
+package com.leadstracker.leadstracker.config;
 
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;

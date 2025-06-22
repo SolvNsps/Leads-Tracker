@@ -1,4 +1,4 @@
-package com.leadstracker.leadstracker.Response;
+package com.leadstracker.leadstracker.response;
 
 public class OperationStatusModel {
 

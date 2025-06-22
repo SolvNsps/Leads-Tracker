@@ -1,10 +1,10 @@
 package com.leadstracker.leadstracker.controller;
 
 import com.leadstracker.leadstracker.DTO.UserDto;
-import com.leadstracker.leadstracker.Response.OperationStatusModel;
-import com.leadstracker.leadstracker.Response.RequestOperationName;
-import com.leadstracker.leadstracker.Response.RequestOperationStatus;
-import com.leadstracker.leadstracker.Response.UserRest;
+import com.leadstracker.leadstracker.response.OperationStatusModel;
+import com.leadstracker.leadstracker.response.RequestOperationName;
+import com.leadstracker.leadstracker.response.RequestOperationStatus;
+import com.leadstracker.leadstracker.response.UserRest;
 import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
 import com.leadstracker.leadstracker.request.OtpVerificationRequest;
 import com.leadstracker.leadstracker.request.ResetPassword;

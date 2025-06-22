@@ -2,7 +2,7 @@ package com.leadstracker.leadstracker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leadstracker.leadstracker.DTO.UserDto;
-import com.leadstracker.leadstracker.Response.UserRest;
+import com.leadstracker.leadstracker.response.UserRest;
 import com.leadstracker.leadstracker.controller.UserController;
 import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
 import com.leadstracker.leadstracker.request.ResetPassword;

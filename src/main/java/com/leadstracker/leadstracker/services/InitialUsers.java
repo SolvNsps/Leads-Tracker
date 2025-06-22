@@ -1,4 +1,4 @@
-package com.leadstracker.leadstracker;
+package com.leadstracker.leadstracker.services;
 
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.AuthorityEntity;
@@ -8,7 +8,6 @@ import com.leadstracker.leadstracker.repositories.AuthorityRepository;
 import com.leadstracker.leadstracker.repositories.RoleRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 @Component
 public class InitialUsers {

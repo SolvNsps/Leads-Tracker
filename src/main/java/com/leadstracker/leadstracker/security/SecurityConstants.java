@@ -1,6 +1,6 @@
 package com.leadstracker.leadstracker.security;
 
-import com.leadstracker.leadstracker.SpringApplicationContext;
+import com.leadstracker.leadstracker.config.SpringApplicationContext;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.core.env.Environment;

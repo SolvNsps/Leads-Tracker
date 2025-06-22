@@ -3,7 +3,7 @@ package com.leadstracker.leadstracker.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leadstracker.leadstracker.DTO.AmazonSES;
 import com.leadstracker.leadstracker.DTO.UserDto;
-import com.leadstracker.leadstracker.SpringApplicationContext;
+import com.leadstracker.leadstracker.config.SpringApplicationContext;
 import com.leadstracker.leadstracker.request.UserLoginRequestModel;
 import com.leadstracker.leadstracker.services.UserService;
 import io.jsonwebtoken.Jwts;
@@ -15,9 +15,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.crypto.SecretKey;
