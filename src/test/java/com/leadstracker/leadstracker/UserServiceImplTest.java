@@ -136,6 +136,7 @@ class UserServiceImplTest {
         assertEquals(userId, result.getUserId());
         assertEquals("test@example.com", result.getEmail());
         assertEquals("John", result.getFirstName());
+        assertEquals("John", result.getFirstName());
         assertEquals("Doe", result.getLastName());
         verify(userRepository).findByUserId(userId);
     }
