@@ -54,7 +54,7 @@ public class UserEntity implements Serializable {
     private Date otpExpiryDate;
 
     @Column(name = "otp_failed_attempts")
-    private Integer otpFailedAttempts = 0;
+    private int otpFailedAttempts = 0;
 
     @ManyToOne(cascade = CascadeType.PERSIST,  fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
@@ -173,11 +173,11 @@ public class UserEntity implements Serializable {
         this.otpExpiryDate = otpExpiryDate;
     }
 
-    public Integer getOtpFailedAttempts() {
+    public int getOtpFailedAttempts() {
         return otpFailedAttempts;
     }
 
-    public void setOtpFailedAttempts(Integer otpFailedAttempts) {
+    public void setOtpFailedAttempts(int otpFailedAttempts) {
         this.otpFailedAttempts = otpFailedAttempts;
     }
 

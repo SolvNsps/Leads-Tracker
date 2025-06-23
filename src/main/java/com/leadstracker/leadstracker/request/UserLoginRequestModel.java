@@ -1,5 +1,6 @@
 package com.leadstracker.leadstracker.request;
 
+
 public class UserLoginRequestModel {
 
     private String email;
@@ -19,5 +20,13 @@ public class UserLoginRequestModel {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    @Override
+    public String toString() {
+        return "UserLoginRequestModel{" +
+                "email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                '}';
     }
 }

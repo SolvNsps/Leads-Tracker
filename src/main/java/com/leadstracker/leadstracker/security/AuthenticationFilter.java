@@ -34,7 +34,6 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
         try{
             UserLoginRequestModel creds = new ObjectMapper().readValue(request.getInputStream(), UserLoginRequestModel.class);
-
             return getAuthenticationManager().authenticate(new UsernamePasswordAuthenticationToken(creds.getEmail(),creds.getPassword()));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -44,7 +43,9 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult)
             throws IOException, ServletException {
 
-        byte[] secretKeyBytes = Base64.getEncoder().encode(SecurityConstants.getTokenSecret().getBytes());
+        String tokenSecret = (String) SpringApplicationContext.getBean("secretKey");
+
+        byte[] secretKeyBytes = Base64.getEncoder().encode(tokenSecret.getBytes());
         SecretKey secretKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS512.getJcaName());
         Instant now = Instant.now();
 
@@ -60,7 +61,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         // Setting OTP expiry (3 minutes from now)
        userService.saveOtp(userName, otp, new Date(System.currentTimeMillis() + 180000));
 
-        AmazonSES emailService = new AmazonSES();
+        AmazonSES emailService = (AmazonSES) SpringApplicationContext.getBean("amazonSES");
         emailService.sendLoginOtpEmail(userDto.getFirstName(), userName, otp);
 
         // Returning response

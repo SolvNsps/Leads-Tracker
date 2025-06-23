@@ -1,13 +1,20 @@
 package com.leadstracker.leadstracker.DTO;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
 import com.amazonaws.services.simpleemail.model.*;
 import org.springframework.stereotype.Service;
 
-@Service
+@Service("amazonSES")
 public class AmazonSES {
+    private final AmazonSimpleEmailService amazonSimpleEmailService;
+
+    public AmazonSES(AmazonSimpleEmailService amazonSimpleEmailService) {
+        this.amazonSimpleEmailService = amazonSimpleEmailService;
+    }
 
     final String FROM = "ernest5arthur@gmail.com";
 
@@ -66,9 +73,6 @@ public class AmazonSES {
 
     public void verifyEmail(UserDto userDto) {
 
-        AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder
-                .standard().withRegion(Regions.US_EAST_1).build();
-
         String htmlBodyWithToken = HTMLBODY.replace("$tokenValue", userDto.getEmailVerificationToken());
         String textBodyWithToken = TEXTBODY.replace("$tokenValue", userDto.getEmailVerificationToken());
 
@@ -78,16 +82,13 @@ public class AmazonSES {
                         .withCharset("UTF-8").withData(textBodyWithToken))).withSubject(new Content().withCharset("UTF-8")
                         .withData(SUBJECT))).withSource(FROM);
 
-        client.sendEmail(request);
+        amazonSimpleEmailService.sendEmail(request);
 
         System.out.println("Email sent to user");
     }
 
     public void sendPasswordResetRequest(String firstName, String email, String token) {
         boolean returnUser = false;
-
-        AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder
-                .standard().withRegion(Regions.US_EAST_1).build();
 
         String htmlBodyWithToken = PASSWORD_RESET_REQUEST_HTMLBODY.replace("$tokenValue", token);
         String textBodyWithToken = PASSWORD_RESET_REQUEST_TEXTBODY.replace("$firstName", firstName);
@@ -99,7 +100,7 @@ public class AmazonSES {
                         .withSubject(new Content().withCharset("UTF-8")
                                 .withData(PASSWORD_RESET_REQUEST_SUBJECT))).withSource(FROM);
 
-        SendEmailResult result = client.sendEmail(request);
+        SendEmailResult result = amazonSimpleEmailService.sendEmail(request);
         if (result != null && (result.getMessageId() != null && !result.getMessageId().isEmpty())) {
             returnUser = true;
         }
@@ -108,8 +109,6 @@ public class AmazonSES {
 
 
     public void sendLoginOtpEmail(String firstName, String email, String otp) {
-        AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder
-                .standard().withRegion(Regions.US_EAST_1).build();
 
         // Replace placeholders
         String htmlBody = LOGIN_OTP_HTMLBODY.replace("$firstName", firstName).replace("$otp", otp);
@@ -126,7 +125,7 @@ public class AmazonSES {
                                 .withCharset("UTF-8")
                                 .withData(LOGIN_OTP_SUBJECT))).withSource(FROM);
 
-        client.sendEmail(request);
+        amazonSimpleEmailService.sendEmail(request);
         System.out.println("OTP sent to " + email);
     }
 

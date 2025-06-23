@@ -94,7 +94,6 @@ public class InitialUsers {
 
             userRepository.save(teamMemberUser);
         }
-
     }
 
     protected AuthorityEntity createAuthority(String name) {

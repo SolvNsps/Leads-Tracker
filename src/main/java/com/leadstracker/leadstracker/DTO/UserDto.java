@@ -34,7 +34,7 @@ public class UserDto implements Serializable {
 
     private Date otpExpiryDate;
 
-    private Integer otpFailedAttempts;
+    private int otpFailedAttempts;
 
     public long getId() {
         return id;
@@ -124,11 +124,11 @@ public class UserDto implements Serializable {
         this.otpExpiryDate = otpExpiryDate;
     }
 
-    public Integer getOtpFailedAttempts() {
+    public int getOtpFailedAttempts() {
         return otpFailedAttempts;
     }
 
-    public void setOtpFailedAttempts(Integer otpFailedAttempts) {
+    public void setOtpFailedAttempts(int otpFailedAttempts) {
         this.otpFailedAttempts = otpFailedAttempts;
     }
 
@@ -138,5 +138,24 @@ public class UserDto implements Serializable {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    @Override
+    public String toString() {
+        return "UserDto{" +
+                "id=" + id +
+                ", userId='" + userId + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", emailVerificationToken='" + emailVerificationToken + '\'' +
+                ", emailVerificationStatus=" + emailVerificationStatus +
+                ", role='" + role + '\'' +
+                ", defaultPassword=" + defaultPassword +
+                ", otp='" + otp + '\'' +
+                ", otpExpiryDate=" + otpExpiryDate +
+                ", otpFailedAttempts=" + otpFailedAttempts +
+                '}';
     }
 }
