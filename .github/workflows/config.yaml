@@ -35,6 +35,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           bash /home/ec2-user/app/deploy.sh
+          
     - name: SSH and Restart App with Supervisor
       uses: appleboy/ssh-action@v0.1.10
       with:
@@ -42,6 +43,6 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          sudo supervisorctl stop springapp
+          sudo supervisorctl stop leadstracker
           sudo cp /home/ec2-user/app/target/*.jar /home/ec2-user/app/target/leads-tracker-0.0.1-SNAPSHOT.jar
-          sudo supervisorctl start springapp
+          sudo supervisorctl start leadstracker
