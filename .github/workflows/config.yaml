@@ -45,4 +45,4 @@ jobs:
         script: |
           sudo supervisorctl reread
           sudo supervisorctl update
-          sudo supervisorctl restart leadstracker || sudo supervisorctl start leadstracker
+          sudo supervisorctl restart springapp || sudo supervisorctl start springapp
