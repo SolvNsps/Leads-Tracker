@@ -43,6 +43,3 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          sudo supervisorctl stop leadstracker
-          sudo cp /home/ec2-user/app/target/*.jar /home/ec2-user/app/target/leads-tracker-0.0.1-SNAPSHOT.jar
-          sudo supervisorctl start leadstracker
