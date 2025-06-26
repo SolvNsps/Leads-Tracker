@@ -34,7 +34,7 @@ public class UserDto implements Serializable {
 
     private Date otpExpiryDate;
 
-    private int otpFailedAttempts;
+    private Integer otpFailedAttempts;
 
     public long getId() {
         return id;

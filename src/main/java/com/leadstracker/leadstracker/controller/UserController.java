@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.controller;
 
 import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.config.SpringApplicationContext;
 import com.leadstracker.leadstracker.response.OperationStatusModel;
 import com.leadstracker.leadstracker.response.RequestOperationName;
 import com.leadstracker.leadstracker.response.RequestOperationStatus;
@@ -12,6 +13,8 @@ import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.security.SecurityConstants;
 import com.leadstracker.leadstracker.services.UserService;
 //import jakarta.validation.Valid;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +23,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.time.Instant;
+import java.util.*;
 
 
 @RestController
@@ -144,14 +148,31 @@ public class UserController {
         boolean isValid = userService.validateOtp(request.getEmail(), request.getOtp());
 
         if (!isValid) {
-            return ResponseEntity.status(401).body("Invalid OTP");
+            return ResponseEntity.ok(Map.of(
+                    "message", "Invalid OTP.",
+                    "status", "FAILED"
+            ));
         }
 
         // OTP is valid. Generating JWT
-        String jwt = SecurityConstants.generateToken(request.getEmail(), SecurityConstants.Expiration_Time_In_Seconds);
+//        String jwt = SecurityConstants.generateToken(request.getEmail(), SecurityConstants.Expiration_Time_In_Seconds);
+        String tokenSecret = (String) SpringApplicationContext.getBean("secretKey");
+
+        byte[] secretKeyBytes = Base64.getEncoder().encode(tokenSecret.getBytes());
+        SecretKey secretKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS512.getJcaName());
+        Instant now = Instant.now();
+
+        long expirationTime = SecurityConstants.Expiration_Time_In_Seconds;
+
+        String token = Jwts.builder()
+                .setSubject(request.getEmail())
+                .setExpiration(Date.from(now.plusMillis(expirationTime)))
+                .setIssuedAt(Date.from(now))
+                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .compact();
 
         return ResponseEntity.ok(Map.of(
-                "token", jwt,
+                "token", token,
                 "status", "LOGIN_SUCCESS"
         ));
     }

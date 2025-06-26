@@ -103,8 +103,18 @@ public class UserServiceImpl implements UserService {
             throw new UsernameNotFoundException(email);
         }
         UserDto returnUser = new UserDto();
+        returnUser.setUserId(userEntity.getUserId());
+        returnUser.setEmailVerificationToken(userEntity.getEmailVerificationToken());
+        returnUser.setEmail(userEntity.getEmail());
+        returnUser.setPassword(userEntity.getPassword());
+        returnUser.setRole(userEntity.getRole().toString());
+        returnUser.setFirstName(userEntity.getFirstName());
+        returnUser.setLastName(userEntity.getLastName());
+        returnUser.setOtpExpiryDate(userEntity.getOtpExpiryDate());
+        returnUser.setOtp(userEntity.getOtp());
+        returnUser.setId(userEntity.getId());
+        returnUser.setOtpFailedAttempts(0);
 
-        BeanUtils.copyProperties(userEntity, returnUser);
         return returnUser;
     }
 

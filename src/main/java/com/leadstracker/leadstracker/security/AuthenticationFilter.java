@@ -55,6 +55,9 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         UserService userService = (UserService) SpringApplicationContext.getBean("userServiceImpl");
         UserDto userDto = userService.getUser(userName);
 
+        // Checking if password needs to be reset (first login with default password)
+        boolean passwordResetRequired = userDto.isDefaultPassword();
+
         // Generate a 6-digit OTP
         String otp = String.format("%06d", new SecureRandom().nextInt(999999));
 
@@ -75,29 +78,27 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                 )
         );
 
-        // Checking if password needs to be reset (first login with default password)
-        boolean passwordResetRequired = userDto.isDefaultPassword();
 
         // Generating token
-        long expirationTime = passwordResetRequired ?
-                SecurityConstants.Password_Reset_Expiration_Time :
-                SecurityConstants.Expiration_Time_In_Seconds;
+//        long expirationTime = passwordResetRequired ?
+//                SecurityConstants.Password_Reset_Expiration_Time :
+//                SecurityConstants.Expiration_Time_In_Seconds;
 
-        String token = Jwts.builder()
-                .setSubject(userName)
-                .setExpiration(
-                        Date.from(now.plusMillis(expirationTime)))
-                .setIssuedAt(Date.from(now)).signWith(secretKey, SignatureAlgorithm.HS512).compact();
+//        String token = Jwts.builder()
+//                .setSubject(userName)
+//                .setExpiration(
+//                        Date.from(now.plusMillis(expirationTime)))
+//                .setIssuedAt(Date.from(now)).signWith(secretKey, SignatureAlgorithm.HS512).compact();
 
 
-        var map = Map.of("userId", userDto.getUserId(),
-                "token", token, "passwordResetRequired", passwordResetRequired);
-        var objectMapper = new ObjectMapper();
-        var body = objectMapper.writeValueAsString(map);
-
-        response.setContentType("application/json");
-        response.getWriter().write(body);
-        response.getWriter().flush();
+//        var map = Map.of("userId", userDto.getUserId(),
+//                "token", token, "passwordResetRequired", passwordResetRequired);
+//        var objectMapper = new ObjectMapper();
+//        var body = objectMapper.writeValueAsString(map);
+//
+//        response.setContentType("application/json");
+//        response.getWriter().write(body);
+//        response.getWriter().flush();
   }
 
 }
