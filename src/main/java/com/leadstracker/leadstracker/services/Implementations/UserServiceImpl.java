@@ -238,7 +238,7 @@ public class UserServiceImpl implements UserService {
     public boolean validateOtp(String email, String otp) {
         UserEntity user = userRepository.findByEmail(email);
 
-        if (user.isAccountLocked()) {
+        if (Boolean.TRUE.equals(user.getAccountLocked())) {
             throw new RuntimeException("Account is permanently locked. Contact Support");
         }
 

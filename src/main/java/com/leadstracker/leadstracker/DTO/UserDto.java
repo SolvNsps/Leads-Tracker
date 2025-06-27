@@ -38,7 +38,7 @@ public class UserDto implements Serializable {
 
     private Date tempBlockTime;
 
-    private boolean accountLocked;
+    private Boolean accountLocked;
 
     public long getId() {
         return id;
@@ -152,11 +152,11 @@ public class UserDto implements Serializable {
         this.tempBlockTime = tempBlockTime;
     }
 
-    public boolean isAccountLocked() {
+    public Boolean getAccountLocked() {
         return accountLocked;
     }
 
-    public void setAccountLocked(boolean accountLocked) {
+    public void setAccountLocked(Boolean accountLocked) {
         this.accountLocked = accountLocked;
     }
 
