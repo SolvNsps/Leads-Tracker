@@ -32,6 +32,8 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 
+import static com.leadstracker.leadstracker.security.SecurityConstants.*;
+
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -107,13 +109,12 @@ public class UserServiceImpl implements UserService {
         returnUser.setEmailVerificationToken(userEntity.getEmailVerificationToken());
         returnUser.setEmail(userEntity.getEmail());
         returnUser.setPassword(userEntity.getPassword());
-        returnUser.setRole(userEntity.getRole().toString());
         returnUser.setFirstName(userEntity.getFirstName());
         returnUser.setLastName(userEntity.getLastName());
         returnUser.setOtpExpiryDate(userEntity.getOtpExpiryDate());
         returnUser.setOtp(userEntity.getOtp());
         returnUser.setId(userEntity.getId());
-        returnUser.setOtpFailedAttempts(0);
+        returnUser.setOtpFailedAttempts(userEntity.getOtpFailedAttempts());
 
         return returnUser;
     }
@@ -245,13 +246,37 @@ public class UserServiceImpl implements UserService {
     public boolean validateOtp(String email, String otp) {
         UserEntity user = userRepository.findByEmail(email);
 
-       //locking the account after some failed attempts
-        if(user.getOtpFailedAttempts() > 3) {
-            throw new RuntimeException("Too many attempts");
+        if (user.isAccountLocked()) {
+            throw new RuntimeException("Account is permanently locked. Contact Support");
         }
 
+        // Checking if user is temporarily blocked
+        if (user.getTempBlockTime() != null &&
+                System.currentTimeMillis() - user.getTempBlockTime().getTime() < Temp_Block_Duration) {
+            long remainingTime = (Temp_Block_Duration -
+                    (System.currentTimeMillis() - user.getTempBlockTime().getTime())) / 60000;
+            throw new RuntimeException("Account temporarily blocked. Try again in " + remainingTime + " minutes.");
+        }
+
+        // Validate OTP
         if (user.getOtp() == null || !otp.equals(user.getOtp())) {
             user.setOtpFailedAttempts(user.getOtpFailedAttempts() + 1);
+
+            // Temporary block on the 3rd attempt
+            if (user.getOtpFailedAttempts() >= Max_Temp_Attempts &&
+                    user.getOtpFailedAttempts() < Max_Perm_Attempts) {
+                user.setTempBlockTime(new Date());
+                userRepository.save(user);
+                throw new RuntimeException("Too many attempts. Account temporarily blocked for 15 minutes.");
+            }
+
+            // Permanently locking on the 5th attempt
+            if (user.getOtpFailedAttempts() >= Max_Perm_Attempts) {
+                user.setAccountLocked(true);
+                userRepository.save(user);
+                throw new RuntimeException("Too many attempts. Account permanently locked.");
+            }
+
             userRepository.save(user);
             return false;
         }
@@ -263,17 +288,10 @@ public class UserServiceImpl implements UserService {
         //resetting attempts on success
         user.setOtpFailedAttempts(0);
         user.setOtp(null);
+        user.setTempBlockTime(null);
         userRepository.save(user);
         return true;
 
-        //invalidating OTP after successful usage
-
-//        if (isValid) {
-//            user.setOtp(null);
-//            user.setOtpExpiryDate(null);
-//            userRepository.save(user);
-//        }
-//        return isValid;
     }
 
 

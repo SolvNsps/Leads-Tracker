@@ -56,6 +56,12 @@ public class UserEntity implements Serializable {
     @Column(name = "otp_failed_attempts")
     private Integer otpFailedAttempts = 0;
 
+    @Column(name = "temp_block_time")
+    private Date tempBlockTime;
+
+    @Column(name = "account_locked")
+    private boolean accountLocked = false;
+
     @ManyToOne(cascade = CascadeType.PERSIST,  fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "roles_id", referencedColumnName = "id"))
@@ -181,5 +187,19 @@ public class UserEntity implements Serializable {
         this.otpFailedAttempts = otpFailedAttempts;
     }
 
+    public Date getTempBlockTime() {
+        return tempBlockTime;
+    }
 
+    public void setTempBlockTime(Date tempBlockTime) {
+        this.tempBlockTime = tempBlockTime;
+    }
+
+    public boolean isAccountLocked() {
+        return accountLocked;
+    }
+
+    public void setAccountLocked(boolean accountLocked) {
+        this.accountLocked = accountLocked;
+    }
 }

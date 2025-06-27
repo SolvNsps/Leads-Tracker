@@ -89,6 +89,7 @@ class UserServiceImplTest {
         mockSavedEntity.setUserId("randomUserId");
         mockSavedEntity.setPassword("encodedPassword");
         mockSavedEntity.setRole(role);
+        mockSavedEntity.setOtpFailedAttempts(0);
 
         when(roleRepository.findByName(anyString())).thenReturn(role);
         when(userRepository.save(Mockito.<UserEntity>any())).thenReturn(mockSavedEntity);
@@ -165,6 +166,7 @@ class UserServiceImplTest {
         mockUserEntity.setEmail(email);
         mockUserEntity.setFirstName("Jane");
         mockUserEntity.setLastName("Smith");
+
 
         when(userRepository.findByEmail(email)).thenReturn(mockUserEntity);
 

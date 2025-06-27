@@ -36,6 +36,10 @@ public class UserDto implements Serializable {
 
     private Integer otpFailedAttempts;
 
+    private Date tempBlockTime;
+
+    private boolean accountLocked;
+
     public long getId() {
         return id;
     }
@@ -124,20 +128,36 @@ public class UserDto implements Serializable {
         this.otpExpiryDate = otpExpiryDate;
     }
 
-    public int getOtpFailedAttempts() {
-        return otpFailedAttempts;
-    }
-
-    public void setOtpFailedAttempts(int otpFailedAttempts) {
-        this.otpFailedAttempts = otpFailedAttempts;
-    }
-
     public String getRole() {
         return role;
     }
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public void setOtpFailedAttempts(Integer otpFailedAttempts) {
+        this.otpFailedAttempts = otpFailedAttempts;
+    }
+
+    public Integer getOtpFailedAttempts() {
+        return otpFailedAttempts;
+    }
+
+    public Date getTempBlockTime() {
+        return tempBlockTime;
+    }
+
+    public void setTempBlockTime(Date tempBlockTime) {
+        this.tempBlockTime = tempBlockTime;
+    }
+
+    public boolean isAccountLocked() {
+        return accountLocked;
+    }
+
+    public void setAccountLocked(boolean accountLocked) {
+        this.accountLocked = accountLocked;
     }
 
     @Override
