@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.controller;
 
 import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.config.SpringApplicationContext;
 import com.leadstracker.leadstracker.response.OperationStatusModel;
 import com.leadstracker.leadstracker.response.RequestOperationName;
@@ -38,6 +39,9 @@ public class UserController {
 
     @Autowired
     ModelMapper modelMapper;
+
+    @Autowired
+    Utils utils;
 
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -107,14 +111,21 @@ public class UserController {
 
 
     @PostMapping("/forgot-password-request")
-    public ResponseEntity<String> forgotPassword(@Validated @RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<?> forgotPassword(@Validated @RequestBody ForgotPasswordRequest request) {
         System.out.println("hitting endpoint");
         boolean result = userService.initiatePasswordReset(request.getEmail());
 
+        String token = utils.generatePasswordResetToken();
+
         if (result) {
-            return ResponseEntity.ok("Password reset instructions have been sent to your email.");
+            return ResponseEntity.ok(Map.of(
+                    "message", "Password reset instructions have been sent to your email.",
+                    "token", token
+            ));
         } else {
-            return ResponseEntity.badRequest().body("No user found with the provided email.");
+            return ResponseEntity.ok(Map.of(
+                    "message", "No user found with the provided email."
+            ));
         }
     }
 

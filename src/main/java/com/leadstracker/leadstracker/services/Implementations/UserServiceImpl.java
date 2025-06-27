@@ -182,14 +182,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public void resetPassword(String token, String newPassword, String confirmNewPassword) {
 
-        // Validate token
-//        String email = Jwts.builder()
-//                .setSigningKey(Base64.getEncoder().encode(SecurityConstants.getTokenSecret().getBytes()))
-//                .build()
-//                .parseClaimsJws(token)
-//                .getBody()
-//                .getSubject();
-
         UserEntity user = userRepository.findByPasswordResetToken(token);
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid password reset token");
