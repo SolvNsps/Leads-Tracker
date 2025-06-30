@@ -57,6 +57,17 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
         // Checking if password needs to be reset (first login with default password)
         boolean passwordResetRequired = userDto.isDefaultPassword();
+            if (passwordResetRequired) {
+                response.setContentType("application/json");
+                new ObjectMapper().writeValue(
+                        response.getWriter(),
+                        Map.of(
+                                "status", "PASSWORD_RESET_REQUIRED",
+                                "email", userName,
+                                "message", "First time login, password reset required"
+                        )
+                );
+            }
 
         // Generate a 6-digit OTP
         String otp = String.format("%06d", new SecureRandom().nextInt(999999));

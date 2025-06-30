@@ -218,7 +218,7 @@ public class UserServiceImpl implements UserService {
     public boolean validateOtp(String email, String otp) {
         UserEntity user = userRepository.findByEmail(email);
 
-        if (user.isAccountLocked()) {
+        if (Boolean.TRUE.equals(user.getAccountLocked())) {
             throw new RuntimeException("Account is permanently locked. Contact Support");
         }
 
@@ -301,6 +301,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto createUser(UserDto userDto){
+        System.out.println("userDto :"+ userDto);
+
         // 1. Check if email already exists
         if (userRepository.findByEmail(userDto.getEmail()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
@@ -353,7 +355,7 @@ public class UserServiceImpl implements UserService {
         UserDto returnDto = mapper.map(savedUser, UserDto.class);
 
         // 8. Send onboarding email
-        amazonSES.sendOnboardingEmail(savedUser.getFirstName(), savedUser.getEmail(), rawPassword);
+        amazonSES.verifyEmail(returnDto);
 
         return returnDto;
     }

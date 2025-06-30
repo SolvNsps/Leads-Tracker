@@ -71,7 +71,7 @@ public class UserEntity implements Serializable {
     private Date tempBlockTime;
 
     @Column(name = "account_locked")
-    private boolean accountLocked = false;
+    private Boolean accountLocked = false;
 
     @ManyToOne(cascade = CascadeType.PERSIST,  fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
@@ -206,11 +206,11 @@ public class UserEntity implements Serializable {
         this.tempBlockTime = tempBlockTime;
     }
 
-    public boolean isAccountLocked() {
+    public Boolean getAccountLocked() {
         return accountLocked;
     }
 
-    public void setAccountLocked(boolean accountLocked) {
+    public void setAccountLocked(Boolean accountLocked) {
         this.accountLocked = accountLocked;
     }
 

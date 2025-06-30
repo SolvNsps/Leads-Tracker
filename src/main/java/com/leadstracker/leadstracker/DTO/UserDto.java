@@ -38,7 +38,7 @@ public class UserDto implements Serializable {
 
     private Date tempBlockTime;
 
-    private boolean accountLocked;
+    private Boolean accountLocked;
 
     private String phoneNumber;
 
@@ -158,11 +158,11 @@ public class UserDto implements Serializable {
         this.tempBlockTime = tempBlockTime;
     }
 
-    public boolean isAccountLocked() {
+    public Boolean getAccountLocked() {
         return accountLocked;
     }
 
-    public void setAccountLocked(boolean accountLocked) {
+    public void setAccountLocked(Boolean accountLocked) {
         this.accountLocked = accountLocked;
     }
 
@@ -182,6 +182,7 @@ public class UserDto implements Serializable {
                 ", otp='" + otp + '\'' +
                 ", otpExpiryDate=" + otpExpiryDate +
                 ", otpFailedAttempts=" + otpFailedAttempts +
+                ", phoneNumber=" + phoneNumber +
                 '}';
     }
 

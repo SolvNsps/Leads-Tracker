@@ -76,10 +76,15 @@ class UserServiceImplTest {
 
     @Test
     void saveUser_shouldSaveAndReturnUser_whenUserIsNew() {
+        userDto.setPassword("password123");
         // Arrange
         when(userRepository.findByEmail(userDto.getEmail())).thenReturn(null);
         when(utils.generateUserId(anyInt())).thenReturn("randomUserId");
-        when(bCryptPasswordEncoder.encode(userDto.getPassword())).thenReturn("encodedPassword");
+        when(utils.generateDefaultPassword()).thenReturn("randomUserId");
+        when(bCryptPasswordEncoder.encode(anyString())).thenReturn("encodedPassword");
+        userDto.setPhoneNumber("1234567890");
+        userDto.setStaffId("123456");
+
 
         var role = new RoleEntity();
         role.setId(1L);
@@ -88,6 +93,7 @@ class UserServiceImplTest {
         UserEntity mockSavedEntity = new ModelMapper().map(userDto, UserEntity.class);
         mockSavedEntity.setUserId("randomUserId");
         mockSavedEntity.setPassword("encodedPassword");
+        mockSavedEntity.setPhoneNumber("1234567890");
         mockSavedEntity.setRole(role);
         mockSavedEntity.setOtpFailedAttempts(0);
 
@@ -102,7 +108,7 @@ class UserServiceImplTest {
         assertNotNull(savedUser);
         assertEquals(userDto.getEmail(), savedUser.getEmail());
         verify(userRepository).save(any(UserEntity.class));
-        verify(utils).generateUserId(50);
+        verify(utils).generateUserId(30);
     }
 
     @Test
@@ -113,7 +119,7 @@ class UserServiceImplTest {
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> userService.createUser(userDto));
-        assertEquals("User already exists", exception.getMessage());
+        assertEquals("400 BAD_REQUEST \"Email already exists\"", exception.getMessage());
         verify(userRepository, never()).save(any(UserEntity.class));
     }
 
