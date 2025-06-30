@@ -342,7 +342,7 @@ public class UserServiceImpl implements UserService {
             }
             TeamEntity team = teamRepository.findById(userDto.getTeamId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Assigned team not found"));
-            userEntity.setTeam(team);
+            userEntity.setTeamMembers(team);
         }
 
         // 6. Generate default password

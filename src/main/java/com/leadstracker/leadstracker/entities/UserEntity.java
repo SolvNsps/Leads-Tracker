@@ -230,14 +230,6 @@ public class UserEntity implements Serializable {
         this.staffId = staffId;
     }
 
-    public TeamEntity getTeam() {
-        return teamMembers;
-    }
-
-    public void setTeam(TeamEntity team) {
-        this.teamMembers = team;
-    }
-
     public TeamEntity getTeamMembers() {
         return teamMembers;
     }

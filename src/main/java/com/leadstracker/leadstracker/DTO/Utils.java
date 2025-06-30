@@ -66,8 +66,17 @@ public class Utils {
         return UUID.randomUUID().toString();
     }
 
+    private String generatePassword(int length) {
+        StringBuilder randomString = new StringBuilder();
+
+        for (int i = 0; i < length; i++) {
+            String alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*+]).{8,}$";
+            randomString.append(alphabet.charAt(random.nextInt(alphabet.length())));
+        }
+        return new String(randomString);
+    }
     public String generateDefaultPassword() {
-        return UUID.randomUUID().toString().substring(0, 10); // e.g., "a4f6e3cd12"
+        return generatePassword(10);
     }
 
 }
