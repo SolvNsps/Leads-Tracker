@@ -38,7 +38,6 @@ public class Utils {
         return new String(randomString);
     }
 
-//<<<<<<< HEAD
     public boolean hasTokenExpired(String token) {
         byte[] secretKeyBytes = Base64.getEncoder().encode(SecurityConstants.getTokenSecret().getBytes());
         SecretKey secretKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS512.getJcaName());
@@ -63,10 +62,12 @@ public class Utils {
                 .compact();
         return token;
     }
-//=======
     public String generatePasswordResetToken() {
         return UUID.randomUUID().toString();
     }
 
-//>>>>>>> origin/jakes-branch
+    public String generateDefaultPassword() {
+        return UUID.randomUUID().toString().substring(0, 10); // e.g., "a4f6e3cd12"
+    }
+
 }

@@ -45,6 +45,17 @@ public class UserEntity implements Serializable {
     @Column (nullable = false,columnDefinition = "boolean default false")
     private boolean emailVerificationStatus;
 
+    @Column(nullable = false, unique = true)
+    private String phoneNumber;
+
+    @Column(nullable = false, unique = true, length = 10)
+    private String staffId;
+
+    @ManyToOne
+    @JoinColumn(name = "team_id")
+    private TeamEntity teamMembers; // nullable if not a Team Member
+
+
 //    default to true for new users
     @Column(name = "default_password", nullable = false)
     private boolean defaultPassword = true;
@@ -201,5 +212,37 @@ public class UserEntity implements Serializable {
 
     public void setAccountLocked(boolean accountLocked) {
         this.accountLocked = accountLocked;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getStaffIdNumber() {
+        return staffId;
+    }
+
+    public void setStaffIdNumber(String staffId) {
+        this.staffId = staffId;
+    }
+
+    public TeamEntity getTeam() {
+        return teamMembers;
+    }
+
+    public void setTeam(TeamEntity team) {
+        this.teamMembers = team;
+    }
+
+    public TeamEntity getTeamMembers() {
+        return teamMembers;
+    }
+
+    public void setTeamMembers(TeamEntity teamMembers) {
+        this.teamMembers = teamMembers;
     }
 }

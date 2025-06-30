@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.List;
 
 public interface UserService extends UserDetailsService {
-    UserDto saveUser(UserDto user);
 
     UserDto getUserByUserId(String id);
 
@@ -29,4 +28,5 @@ public interface UserService extends UserDetailsService {
 
     void deleteUser(String id);
 
+    UserDto createUser(UserDto userDto);
 }

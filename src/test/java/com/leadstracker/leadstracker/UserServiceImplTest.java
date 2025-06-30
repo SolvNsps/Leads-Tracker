@@ -96,7 +96,7 @@ class UserServiceImplTest {
 
 
         // Act
-        UserDto savedUser = userService.saveUser(userDto);
+        UserDto savedUser = userService.createUser(userDto);
 
         // Assert
         assertNotNull(savedUser);
@@ -112,7 +112,7 @@ class UserServiceImplTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> userService.saveUser(userDto));
+                () -> userService.createUser(userDto));
         assertEquals("User already exists", exception.getMessage());
         verify(userRepository, never()).save(any(UserEntity.class));
     }

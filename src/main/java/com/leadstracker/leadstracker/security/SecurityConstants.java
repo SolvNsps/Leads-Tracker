@@ -39,8 +39,6 @@ public class SecurityConstants {
                 .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
     }
-
-
     public  static String getTokenSecret() {
         Environment environment = (Environment) SpringApplicationContext.getBean("environment");
         return environment.getProperty("tokenSecret");

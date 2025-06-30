@@ -5,6 +5,10 @@ public class UserDetails {
     private String lastName;
     private String email;
     private String password;
+    private String phoneNumber;
+    private String staffIdNumber;
+    private String teamId;
+    public String role;    // “TEAM_LEAD” or “TEAM_MEMBER”
 
     public UserDetails() {}
 
@@ -38,5 +42,37 @@ public class UserDetails {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getStaffIdNumber() {
+        return staffIdNumber;
+    }
+
+    public void setStaffIdNumber(String staffIdNumber) {
+        this.staffIdNumber = staffIdNumber;
+    }
+
+    public String getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(String teamId) {
+        this.teamId = teamId;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

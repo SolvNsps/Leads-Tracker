@@ -40,6 +40,12 @@ public class UserDto implements Serializable {
 
     private boolean accountLocked;
 
+    private String phoneNumber;
+
+    private String staffId;
+
+    private Long teamId;
+
     public long getId() {
         return id;
     }
@@ -177,5 +183,29 @@ public class UserDto implements Serializable {
                 ", otpExpiryDate=" + otpExpiryDate +
                 ", otpFailedAttempts=" + otpFailedAttempts +
                 '}';
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(String staffId) {
+        this.staffId = staffId;
+    }
+
+    public Long getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(Long teamId) {
+        this.teamId = teamId;
     }
 }

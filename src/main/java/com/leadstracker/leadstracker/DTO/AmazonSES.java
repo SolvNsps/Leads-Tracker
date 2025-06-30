@@ -128,5 +128,31 @@ public class AmazonSES {
         amazonSimpleEmailService.sendEmail(request);
         System.out.println("OTP sent to " + email);
     }
+    public void sendSimpleEmail(String to, String subject, String body) {
+        SendEmailRequest request = new SendEmailRequest()
+                .withDestination(new Destination().withToAddresses(to))
+                .withMessage(new Message()
+                        .withSubject(new Content().withCharset("UTF-8").withData(subject))
+                        .withBody(new Body()
+                                .withText(new Content().withCharset("UTF-8").withData(body))))
+                .withSource(FROM);
 
+        amazonSimpleEmailService.sendEmail(request);
+    }
+    public void sendOnboardingEmail(String email, String fullName, String rawPassword) {
+        String subject = "Welcome to Leads Tracker - Your Account Details";
+
+        String body = String.format(
+                "Hello %s,\n\n" +
+                        "Welcome to the Leads Tracker system! Your account has been created successfully.\n\n" +
+                        "You can log in using the following credentials:\n" +
+                        "Email: %s\n" +
+                        "Temporary Password: %s\n\n" +
+                        "Please use the provided password to log in and reset your password immediately.\n\n" +
+                        "Regards,\nLeads Tracker Admin Team",
+                fullName, email, rawPassword
+        );
+
+        sendSimpleEmail(email, subject, body);
+    }
 }
