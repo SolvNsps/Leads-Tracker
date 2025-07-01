@@ -21,19 +21,19 @@ public class UserEntity implements Serializable {
     @GeneratedValue
     private long id;
 
-    @Column (nullable = false)
+    @Column(nullable = false)
     private String userId;
 
-    @Column (nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private String firstName;
 
-    @Column (nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private String lastName;
 
-    @Column (nullable = false, length = 50, unique = true)
+    @Column(nullable = false, length = 50, unique = true)
     private String email;
 
-    @Column (nullable = false)
+    @Column(nullable = false)
     private String password;
 
     private String emailVerificationToken;
@@ -43,10 +43,21 @@ public class UserEntity implements Serializable {
     @Column(name = "password_reset_expiration")
     private Date passwordResetExpiration;
 
-    @Column (nullable = false,columnDefinition = "boolean default false")
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean emailVerificationStatus;
 
-//    default to true for new users
+    @Column(nullable = false, unique = true)
+    private String phoneNumber;
+
+    @Column(nullable = false, unique = true, length = 10)
+    private String staffId;
+
+    @ManyToOne
+    @JoinColumn(name = "team_id")
+    private TeamEntity teamMembers; // nullable if not a Team Member
+
+
+    //    default to true for new users
     @Column(name = "default_password", nullable = false)
     private boolean defaultPassword = true;
 
@@ -69,7 +80,7 @@ public class UserEntity implements Serializable {
     @Column(name = "last_otp_resend")
     private LocalDateTime lastOtpResendTime;
 
-    @ManyToOne(cascade = CascadeType.PERSIST,  fetch = FetchType.EAGER)
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "roles_id", referencedColumnName = "id"))
     private RoleEntity role;
@@ -225,4 +236,30 @@ public class UserEntity implements Serializable {
     public void setLastOtpResendTime(LocalDateTime lastOtpResendTime) {
         this.lastOtpResendTime = lastOtpResendTime;
     }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getStaffIdNumber() {
+        return staffId;
+    }
+
+    public void setStaffIdNumber(String staffId) {
+        this.staffId = staffId;
+    }
+
+    public TeamEntity getTeamMembers() {
+        return teamMembers;
+    }
+
+    public void setTeamMembers(TeamEntity teamMembers) {
+        this.teamMembers = teamMembers;
+
+    }
+
 }

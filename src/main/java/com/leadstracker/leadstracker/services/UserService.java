@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface UserService extends UserDetailsService {
-    UserDto saveUser(UserDto user);
 
     UserDto getUserByUserId(String id);
 
@@ -31,4 +30,7 @@ public interface UserService extends UserDetailsService {
     void deleteUser(String id);
 
     Map<String, Object> resendOtp(String email);
+
+    UserDto createUser(UserDto userDto);
+
 }

@@ -69,7 +69,7 @@ public class UserControllerTest {
         response.setEmail("test@gmail.com");
 
         when(modelMapper.map(any(UserDetails.class), eq(UserDto.class))).thenReturn(mappedDto);
-        when(userService.saveUser(any(UserDto.class))).thenReturn(createdDto);
+        when(userService.createUser(any(UserDto.class))).thenReturn(createdDto);
         when(modelMapper.map(any(UserDto.class), eq(UserRest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/leads")
@@ -79,7 +79,7 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("test@gmail.com"));
 
-        verify(userService).saveUser(any(UserDto.class));
+        verify(userService).createUser(any(UserDto.class));
     }
 
     @Test

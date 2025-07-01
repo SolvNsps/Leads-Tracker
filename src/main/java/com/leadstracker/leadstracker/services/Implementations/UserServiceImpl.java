@@ -4,8 +4,10 @@ import com.leadstracker.leadstracker.DTO.AmazonSES;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.RoleEntity;
+import com.leadstracker.leadstracker.entities.TeamEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.RoleRepository;
+import com.leadstracker.leadstracker.repositories.TeamRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.security.SecurityConstants;
 import com.leadstracker.leadstracker.security.UserPrincipal;
@@ -48,36 +50,14 @@ public class UserServiceImpl implements UserService {
     private AmazonSES amazonSES;
 
     @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
     Utils utils;
 
     @Autowired
     BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    @Override
-    @Transactional
-    public UserDto saveUser(UserDto user) {
-        if(userRepository.findByEmail(user.getEmail()) != null){
-            throw new RuntimeException("User already exists");
-        }
-        ModelMapper mapper = new ModelMapper();
-        UserEntity userEntity = mapper.map(user, UserEntity.class);
-
-        String publicUserId = utils.generateUserId(50);
-        userEntity.setUserId(publicUserId);
-        userEntity.setPassword(bCryptPasswordEncoder. encode(user.getPassword()));
-        userEntity.setEmailVerificationStatus(false);
-        userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
-
-        RoleEntity role = roleRepository.findByName(user.getRole());
-        userEntity.setRole(role);
-
-        UserEntity savedUser = userRepository.save(userEntity);
-
-        UserDto returnUser = mapper.map(savedUser, UserDto.class);
-
-        amazonSES.verifyEmail(returnUser);
-        return returnUser;
-    }
 
     @Override
     public UserDto getUserByUserId(String userId) {
@@ -319,6 +299,7 @@ public class UserServiceImpl implements UserService {
         userRepository.delete(userEntity);
     }
 
+
     @Override
 
     public Map<String, Object> resendOtp(String email) {
@@ -355,4 +336,68 @@ public class UserServiceImpl implements UserService {
                 "details", Map.of("resendAttemptsRemaining", Max_Resend_Attempts - user.getResendOtpAttempts())
         );
     }
+
+    @Override
+    @Transactional
+    public UserDto createUser(UserDto userDto){
+        System.out.println("userDto :"+ userDto);
+
+        // 1. Check if email already exists
+        if (userRepository.findByEmail(userDto.getEmail()) != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
+        }
+        if (userRepository.findByStaffId(userDto.getStaffId()) != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Staff ID already exists");
+        }
+        // 2. Validate required fields
+        if (userDto.getFirstName() == null || userDto.getFirstName().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "First Name is required");
+        }
+
+        if (userDto.getPhoneNumber() == null || userDto.getPhoneNumber().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phone Number is required");
+        }
+        if (userDto.getStaffId() == null || userDto.getStaffId().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Staff ID Number is required");
+        }
+        if (userDto.getEmail() == null || userDto.getEmail().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+        ModelMapper mapper = new ModelMapper();
+        UserEntity userEntity = mapper.map(userDto, UserEntity.class);
+        userEntity.setUserId(utils.generateUserId(30));
+
+        // Assign Role
+        RoleEntity role = roleRepository.findByName(userDto.getRole());
+        if (role == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role");
+        }
+        userEntity.setRole(role);
+
+        // 5. Assign Team if Team Member
+        if ("TEAM_MEMBER".equalsIgnoreCase(userDto.getRole())) {
+            if (userDto.getTeamId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Team assignment required for Team Members");
+            }
+            TeamEntity team = teamRepository.findById(userDto.getTeamId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Assigned team not found"));
+            userEntity.setTeamMembers(team);
+        }
+
+        // 6. Generate default password
+        String rawPassword = utils.generateDefaultPassword();
+        userEntity.setPassword(bCryptPasswordEncoder.encode(rawPassword));
+        userEntity.setDefaultPassword(true); // To force reset on first login
+
+        // 7. Save and return
+        UserEntity savedUser = userRepository.save(userEntity);
+        UserDto returnDto = mapper.map(savedUser, UserDto.class);
+
+        // 8. Send onboarding email
+        amazonSES.verifyEmail(returnDto);
+
+        return returnDto;
+    }
+
 }
+

@@ -7,6 +7,10 @@ public class UserRest {
     private String lastName;
     private String email;
     private String role;
+    private String phoneNumber;  // New
+    private String staffId;         // New
+    private String teamName;        // Optional - show if user is a Team Member
+
 
     public String getUserId() {
         return userId;
@@ -46,5 +50,29 @@ public class UserRest {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(String staffId) {
+        this.staffId = staffId;
+    }
+
+    public String getTeamName() {
+        return teamName;
+    }
+
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
     }
 }

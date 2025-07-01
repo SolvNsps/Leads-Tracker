@@ -16,11 +16,13 @@ import com.leadstracker.leadstracker.services.UserService;
 //import jakarta.validation.Valid;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
@@ -51,7 +53,7 @@ public class UserController {
     public ResponseEntity<UserRest> createUser(@RequestBody UserDetails userDetails) throws Exception {
         UserDto userDto = modelMapper.map(userDetails, UserDto.class);
 
-        UserDto createdUser = userService.saveUser(userDto);
+        UserDto createdUser = userService.createUser(userDto);
         UserRest userRest = modelMapper.map(createdUser, UserRest.class);
 
         return ResponseEntity.ok(userRest);
@@ -66,7 +68,6 @@ public class UserController {
 
         return ResponseEntity.ok(userRest);
     }
-
 
     @PutMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -214,5 +215,4 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.ok("User deleted successfully.");
     }
-
 }
