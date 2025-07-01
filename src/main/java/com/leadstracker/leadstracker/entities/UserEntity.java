@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Date;
 
@@ -61,6 +62,12 @@ public class UserEntity implements Serializable {
 
     @Column(name = "account_locked")
     private Boolean accountLocked = false;
+
+    @Column(name = "resend_otp_attempts")
+    private Integer resendOtpAttempts = 0;
+
+    @Column(name = "last_otp_resend")
+    private LocalDateTime lastOtpResendTime;
 
     @ManyToOne(cascade = CascadeType.PERSIST,  fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
@@ -201,5 +208,21 @@ public class UserEntity implements Serializable {
 
     public void setAccountLocked(Boolean accountLocked) {
         this.accountLocked = accountLocked;
+    }
+
+    public Integer getResendOtpAttempts() {
+        return resendOtpAttempts;
+    }
+
+    public void setResendOtpAttempts(Integer resendOtpAttempts) {
+        this.resendOtpAttempts = resendOtpAttempts;
+    }
+
+    public LocalDateTime getLastOtpResendTime() {
+        return lastOtpResendTime;
+    }
+
+    public void setLastOtpResendTime(LocalDateTime lastOtpResendTime) {
+        this.lastOtpResendTime = lastOtpResendTime;
     }
 }

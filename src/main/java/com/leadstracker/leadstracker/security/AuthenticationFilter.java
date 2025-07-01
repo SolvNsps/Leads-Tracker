@@ -12,6 +12,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -99,6 +100,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 //        response.setContentType("application/json");
 //        response.getWriter().write(body);
 //        response.getWriter().flush();
-  }
+
+    }
 
 }

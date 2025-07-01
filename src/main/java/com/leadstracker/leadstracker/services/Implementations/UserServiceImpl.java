@@ -27,10 +27,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
 
 import static com.leadstracker.leadstracker.security.SecurityConstants.*;
 
@@ -317,5 +317,42 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(String userId) {
         UserEntity userEntity = userRepository.findByUserId(userId);
         userRepository.delete(userEntity);
+    }
+
+    @Override
+
+    public Map<String, Object> resendOtp(String email) {
+        UserEntity user = userRepository.findByEmail(email);
+
+        //  Validating resend attempts
+        if (user.getResendOtpAttempts() >= Max_Resend_Attempts &&
+                Duration.between(user.getLastOtpResendTime(), LocalDateTime.now()).toMinutes() < Resend_Cooldown.toMinutes()) {
+
+            long remainingCooldown = Resend_Cooldown.toMinutes() -
+                    Duration.between(user.getLastOtpResendTime(), LocalDateTime.now()).toMinutes();
+
+            return Map.of(
+                    "status", "ERROR",
+                    "message", "Too many resend attempts. Try again after " + remainingCooldown + " minutes.",
+                    "timestamp", LocalDateTime.now()
+            );
+        }
+
+        //  Generating and sending new OTP
+        String newOtp = String.format("%06d", new SecureRandom().nextInt(999999));
+        user.setOtp(newOtp);
+        user.setOtpExpiryDate(new Date(System.currentTimeMillis() + 180000));
+        user.setResendOtpAttempts(user.getResendOtpAttempts() + 1);
+        user.setLastOtpResendTime(LocalDateTime.now());
+        userRepository.save(user);
+
+        amazonSES.sendLoginOtpEmail(user.getFirstName(), email, newOtp);
+
+        return Map.of(
+                "status", "SUCCESS",
+                "message", "New OTP sent successfully",
+                "timestamp", LocalDateTime.now(),
+                "details", Map.of("resendAttemptsRemaining", Max_Resend_Attempts - user.getResendOtpAttempts())
+        );
     }
 }
