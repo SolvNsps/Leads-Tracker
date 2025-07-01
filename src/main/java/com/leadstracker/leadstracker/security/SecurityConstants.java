@@ -7,6 +7,7 @@ import org.springframework.core.env.Environment;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
 
@@ -16,6 +17,8 @@ public class SecurityConstants {
     public static final int Max_Temp_Attempts = 3;
     public static final int Max_Perm_Attempts = 5;
     public static final long Temp_Block_Duration = 900000; // temporarily locked for 15 minutes
+    public static final int Max_Resend_Attempts = 3;
+    public static final Duration Resend_Cooldown = Duration.ofMinutes(5);
     public static final String Token_Prefix = "Bearer ";
     public static final String Token_Header = "Authorization";
     public static final String Token_Secret = "bvgshg73hue7739349nfewywfw9wldsa73waada13948uewjew2d4f5z0s6xv";

@@ -3,6 +3,7 @@ package com.leadstracker.leadstracker.DTO;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 public class UserDto implements Serializable {
@@ -39,6 +40,10 @@ public class UserDto implements Serializable {
     private Date tempBlockTime;
 
     private Boolean accountLocked;
+
+    private Integer resendOtpAttempts;
+
+    private LocalDateTime lastOtpResendTime;
 
     private String phoneNumber;
 
@@ -164,6 +169,22 @@ public class UserDto implements Serializable {
 
     public void setAccountLocked(Boolean accountLocked) {
         this.accountLocked = accountLocked;
+    }
+
+    public Integer getResendOtpAttempts() {
+        return resendOtpAttempts;
+    }
+
+    public void setResendOtpAttempts(Integer resendOtpAttempts) {
+        this.resendOtpAttempts = resendOtpAttempts;
+    }
+
+    public LocalDateTime getLastOtpResendTime() {
+        return lastOtpResendTime;
+    }
+
+    public void setLastOtpResendTime(LocalDateTime lastOtpResendTime) {
+        this.lastOtpResendTime = lastOtpResendTime;
     }
 
     @Override

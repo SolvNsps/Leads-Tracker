@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.controller;
 
 import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.config.SpringApplicationContext;
 import com.leadstracker.leadstracker.response.OperationStatusModel;
 import com.leadstracker.leadstracker.response.RequestOperationName;
@@ -19,6 +20,7 @@ import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 
 
@@ -40,6 +43,9 @@ public class UserController {
 
     @Autowired
     ModelMapper modelMapper;
+
+    @Autowired
+    Utils utils;
 
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -108,14 +114,22 @@ public class UserController {
 
 
     @PostMapping("/forgot-password-request")
-    public ResponseEntity<String> forgotPassword(@Validated @RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<?> forgotPassword(@Validated @RequestBody ForgotPasswordRequest request) {
         System.out.println("hitting endpoint");
         boolean result = userService.initiatePasswordReset(request.getEmail());
+        String token = utils.generatePasswordResetToken();
 
         if (result) {
-            return ResponseEntity.ok("Password reset instructions have been sent to your email.");
+            return ResponseEntity.ok(Map.of(
+                    "token", token,
+                    "message", "Password reset instructions have been sent to your email.",
+                    "status", "SUCCESS"
+            ));
         } else {
-            return ResponseEntity.badRequest().body("No user found with the provided email.");
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "No user found with the provided email.",
+                    "status", "FAILED"
+            ));
         }
     }
 
@@ -176,6 +190,25 @@ public class UserController {
                 "token", token,
                 "status", "LOGIN_SUCCESS"
         ));
+    }
+
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<?> resendOtp(@RequestParam String email) {
+        try {
+            Map<String, Object> response = userService.resendOtp(email);
+            HttpStatus status = response.get("status").equals("SUCCESS")
+                    ? HttpStatus.OK
+                    : HttpStatus.TOO_MANY_REQUESTS;
+            return ResponseEntity.status(status).body(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of(
+                            "status", "ERROR",
+                            "message", e.getMessage(),
+                            "timestamp", LocalDateTime.now()
+                    ));
+        }
     }
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable String id) {

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Date;
 
@@ -20,19 +21,19 @@ public class UserEntity implements Serializable {
     @GeneratedValue
     private long id;
 
-    @Column (nullable = false)
+    @Column(nullable = false)
     private String userId;
 
-    @Column (nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private String firstName;
 
-    @Column (nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private String lastName;
 
-    @Column (nullable = false, length = 50, unique = true)
+    @Column(nullable = false, length = 50, unique = true)
     private String email;
 
-    @Column (nullable = false)
+    @Column(nullable = false)
     private String password;
 
     private String emailVerificationToken;
@@ -42,7 +43,7 @@ public class UserEntity implements Serializable {
     @Column(name = "password_reset_expiration")
     private Date passwordResetExpiration;
 
-    @Column (nullable = false,columnDefinition = "boolean default false")
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean emailVerificationStatus;
 
     @Column(nullable = false, unique = true)
@@ -56,7 +57,7 @@ public class UserEntity implements Serializable {
     private TeamEntity teamMembers; // nullable if not a Team Member
 
 
-//    default to true for new users
+    //    default to true for new users
     @Column(name = "default_password", nullable = false)
     private boolean defaultPassword = true;
 
@@ -73,7 +74,13 @@ public class UserEntity implements Serializable {
     @Column(name = "account_locked")
     private Boolean accountLocked = false;
 
-    @ManyToOne(cascade = CascadeType.PERSIST,  fetch = FetchType.EAGER)
+    @Column(name = "resend_otp_attempts")
+    private Integer resendOtpAttempts = 0;
+
+    @Column(name = "last_otp_resend")
+    private LocalDateTime lastOtpResendTime;
+
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "roles_id", referencedColumnName = "id"))
     private RoleEntity role;
@@ -214,6 +221,22 @@ public class UserEntity implements Serializable {
         this.accountLocked = accountLocked;
     }
 
+    public Integer getResendOtpAttempts() {
+        return resendOtpAttempts;
+    }
+
+    public void setResendOtpAttempts(Integer resendOtpAttempts) {
+        this.resendOtpAttempts = resendOtpAttempts;
+    }
+
+    public LocalDateTime getLastOtpResendTime() {
+        return lastOtpResendTime;
+    }
+
+    public void setLastOtpResendTime(LocalDateTime lastOtpResendTime) {
+        this.lastOtpResendTime = lastOtpResendTime;
+    }
+
     public String getPhoneNumber() {
         return phoneNumber;
     }
@@ -236,5 +259,7 @@ public class UserEntity implements Serializable {
 
     public void setTeamMembers(TeamEntity teamMembers) {
         this.teamMembers = teamMembers;
+
     }
+
 }

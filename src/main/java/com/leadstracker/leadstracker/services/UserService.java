@@ -5,6 +5,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public interface UserService extends UserDetailsService {
 
@@ -28,5 +29,8 @@ public interface UserService extends UserDetailsService {
 
     void deleteUser(String id);
 
+    Map<String, Object> resendOtp(String email);
+
     UserDto createUser(UserDto userDto);
+
 }

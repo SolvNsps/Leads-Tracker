@@ -2,6 +2,7 @@ package com.leadstracker.leadstracker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.response.UserRest;
 import com.leadstracker.leadstracker.controller.UserController;
 import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
@@ -42,6 +43,9 @@ public class UserControllerTest {
 
     @MockitoBean
     private ModelMapper modelMapper;
+
+    @MockitoBean
+    Utils utils;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -154,14 +158,23 @@ public class UserControllerTest {
         request.setEmail("test@gmail.com");
 
         when(userService.initiatePasswordReset("test@gmail.com")).thenReturn(true);
+        when(utils.generatePasswordResetToken()).thenReturn("dummy-token");
 
         mockMvc.perform(post("/api/v1/leads/forgot-password-request")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Password reset instructions have been sent to your email."));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("Password reset instructions have been sent to your email."))
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.token").value("dummy-token"))
+                .andDo(result -> {
+                    System.out.println("Response: " + result.getResponse().getContentAsString());
+                });
     }
+
+
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
