@@ -5,8 +5,10 @@ import com.leadstracker.leadstracker.DTO.AmazonSES;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.RoleEntity;
+import com.leadstracker.leadstracker.entities.TeamEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.RoleRepository;
+import com.leadstracker.leadstracker.repositories.TeamRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.services.Implementations.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +51,9 @@ class UserServiceImplTest {
     private RoleRepository roleRepository;
 
     @Mock
+    private TeamRepository teamRepository;
+
+    @Mock
     private Utils utils;
 
     @Mock
@@ -61,6 +66,9 @@ class UserServiceImplTest {
     private ModelMapper modelMapper;
 
     private UserDto userDto;
+    private UserEntity userEntity;
+    private RoleEntity roleEntity;
+    private TeamEntity teamEntity;
 
     @BeforeEach
     void setUp() {
@@ -406,6 +414,18 @@ class UserServiceImplTest {
 
         assertEquals(email, exception.getMessage());
     }
+    @Test
+    void testDeleteUser_Success() {
+        // Given
+        String userId = "abc123";
+        UserEntity mockUser = new UserEntity();
+        mockUser.setUserId(userId);
 
+        when(userRepository.findByUserId(userId)).thenReturn(mockUser);
 
+        userService.deleteUser(userId);
+
+        verify(userRepository).findByUserId(userId);
+        verify(userRepository).delete(mockUser);
+    }
 }

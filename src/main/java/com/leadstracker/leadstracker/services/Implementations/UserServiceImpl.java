@@ -293,11 +293,13 @@ public class UserServiceImpl implements UserService {
         return new UserPrincipal(userEntity);
 
     }
+
     @Override
     public void deleteUser(String userId) {
         UserEntity userEntity = userRepository.findByUserId(userId);
         userRepository.delete(userEntity);
     }
+
     @Override
     @Transactional
     public UserDto createUser(UserDto userDto){

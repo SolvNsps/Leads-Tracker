@@ -181,5 +181,26 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.message").value("Password reset successful."));
         ;
     }
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeleteUser_Success() throws Exception {
+        String userId = "abc123";
+
+        doNothing().when(userService).deleteUser(userId);
+
+        mockMvc.perform(delete("/api/v1/leads/delete/{id}", userId)
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("User deleted successfully."));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void testDeleteUser_ForbiddenForNonAdmin() throws Exception {
+        String userId = "abc123";
+
+        mockMvc.perform(delete("/api/v1/leads/delete/{id}", userId))
+                .andExpect(status().isForbidden());
+    }
 }
 
