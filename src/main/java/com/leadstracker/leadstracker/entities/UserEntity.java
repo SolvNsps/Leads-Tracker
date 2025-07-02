@@ -37,6 +37,8 @@ public class UserEntity implements Serializable {
     @Column(nullable = false)
     private String password;
 
+    private String emailVerificationToken;
+
     private String passwordResetToken;
 
     @Column(name = "password_reset_expiration")
@@ -124,6 +126,14 @@ public class UserEntity implements Serializable {
 
     public void setEmailVerificationStatus(boolean emailVerificationStatus) {
         this.emailVerificationStatus = emailVerificationStatus;
+    }
+
+    public String getEmailVerificationToken() {
+        return emailVerificationToken;
+    }
+
+    public void setEmailVerificationToken(String emailVerificationToken) {
+        this.emailVerificationToken = emailVerificationToken;
     }
 
     public String getPassword() {
