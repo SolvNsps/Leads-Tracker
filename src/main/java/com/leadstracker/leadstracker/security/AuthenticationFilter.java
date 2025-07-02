@@ -5,6 +5,8 @@ import com.leadstracker.leadstracker.DTO.AmazonSES;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.config.SpringApplicationContext;
+import com.leadstracker.leadstracker.entities.UserEntity;
+import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.request.UserLoginRequestModel;
 import com.leadstracker.leadstracker.services.UserService;
 import io.jsonwebtoken.Jwts;
@@ -28,9 +30,11 @@ import java.util.*;
 
 
 public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+    private final UserRepository userRepository;
 
-    public AuthenticationFilter(AuthenticationManager authenticationManager) {
+    public AuthenticationFilter(AuthenticationManager authenticationManager, UserRepository userRepository) {
         super(authenticationManager);
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -61,17 +65,16 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         // Checking if password needs to be reset (first login with default password)
         boolean passwordResetRequired = userDto.isDefaultPassword();
 
-        // Generating OTP
-        String otp = String.format("%06d", new SecureRandom().nextInt(999999));
-        userService.saveOtp(userName, otp, new Date(System.currentTimeMillis() + 180000));
-
-        AmazonSES emailService = (AmazonSES) SpringApplicationContext.getBean("amazonSES");
-        emailService.sendLoginOtpEmail(userDto.getFirstName(), userName, otp);
-
         if (passwordResetRequired) {
             // Generating reset token
             Utils utils = new Utils();
             String token = utils.generatePasswordResetToken();
+
+            // Save token to the database
+            UserEntity userEntity = userRepository.findByEmail(userName);
+            userEntity.setPasswordResetToken(token);
+            userEntity.setPasswordResetExpiration(new Date(System.currentTimeMillis() + 1800000)); // 30 min
+            userRepository.save(userEntity);
 
             response.setContentType("application/json");
             new ObjectMapper().writeValue(
@@ -80,11 +83,18 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                             "status", "PASSWORD_RESET_REQUIRED",
                             "email", userName,
                             "message", "First time login: password reset required",
-                            "token", token,
-                            "otpStatus", "OTP_SENT"
+                            "token", token
                     )
             );
-        } else {
+            return;
+        }
+        else {
+            // Generating OTP
+            String otp = String.format("%06d", new SecureRandom().nextInt(999999));
+            userService.saveOtp(userName, otp, new Date(System.currentTimeMillis() + 180000));
+
+            AmazonSES emailService = (AmazonSES) SpringApplicationContext.getBean("amazonSES");
+            emailService.sendLoginOtpEmail(userDto.getFirstName(), userName, otp);
             // Normal login case
             response.setContentType("application/json");
             new ObjectMapper().writeValue(
@@ -95,6 +105,8 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                             "message", "OTP sent to registered email"
                     )
             );
+
+            return;
         }
 
     }

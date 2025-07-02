@@ -14,7 +14,7 @@ public class ClientDto implements Serializable {
     private String lastName;
     private String phoneNumber;
     private String GPSLocation;
-    private int createdBy;
+    private UserDto createdBy;
     private Date createdDate;
     private Date lastUpdated;
 
@@ -58,11 +58,11 @@ public class ClientDto implements Serializable {
         this.GPSLocation = GPSLocation;
     }
 
-    public int getCreatedBy() {
+    public UserDto getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(int createdBy) {
+    public void setCreatedBy(UserDto createdBy) {
         this.createdBy = createdBy;
     }
 

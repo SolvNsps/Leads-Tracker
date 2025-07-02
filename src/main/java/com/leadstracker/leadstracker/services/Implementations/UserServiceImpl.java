@@ -131,10 +131,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean initiatePasswordReset(String email) {
+    public String initiatePasswordReset(String email) {
         UserEntity user = userRepository.findByEmail(email);
         if (user == null) {
-            return false;
+            return null;
     }
         String token = utils.generatePasswordResetToken();
         user.setPasswordResetToken(token);
@@ -148,7 +148,7 @@ public class UserServiceImpl implements UserService {
         // http://localhost:8080/reset-password?token=xyz123
         System.out.println("Password reset link: http://localhost:8080/reset-password?token=" + token);
 
-        return true;
+        return token;
     }
 
     @Override
@@ -433,6 +433,15 @@ public class UserServiceImpl implements UserService {
         ModelMapper modelMapper = new ModelMapper();
 
         return modelMapper.map(memberEntity, UserDto.class);
+    }
+
+    /**
+     * @param loggedInEmail
+     * @return
+     */
+    @Override
+    public UserDto getUserByEmail(String loggedInEmail) {
+        return null;
     }
 
 }

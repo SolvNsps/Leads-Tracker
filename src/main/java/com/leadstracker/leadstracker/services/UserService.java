@@ -19,7 +19,7 @@ public interface UserService extends UserDetailsService {
 
     boolean verifyEmailToken(String token);
 
-    boolean initiatePasswordReset(String email);
+    String initiatePasswordReset(String email);
 
     void resetPassword(String token, String newPassword, String confirmNewPassword);
 
@@ -36,4 +36,6 @@ public interface UserService extends UserDetailsService {
     List<UserDto> getMembersUnderLead(String id);
 
     UserDto getMemberUnderLead(String userId, String memberId);
+
+    UserDto getUserByEmail(String loggedInEmail);
 }

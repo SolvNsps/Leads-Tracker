@@ -45,5 +45,5 @@ public class AppConfig {
                 .withRegion(Regions.US_EAST_1)
                 .build();
     }
-
+    
 }

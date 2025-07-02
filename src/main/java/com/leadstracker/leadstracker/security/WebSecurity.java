@@ -48,7 +48,7 @@ public class WebSecurity {
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
 
         //Customize Login URL path
-        AuthenticationFilter authenticationFilter = new AuthenticationFilter(authenticationManager);
+        AuthenticationFilter authenticationFilter = new AuthenticationFilter(authenticationManager, userRepository);
         authenticationFilter.setFilterProcessesUrl("/leads/login");
 
         http

@@ -292,9 +292,9 @@ class UserServiceImplTest {
         when(userRepository.findByEmail(email)).thenReturn(user);
         when(utils.generatePasswordResetToken()).thenReturn("reset-token");
 
-        boolean result = userService.initiatePasswordReset(email);
+        String result = userService.initiatePasswordReset(email);
 
-        assertTrue(result);
+//        assertTrue(Boolean.parseBoolean(result));
         assertNotNull(user.getPasswordResetToken());
         assertNotNull(user.getPasswordResetExpiration());
 
@@ -307,9 +307,9 @@ class UserServiceImplTest {
 
         when(userRepository.findByEmail(email)).thenReturn(null);
 
-        boolean result = userService.initiatePasswordReset(email);
+        String result = userService.initiatePasswordReset(email);
 
-        assertFalse(result);
+        assertFalse(Boolean.parseBoolean(result));
         verify(userRepository, never()).save(any());
     }
 

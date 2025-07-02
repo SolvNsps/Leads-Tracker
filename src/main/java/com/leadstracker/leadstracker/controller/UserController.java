@@ -140,10 +140,10 @@ public class UserController {
     @PostMapping("/forgot-password-request")
     public ResponseEntity<?> forgotPassword(@Validated @RequestBody ForgotPasswordRequest request) {
         System.out.println("hitting endpoint");
-        boolean result = userService.initiatePasswordReset(request.getEmail());
-        String token = utils.generatePasswordResetToken();
 
-        if (result) {
+        String token = userService.initiatePasswordReset(request.getEmail());
+
+        if (token != null) {
             return ResponseEntity.ok(Map.of(
                     "token", token,
                     "message", "Password reset instructions have been sent to your email.",
