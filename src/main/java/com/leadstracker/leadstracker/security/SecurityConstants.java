@@ -30,6 +30,8 @@ public class SecurityConstants {
     public static final String Verify_OTP = "/api/v1/leads/verify-otp";
     public static final String Delete_User = "/api/v1/leads/delete/{id}";
     public static final String Resend_OTP = "/api/v1/leads/resend-otp";
+    public static final String view_Users = "/api/v1/leads/**";
+    public static final String Edit_Users = "/api/v1/leads/{id}";
 
 
     public static String generateToken(String username, long expirationTimeMillis) {
