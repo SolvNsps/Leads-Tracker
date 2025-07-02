@@ -286,6 +286,7 @@ public class UserServiceImpl implements UserService {
         return new UserPrincipal(userEntity);
 
     }
+
     @Override
     public void deleteUser(String userId) {
         UserEntity userEntity = userRepository.findByUserId(userId);
@@ -337,6 +338,7 @@ public class UserServiceImpl implements UserService {
                 "details", Map.of("resendAttemptsRemaining", Max_Resend_Attempts - (attempts +1))
         );
     }
+
 
     @Override
     @Transactional
