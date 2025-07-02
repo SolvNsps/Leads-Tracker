@@ -6,8 +6,9 @@ import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 
 @Entity(name = "users")
@@ -36,8 +37,6 @@ public class UserEntity implements Serializable {
     @Column(nullable = false)
     private String password;
 
-    private String emailVerificationToken;
-
     private String passwordResetToken;
 
     @Column(name = "password_reset_expiration")
@@ -53,9 +52,11 @@ public class UserEntity implements Serializable {
     private String staffId;
 
     @ManyToOne
-    @JoinColumn(name = "team_id")
-    private TeamEntity teamMembers; // nullable if not a Team Member
+    @JoinColumn(name = "team_lead_id")
+    private UserEntity teamLead; // Only set if the user is a TEAM_MEMBER
 
+    @OneToMany(mappedBy = "teamLead")
+    private List<UserEntity> teamMembers = new ArrayList<>(); // Only used if the user is a TEAM_LEAD
 
     //    default to true for new users
     @Column(name = "default_password", nullable = false)
@@ -253,13 +254,19 @@ public class UserEntity implements Serializable {
         this.staffId = staffId;
     }
 
-    public TeamEntity getTeamMembers() {
+    public UserEntity getTeamLead() {
+        return teamLead;
+    }
+
+    public void setTeamLead(UserEntity teamLead) {
+        this.teamLead = teamLead;
+    }
+
+    public List<UserEntity> getTeamMembers() {
         return teamMembers;
     }
 
-    public void setTeamMembers(TeamEntity teamMembers) {
+    public void setTeamMembers(List<UserEntity> teamMembers) {
         this.teamMembers = teamMembers;
-
     }
-
 }

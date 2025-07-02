@@ -7,8 +7,8 @@ public class UserRest {
     private String lastName;
     private String email;
     private String role;
-    private String phoneNumber;  // New
-    private String staffId;         // New
+    private String phoneNumber;
+    private String staffId;
     private String teamName;        // Optional - show if user is a Team Member
 
 

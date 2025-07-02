@@ -1,5 +1,6 @@
 package com.leadstracker.leadstracker.security;
 
+import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.services.UserService;
 import org.springframework.context.annotation.Bean;
@@ -62,6 +63,7 @@ public class WebSecurity {
                         .requestMatchers(HttpMethod.GET, "/api/v1/leads/**").permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_Email).permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_OTP).permitAll()
+                        .requestMatchers(HttpMethod.POST, SecurityConstants.Resend_OTP).permitAll()
                         .requestMatchers(HttpMethod.DELETE, SecurityConstants.Delete_User).hasRole("ADMIN")
 
                         .anyRequest().authenticated())

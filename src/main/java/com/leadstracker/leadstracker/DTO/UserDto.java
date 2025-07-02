@@ -22,8 +22,6 @@ public class UserDto implements Serializable {
 
     private String password;
 
-    private String emailVerificationToken;
-
     private boolean emailVerificationStatus;
 
     private String role;
@@ -49,7 +47,7 @@ public class UserDto implements Serializable {
 
     private String staffId;
 
-    private Long teamId;
+    private String teamLeadId;
 
     public long getId() {
         return id;
@@ -223,11 +221,11 @@ public class UserDto implements Serializable {
         this.staffId = staffId;
     }
 
-    public Long getTeamId() {
-        return teamId;
+    public String getTeamLeadId() {
+        return teamLeadId;
     }
 
-    public void setTeamId(Long teamId) {
-        this.teamId = teamId;
+    public void setTeamLeadId(String teamLeadId) {
+        this.teamLeadId = teamLeadId;
     }
 }

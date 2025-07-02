@@ -3,26 +3,18 @@ package com.leadstracker.leadstracker.controller;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.config.SpringApplicationContext;
-import com.leadstracker.leadstracker.response.OperationStatusModel;
-import com.leadstracker.leadstracker.response.RequestOperationName;
-import com.leadstracker.leadstracker.response.RequestOperationStatus;
-import com.leadstracker.leadstracker.response.UserRest;
-import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
-import com.leadstracker.leadstracker.request.OtpVerificationRequest;
-import com.leadstracker.leadstracker.request.ResetPassword;
-import com.leadstracker.leadstracker.request.UserDetails;
+import com.leadstracker.leadstracker.request.*;
+import com.leadstracker.leadstracker.response.*;
 import com.leadstracker.leadstracker.security.SecurityConstants;
 import com.leadstracker.leadstracker.services.UserService;
 //import jakarta.validation.Valid;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
@@ -48,6 +40,7 @@ public class UserController {
     Utils utils;
 
 
+
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserRest> createUser(@RequestBody UserDetails userDetails) throws Exception {
@@ -60,14 +53,45 @@ public class UserController {
 
     }
 
-    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    //Viewing and managing the data of each team lead
+    @GetMapping(path = "/team-leads/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserRest> getUser(@PathVariable String id) throws Exception {
 
         UserDto userDto = userService.getUserByUserId(id);
+
+        // Checking that the user has TEAM_LEAD role
+        if (!"TEAM_LEAD".equalsIgnoreCase(userDto.getRole())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null);
+        }
         UserRest userRest = modelMapper.map(userDto, UserRest.class);
 
         return ResponseEntity.ok(userRest);
     }
+
+    //Viewing and managing the data of all the team members under a team lead
+    @GetMapping(path = "/team-leads/{id}/members", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<UserRest>> getTeamMembers(@PathVariable String id) {
+        List<UserDto> teamMembers = userService.getMembersUnderLead(id);
+
+        List<UserRest> response = teamMembers.stream()
+                .map(dto -> modelMapper.map(dto, UserRest.class))
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    //Viewing and managing the data of a particular team member under a team lead
+    @GetMapping(path = "/team-leads/{userId}/members/{memberId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserRest> getTeamMemberUnderLead(@PathVariable String userId, @PathVariable String memberId) {
+
+        UserDto userDto = userService.getMemberUnderLead(userId, memberId);
+
+        UserRest userRest = modelMapper.map(userDto, UserRest.class);
+
+        return ResponseEntity.ok(userRest);
+    }
+
 
     @PutMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -194,9 +218,9 @@ public class UserController {
 
 
     @PostMapping("/resend-otp")
-    public ResponseEntity<?> resendOtp(@RequestParam String email) {
+    public ResponseEntity<?> resendOtp(@RequestBody ResendOtpRequest request) {
         try {
-            Map<String, Object> response = userService.resendOtp(email);
+            Map<String, Object> response = userService.resendOtp(request.getEmail());
             HttpStatus status = response.get("status").equals("SUCCESS")
                     ? HttpStatus.OK
                     : HttpStatus.TOO_MANY_REQUESTS;

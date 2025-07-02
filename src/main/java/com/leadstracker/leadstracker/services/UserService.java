@@ -33,4 +33,7 @@ public interface UserService extends UserDetailsService {
 
     UserDto createUser(UserDto userDto);
 
+    List<UserDto> getMembersUnderLead(String id);
+
+    UserDto getMemberUnderLead(String userId, String memberId);
 }

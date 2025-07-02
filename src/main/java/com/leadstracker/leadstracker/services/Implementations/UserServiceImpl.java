@@ -4,15 +4,12 @@ import com.leadstracker.leadstracker.DTO.AmazonSES;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.RoleEntity;
-import com.leadstracker.leadstracker.entities.TeamEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.RoleRepository;
-import com.leadstracker.leadstracker.repositories.TeamRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
-import com.leadstracker.leadstracker.security.SecurityConstants;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.UserService;
-import io.jsonwebtoken.Jwts;
+import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +18,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -48,9 +44,6 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private AmazonSES amazonSES;
-
-    @Autowired
-    private TeamRepository teamRepository;
 
     @Autowired
     Utils utils;
@@ -305,12 +298,20 @@ public class UserServiceImpl implements UserService {
     public Map<String, Object> resendOtp(String email) {
         UserEntity user = userRepository.findByEmail(email);
 
+        if (user == null) {
+            throw new RuntimeException("User not found with email : " + email);
+        }
+
+        int attempts = Optional.ofNullable(user.getResendOtpAttempts()).orElse(0);
+        LocalDateTime lastResendTime = user.getLastOtpResendTime();
+
         //  Validating resend attempts
-        if (user.getResendOtpAttempts() >= Max_Resend_Attempts &&
-                Duration.between(user.getLastOtpResendTime(), LocalDateTime.now()).toMinutes() < Resend_Cooldown.toMinutes()) {
+        if (attempts >= Max_Resend_Attempts &&
+                lastResendTime != null &&
+                Duration.between(lastResendTime, LocalDateTime.now()).toMinutes() < Resend_Cooldown.toMinutes()) {
 
             long remainingCooldown = Resend_Cooldown.toMinutes() -
-                    Duration.between(user.getLastOtpResendTime(), LocalDateTime.now()).toMinutes();
+                    Duration.between(lastResendTime, LocalDateTime.now()).toMinutes();
 
             return Map.of(
                     "status", "ERROR",
@@ -323,7 +324,7 @@ public class UserServiceImpl implements UserService {
         String newOtp = String.format("%06d", new SecureRandom().nextInt(999999));
         user.setOtp(newOtp);
         user.setOtpExpiryDate(new Date(System.currentTimeMillis() + 180000));
-        user.setResendOtpAttempts(user.getResendOtpAttempts() + 1);
+        user.setResendOtpAttempts(attempts + 1);
         user.setLastOtpResendTime(LocalDateTime.now());
         userRepository.save(user);
 
@@ -333,7 +334,7 @@ public class UserServiceImpl implements UserService {
                 "status", "SUCCESS",
                 "message", "New OTP sent successfully",
                 "timestamp", LocalDateTime.now(),
-                "details", Map.of("resendAttemptsRemaining", Max_Resend_Attempts - user.getResendOtpAttempts())
+                "details", Map.of("resendAttemptsRemaining", Max_Resend_Attempts - (attempts +1))
         );
     }
 
@@ -376,27 +377,62 @@ public class UserServiceImpl implements UserService {
 
         // 5. Assign Team if Team Member
         if ("TEAM_MEMBER".equalsIgnoreCase(userDto.getRole())) {
-            if (userDto.getTeamId() == null) {
+            if (userDto.getTeamLeadId() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Team assignment required for Team Members");
             }
-            TeamEntity team = teamRepository.findById(userDto.getTeamId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Assigned team not found"));
-            userEntity.setTeamMembers(team);
+
+            UserEntity teamLead = userRepository.findByUserId(userDto.getTeamLeadId());
+            if (teamLead == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Assigned Team Lead not found");
+            }
+
+            userEntity.setTeamLead(teamLead);
         }
 
-        // 6. Generate default password
+        // 6. Generating default password
         String rawPassword = utils.generateDefaultPassword();
         userEntity.setPassword(bCryptPasswordEncoder.encode(rawPassword));
+        userEntity.setEmailVerificationStatus(true);
         userEntity.setDefaultPassword(true); // To force reset on first login
 
         // 7. Save and return
         UserEntity savedUser = userRepository.save(userEntity);
         UserDto returnDto = mapper.map(savedUser, UserDto.class);
 
-        // 8. Send onboarding email
-        amazonSES.verifyEmail(returnDto);
-
         return returnDto;
+    }
+
+    /**
+     * @param id
+     * @return
+     */
+    @Override
+    public List<UserDto> getMembersUnderLead(String id) {
+
+        List<UserEntity> teamMembers = userRepository.findByTeamLead_UserId(id);
+        ModelMapper modelMapper = new ModelMapper();
+
+        return teamMembers.stream()
+                .map(user -> modelMapper.map(user, UserDto.class))
+                .toList();
+    }
+
+
+    /**
+     * @param userId
+     * @param memberId
+     * @return
+     */
+    @Override
+    public UserDto getMemberUnderLead(String userId, String memberId) {
+
+        UserEntity memberEntity = (UserEntity) userRepository.findByUserIdAndTeamLead_UserId(memberId, userId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Team member not found under the specified team lead."));
+
+        ModelMapper modelMapper = new ModelMapper();
+
+        return modelMapper.map(memberEntity, UserDto.class);
     }
 
 }

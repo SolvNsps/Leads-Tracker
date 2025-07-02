@@ -50,6 +50,7 @@ public class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+
     @Test
     @WithMockUser
     void createUser_ShouldReturnUserRest() throws Exception {
@@ -88,6 +89,7 @@ public class UserControllerTest {
         UserDto dto = new UserDto();
         dto.setUserId("abc123");
         dto.setEmail("john@gmail.com");
+        dto.setRole("TEAM_LEAD");
 
         UserRest userRest = new UserRest();
         userRest.setEmail("john@gmail.com");
@@ -95,7 +97,8 @@ public class UserControllerTest {
         when(userService.getUserByUserId("abc123")).thenReturn(dto);
         when(modelMapper.map(dto, UserRest.class)).thenReturn(userRest);
 
-        mockMvc.perform(get("/api/v1/leads/abc123"))
+        mockMvc.perform(get("/api/v1/leads/team-leads/abc123")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("john@gmail.com"));
     }
@@ -107,7 +110,7 @@ public class UserControllerTest {
         details.setFirstName("Updated");
         details.setLastName("User");
 
-        UserDto mappedDto = new UserDto(); // <- result of modelMapper.map(details, UserDto.class)
+        UserDto mappedDto = new UserDto();
         mappedDto.setFirstName("Updated");
         mappedDto.setLastName("User");
 
