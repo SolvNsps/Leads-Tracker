@@ -16,7 +16,7 @@ public class AmazonSES {
         this.amazonSimpleEmailService = amazonSimpleEmailService;
     }
 
-    final String FROM = "ernest5arthur@gmail.com";
+    final String FROM = "tetteyabigail6@gmail.com";
 
     final String SUBJECT = "One last step to complete your registration";
 
