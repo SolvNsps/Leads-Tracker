@@ -29,7 +29,7 @@ public class UserDto implements Serializable {
     private String role;
 
 //    default to true for new users
-    private boolean defaultPassword = true;
+    private boolean defaultPassword;
 
     private String otp;
 

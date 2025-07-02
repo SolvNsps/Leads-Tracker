@@ -87,6 +87,7 @@ public class UserServiceImpl implements UserService {
         returnUser.setOtp(userEntity.getOtp());
         returnUser.setId(userEntity.getId());
         returnUser.setOtpFailedAttempts(userEntity.getOtpFailedAttempts());
+        returnUser.setDefaultPassword(userEntity.isDefaultPassword());
 
         return returnUser;
     }
