@@ -126,14 +126,6 @@ public class UserEntity implements Serializable {
         this.emailVerificationStatus = emailVerificationStatus;
     }
 
-    public String getEmailVerificationToken() {
-        return emailVerificationToken;
-    }
-
-    public void setEmailVerificationToken(String emailVerificationToken) {
-        this.emailVerificationToken = emailVerificationToken;
-    }
-
     public String getPassword() {
         return password;
     }

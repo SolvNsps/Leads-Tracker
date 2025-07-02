@@ -97,14 +97,6 @@ public class UserDto implements Serializable {
         this.password = password;
     }
 
-    public String getEmailVerificationToken() {
-        return emailVerificationToken;
-    }
-
-    public void setEmailVerificationToken(String emailVerificationToken) {
-        this.emailVerificationToken = emailVerificationToken;
-    }
-
     public boolean isEmailVerificationStatus() {
         return emailVerificationStatus;
     }
@@ -194,7 +186,6 @@ public class UserDto implements Serializable {
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
-                ", emailVerificationToken='" + emailVerificationToken + '\'' +
                 ", emailVerificationStatus=" + emailVerificationStatus +
                 ", role='" + role + '\'' +
                 ", defaultPassword=" + defaultPassword +
