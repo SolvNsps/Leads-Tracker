@@ -2,7 +2,6 @@ package com.leadstracker.leadstracker.entities;
 
 import jakarta.persistence.*;
 
-import javax.annotation.processing.Generated;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
