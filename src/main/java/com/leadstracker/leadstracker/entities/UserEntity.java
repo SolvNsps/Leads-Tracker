@@ -83,6 +83,9 @@ public class UserEntity implements Serializable {
     @Column(name = "last_otp_resend")
     private LocalDateTime lastOtpResendTime;
 
+    @OneToMany(mappedBy = "createdBy")
+    private List<ClientEntity> clients;
+
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "roles_id", referencedColumnName = "id"))

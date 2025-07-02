@@ -6,6 +6,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
+@Entity(name = "clients")
 public class ClientEntity implements Serializable {
 
     @Serial
@@ -27,12 +28,15 @@ public class ClientEntity implements Serializable {
     @Column(nullable=false)
     private String GPSLocation;
 
-    @OneToMany(mappedBy = "userId")
-    private int createdBy;
+    @ManyToOne
+    @JoinColumn(name = "created_by", nullable = false)
+    private UserEntity createdBy;
 
-    private Date createdDate;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdDate = new Date();
 
-    private Date lastUpdated;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lastUpdated = new Date();
 
     public long getId() {
         return id;
@@ -74,11 +78,11 @@ public class ClientEntity implements Serializable {
         this.GPSLocation = GPSLocation;
     }
 
-    public int getCreatedBy() {
+    public UserEntity getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(int createdBy) {
+    public void setCreatedBy(UserEntity createdBy) {
         this.createdBy = createdBy;
     }
 
