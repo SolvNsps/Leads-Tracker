@@ -79,7 +79,6 @@ public class UserServiceImpl implements UserService {
         }
         UserDto returnUser = new UserDto();
         returnUser.setUserId(userEntity.getUserId());
-        returnUser.setEmailVerificationToken(userEntity.getEmailVerificationToken());
         returnUser.setEmail(userEntity.getEmail());
         returnUser.setPassword(userEntity.getPassword());
         returnUser.setFirstName(userEntity.getFirstName());
@@ -188,7 +187,6 @@ public class UserServiceImpl implements UserService {
             boolean hasTokenExpired = utils.hasTokenExpired(token);
 
             if(!hasTokenExpired) {
-                userEntity.setEmailVerificationToken(null);
                 userEntity.setEmailVerificationStatus(Boolean.TRUE);
                 userRepository.save(userEntity);
                 returnUser = true;
