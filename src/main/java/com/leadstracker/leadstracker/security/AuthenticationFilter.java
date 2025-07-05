@@ -86,15 +86,14 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                             "token", token
                     )
             );
-            return;
         }
         else {
             // Generating OTP
             String otp = String.format("%06d", new SecureRandom().nextInt(999999));
             userService.saveOtp(userName, otp, new Date(System.currentTimeMillis() + 180000));
 
-            AmazonSES emailService = (AmazonSES) SpringApplicationContext.getBean("amazonSES");
-            emailService.sendLoginOtpEmail(userDto.getFirstName(), userName, otp);
+//            AmazonSES emailService = (AmazonSES) SpringApplicationContext.getBean("amazonSES");
+//            emailService.sendLoginOtpEmail(userDto.getFirstName(), userName, otp);
             // Normal login case
             response.setContentType("application/json");
             new ObjectMapper().writeValue(
@@ -106,8 +105,8 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                     )
             );
 
-            return;
         }
+        return;
 
     }
 

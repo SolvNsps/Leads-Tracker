@@ -70,10 +70,32 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
             return null;
         }
 
-        UserEntity userEntity = userRepository.findByEmail(user);
-        UserPrincipal userPrincipal = new UserPrincipal(userEntity);
+        // Get role and authorities from token claims
+        String role = claims.get("roles", String.class);
+        List<String> authorities = claims.get("authorities", List.class);
 
-        return new UsernamePasswordAuthenticationToken(user, null, userPrincipal.getAuthorities());
+        List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+
+        // Add role with ROLE_ prefix
+        if (role != null) {
+            grantedAuthorities.add(new SimpleGrantedAuthority(role));
+        }
+
+        // Add individual authorities
+        if (authorities != null) {
+            authorities.forEach(auth ->
+                    grantedAuthorities.add(new SimpleGrantedAuthority(auth))
+            );
+        }
+
+        System.out.println("Token granted authorities: " + grantedAuthorities);
+        return new UsernamePasswordAuthenticationToken(user, null, grantedAuthorities);
+
+
+//        UserEntity userEntity = userRepository.findByEmail(user);
+//        UserPrincipal userPrincipal = new UserPrincipal(userEntity);
+//
+//        return new UsernamePasswordAuthenticationToken(user, null, userPrincipal.getAuthorities());
     }
 }
 

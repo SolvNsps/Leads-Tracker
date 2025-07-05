@@ -5,8 +5,12 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
+import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.entities.UserEntity;
+import com.leadstracker.leadstracker.request.UserDetails;
 import jakarta.annotation.PostConstruct;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,9 +30,33 @@ public class AppConfig {
         return new BCryptPasswordEncoder();
     }
 
+//    @Bean
+//    public ModelMapper modelMapper() {
+//        return new ModelMapper();
+//    }
+
     @Bean
     public ModelMapper modelMapper() {
-        return new ModelMapper();
+        ModelMapper mapper = new ModelMapper();
+        mapper.getConfiguration()
+                .setMatchingStrategy(MatchingStrategies.STRICT)
+                .setAmbiguityIgnored(true);
+
+        // UserDetails -> UserDto mapping
+        mapper.typeMap(UserDetails.class, UserDto.class)
+                .addMappings(map -> {
+                    map.map(UserDetails::getTeamLeadUserId, UserDto::setTeamLeadUserId);
+                    map.map(UserDetails::getRole, UserDto::setRole);
+                    map.map(UserDetails::getStaffId, UserDto::setStaffId);
+                });
+
+        // UserEntity -> UserDto mapping
+        mapper.typeMap(UserEntity.class, UserDto.class)
+                .addMappings(map -> {
+                    map.map(src -> src.getRole().getName(), UserDto::setRole);
+                });
+
+        return mapper;
     }
 
 

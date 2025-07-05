@@ -44,10 +44,10 @@ public class UserEntity implements Serializable {
     @Column(name = "password_reset_expiration")
     private Date passwordResetExpiration;
 
-    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Column(nullable = false)
     private boolean emailVerificationStatus;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String phoneNumber;
 
     @Column(nullable = false, unique = true, length = 10)
@@ -251,11 +251,11 @@ public class UserEntity implements Serializable {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getStaffIdNumber() {
+    public String getStaffId() {
         return staffId;
     }
 
-    public void setStaffIdNumber(String staffId) {
+    public void setStaffId(String staffId) {
         this.staffId = staffId;
     }
 

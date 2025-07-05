@@ -56,11 +56,11 @@ public class WebSecurity {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authz) -> authz
 
-                        .requestMatchers(HttpMethod.POST, SecurityConstants.Create_User).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, SecurityConstants.Create_User).hasAnyAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Login).permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Forgot_Password_Request).permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Reset_Password).permitAll()
-                        .requestMatchers(HttpMethod.GET, SecurityConstants.view_Users).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, SecurityConstants.view_Users).hasAnyRole("ADMIN", "TEAM_LEAD")
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_Email).permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_OTP).permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Resend_OTP).permitAll()

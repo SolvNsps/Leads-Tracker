@@ -39,7 +39,11 @@ public class UserPrincipal implements UserDetails {
         authorityEntities.forEach(authorityEntity -> {
             authorities.add(new SimpleGrantedAuthority(authorityEntity.getName()));
         });
+
+        System.out.println("Assigned authorities: " + authorities);
+
         return authorities;
+
     }
 
     /**

@@ -7,5 +7,5 @@ import org.springframework.stereotype.Service;
 
 @Service
 public interface ClientService extends UserDetailsService {
-    ClientDto createUser(ClientDto clientDto);
+    ClientDto createClient(ClientDto clientDto);
 }

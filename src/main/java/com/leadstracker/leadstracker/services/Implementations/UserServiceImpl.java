@@ -43,6 +43,9 @@ public class UserServiceImpl implements UserService {
     RoleRepository roleRepository;
 
     @Autowired
+    ModelMapper modelMapper;
+
+    @Autowired
     private AmazonSES amazonSES;
 
     @Autowired
@@ -260,7 +263,7 @@ public class UserServiceImpl implements UserService {
 
 
     //clearing expired OTPs
-    @Scheduled(fixedRate = 1800000) // for 30 minutes
+    @Scheduled(fixedRate = 180000) // for 3 minutes
     public void cleanupExpiredOtps() {
         List<UserEntity> users = userRepository.findByOtpIsNotNull();
         Date now = new Date();
@@ -341,21 +344,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto createUser(UserDto userDto){
-        System.out.println("userDto :"+ userDto);
-
-        // 1. Check if email already exists
-        if (userRepository.findByEmail(userDto.getEmail()) != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
-        }
-        if (userRepository.findByStaffId(userDto.getStaffId()) != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Staff ID already exists");
-        }
-        // 2. Validate required fields
+    public UserDto createUser(UserDto userDto) {
+        // Validate required fields
         if (userDto.getFirstName() == null || userDto.getFirstName().trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "First Name is required");
         }
-
         if (userDto.getPhoneNumber() == null || userDto.getPhoneNumber().trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phone Number is required");
         }
@@ -365,42 +358,58 @@ public class UserServiceImpl implements UserService {
         if (userDto.getEmail() == null || userDto.getEmail().trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
         }
-        ModelMapper mapper = new ModelMapper();
-        UserEntity userEntity = mapper.map(userDto, UserEntity.class);
+        if (userDto.getRole() == null || userDto.getRole().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role is required");
+        }
+
+        // Check uniqueness
+        if (userRepository.findByEmail(userDto.getEmail()) != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
+        }
+        if (userRepository.findByStaffId(userDto.getStaffId()) != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Staff ID already exists");
+        }
+
+        UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
         userEntity.setUserId(utils.generateUserId(30));
 
-        // Assign Role
-        RoleEntity role = roleRepository.findByName(userDto.getRole());
+        // Handle role
+        String rawRole = userDto.getRole().trim();
+        String roleName = rawRole.startsWith("ROLE_") ? rawRole : "ROLE_" + rawRole;
+        RoleEntity role = roleRepository.findByName(roleName);
+
         if (role == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role");
         }
         userEntity.setRole(role);
 
-        // 5. Assign Team if Team Member
-        if ("TEAM_MEMBER".equalsIgnoreCase(userDto.getRole())) {
-            if (userDto.getTeamLeadId() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Team assignment required for Team Members");
+        // Handle team member case
+//        String normalized = rawRole.startsWith("ROLE_") ? rawRole.substring(5) : rawRole;
+        if (userDto.getRole().replace("ROLE_", "").equalsIgnoreCase("TEAM_MEMBER")) {
+            if (userDto.getTeamLeadUserId() == null || userDto.getTeamLeadUserId().trim().isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Team Lead ID is required for Team Members");
             }
 
-            UserEntity teamLead = userRepository.findByUserId(userDto.getTeamLeadId());
+            UserEntity teamLead = userRepository.findByUserId(userDto.getTeamLeadUserId());
             if (teamLead == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Assigned Team Lead not found");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Assigned Team Lead not found");
             }
-
             userEntity.setTeamLead(teamLead);
         }
 
-        // 6. Generating default password
+        // Set password and other defaults
         String rawPassword = utils.generateDefaultPassword();
         userEntity.setPassword(bCryptPasswordEncoder.encode(rawPassword));
         userEntity.setEmailVerificationStatus(true);
-        userEntity.setDefaultPassword(true); // To force reset on first login
+        userEntity.setDefaultPassword(true);
 
-        // 7. Save and return
         UserEntity savedUser = userRepository.save(userEntity);
-        UserDto returnDto = mapper.map(savedUser, UserDto.class);
-
-        return returnDto;
+        UserDto responseDto = modelMapper.map(savedUser, UserDto.class);
+        responseDto.setRole(savedUser.getRole().getName().replace("ROLE", "")); // Explicitly set role name
+        return responseDto;
+//        return mapper.map(savedUser, UserDto.class);
     }
 
     /**
@@ -442,7 +451,15 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserDto getUserByEmail(String loggedInEmail) {
-        return null;
+        UserDto userDto = new UserDto();
+
+        UserEntity userEntity = userRepository.findByEmail(loggedInEmail);
+
+        if (userEntity == null) {
+            throw new UsernameNotFoundException("User with Email: " + loggedInEmail + "not found");
+        }
+        BeanUtils.copyProperties(userEntity, userDto);
+        return userDto;
     }
 
 }

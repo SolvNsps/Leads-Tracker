@@ -14,9 +14,10 @@ public class ClientDto implements Serializable {
     private String lastName;
     private String phoneNumber;
     private String GPSLocation;
-    private UserDto createdBy;
+    private String createdByUserId;
     private Date createdDate;
     private Date lastUpdated;
+    private String clientStatus;
 
     public long getId() {
         return id;
@@ -58,12 +59,12 @@ public class ClientDto implements Serializable {
         this.GPSLocation = GPSLocation;
     }
 
-    public UserDto getCreatedBy() {
-        return createdBy;
+    public String getCreatedByUserId() {
+        return createdByUserId;
     }
 
-    public void setCreatedBy(UserDto createdBy) {
-        this.createdBy = createdBy;
+    public void setCreatedByUserId(String createdByUserId) {
+        this.createdByUserId = createdByUserId;
     }
 
     public Date getCreatedDate() {
@@ -82,6 +83,14 @@ public class ClientDto implements Serializable {
         this.lastUpdated = lastUpdated;
     }
 
+    public String getClientStatus() {
+        return clientStatus;
+    }
+
+    public void setClientStatus(String clientStatus) {
+        this.clientStatus = clientStatus;
+    }
+
     @Override
     public String toString() {
         return "ClientDto{" +
@@ -90,9 +99,10 @@ public class ClientDto implements Serializable {
                 ", lastName='" + lastName + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", GPSLocation='" + GPSLocation + '\'' +
-                ", createdBy=" + createdBy +
+                ", createdByUserId=" + createdByUserId +
                 ", createdDate=" + createdDate +
                 ", lastUpdated=" + lastUpdated +
+                ", clientStatus=" + clientStatus +
                 '}';
     }
 }

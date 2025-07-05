@@ -47,6 +47,6 @@ public class SecurityConstants {
     }
     public  static String getTokenSecret() {
         Environment environment = (Environment) SpringApplicationContext.getBean("environment");
-        return environment.getProperty("tokenSecret");
+        return environment.getProperty("token.secret");
     }
 }

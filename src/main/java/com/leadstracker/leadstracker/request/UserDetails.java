@@ -6,9 +6,9 @@ public class UserDetails {
     private String email;
     private String password;
     private String phoneNumber;
-    private String staffIdNumber;
-    private String teamId;
-    public String role;    // “TEAM_LEAD” or “TEAM_MEMBER”
+    private String staffId;
+    private String teamLeadUserId;
+    public String role;
 
     public UserDetails() {}
 
@@ -52,20 +52,20 @@ public class UserDetails {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getStaffIdNumber() {
-        return staffIdNumber;
+    public String getStaffId() {
+        return staffId;
     }
 
-    public void setStaffIdNumber(String staffIdNumber) {
-        this.staffIdNumber = staffIdNumber;
+    public void setStaffId(String staffId) {
+        this.staffId = staffId;
     }
 
-    public String getTeamId() {
-        return teamId;
+    public String getTeamLeadUserId() {
+        return teamLeadUserId;
     }
 
-    public void setTeamId(String teamId) {
-        this.teamId = teamId;
+    public void setTeamLeadUserId(String teamLeadUserId) {
+        this.teamLeadUserId = teamLeadUserId;
     }
 
     public String getRole() {

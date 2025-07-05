@@ -1,5 +1,6 @@
 package com.leadstracker.leadstracker.entities;
 
+import com.leadstracker.leadstracker.response.Statuses;
 import jakarta.persistence.*;
 
 import java.io.Serial;
@@ -7,6 +8,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 @Entity(name = "clients")
+@Table(name = "clients")
 public class ClientEntity implements Serializable {
 
     @Serial
@@ -22,7 +24,7 @@ public class ClientEntity implements Serializable {
     @Column(nullable=false)
     private String lastName;
 
-    @Column(nullable=false)
+    @Column(unique = true)
     private String phoneNumber;
 
     @Column(nullable=false)
@@ -32,11 +34,19 @@ public class ClientEntity implements Serializable {
     @JoinColumn(name = "created_by", nullable = false)
     private UserEntity createdBy;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdDate = new Date();
+    @ManyToOne
+    @JoinColumn(name = "team_lead_id", nullable = false)
+    private UserEntity teamLead; // Always points to the lead responsible for the client
+
 
     @Temporal(TemporalType.TIMESTAMP)
-    private Date lastUpdated = new Date();
+    private Date createdDate;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lastUpdated;
+
+    @Enumerated(EnumType.STRING)
+    private Statuses clientStatus = Statuses.PENDING;
 
     public long getId() {
         return id;
@@ -100,5 +110,47 @@ public class ClientEntity implements Serializable {
 
     public void setLastUpdated(Date lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public Statuses getClientStatus() {
+        return clientStatus;
+    }
+
+    public void setClientStatus(Statuses clientStatus) {
+        this.clientStatus = clientStatus;
+    }
+
+    public UserEntity getTeamLead() {
+        return teamLead;
+    }
+
+    public void setTeamLead(UserEntity teamLead) {
+        this.teamLead = teamLead;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        createdDate = new Date();
+        lastUpdated = new Date();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        lastUpdated = new Date();
+    }
+
+    @Override
+    public String toString() {
+        return "ClientEntity{" +
+                "id=" + id +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", GPSLocation='" + GPSLocation + '\'' +
+                ", createdBy=" + createdBy +
+                ", createdDate=" + createdDate +
+                ", lastUpdated=" + lastUpdated +
+                ", clientStatus=" + clientStatus +
+                '}';
     }
 }

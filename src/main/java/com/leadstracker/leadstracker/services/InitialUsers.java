@@ -25,7 +25,8 @@ public class InitialUsers {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final UserRepository userRepository;
 
-    public InitialUsers(AuthorityRepository authorityRepository, RoleRepository roleRepository, Utils utils, BCryptPasswordEncoder bCryptPasswordEncoder, UserRepository userRepository) {
+    public InitialUsers(AuthorityRepository authorityRepository, RoleRepository roleRepository,
+                        Utils utils, BCryptPasswordEncoder bCryptPasswordEncoder, UserRepository userRepository) {
         this.authorityRepository = authorityRepository;
         this.roleRepository = roleRepository;
         this.utils = utils;
@@ -60,23 +61,43 @@ public class InitialUsers {
             adminUser.setFirstName("admin");
             adminUser.setLastName("admin");
             adminUser.setEmail("lordiatakyi99@gmail.com");
-            adminUser.setUserId(utils.generateUserId(50));
+            adminUser.setUserId(utils.generateUserId(30));
             adminUser.setEmailVerificationStatus(true);
             adminUser.setPassword(bCryptPasswordEncoder.encode("Xzibit5!"));
+            adminUser.setPhoneNumber("0547091395");
+            adminUser.setStaffId(utils.generateUserId(10));
             adminUser.setRole(roleAdmin);
 
             userRepository.save(adminUser);
 
         }
 
+        if (userRepository.findByEmail("ewusii.priscilla@gmail.com") == null) {
+            UserEntity leadUser = new UserEntity();
+            leadUser.setFirstName("lead1");
+            leadUser.setLastName("lead1");
+            leadUser.setEmail("ewusii.priscilla@gmail.com");
+            leadUser.setUserId(utils.generateUserId(30));
+            leadUser.setEmailVerificationStatus(true);
+            leadUser.setPassword(bCryptPasswordEncoder.encode("1@Priscilla"));
+            leadUser.setPhoneNumber("0547091394");
+            leadUser.setStaffId(utils.generateUserId(10));
+            leadUser.setRole(roleTeamLead);
+
+            userRepository.save(leadUser);
+        }
+
+
         if (userRepository.findByEmail("trenyce.nd@gmail.com") == null) {
             UserEntity leadUser = new UserEntity();
             leadUser.setFirstName("lead");
             leadUser.setLastName("lead");
             leadUser.setEmail("trenyce.nd@gmail.com");
-            leadUser.setUserId(utils.generateUserId(50));
+            leadUser.setUserId(utils.generateUserId(30));
             leadUser.setEmailVerificationStatus(true);
             leadUser.setPassword(bCryptPasswordEncoder.encode("3Ne.llie+"));
+            leadUser.setPhoneNumber("0547091393");
+            leadUser.setStaffId(utils.generateUserId(10));
             leadUser.setRole(roleTeamLead);
 
             userRepository.save(leadUser);
@@ -87,10 +108,18 @@ public class InitialUsers {
             teamMemberUser.setFirstName("teamMember");
             teamMemberUser.setLastName("teamMember");
             teamMemberUser.setEmail("godsonsese04@gmail.com");
-            teamMemberUser.setUserId(utils.generateUserId(50));
+            teamMemberUser.setUserId(utils.generateUserId(30));
             teamMemberUser.setEmailVerificationStatus(true);
             teamMemberUser.setPassword(bCryptPasswordEncoder.encode("QA1@gods"));
+            teamMemberUser.setPhoneNumber("0547091392");
+            teamMemberUser.setStaffId(utils.generateUserId(10));
             teamMemberUser.setRole(roleTeamMember);
+
+            //Assigning a team lead to this member
+            UserEntity lead = userRepository.findByEmail("ewusii.priscilla@gmail.com");
+            if (lead != null) {
+                teamMemberUser.setTeamLead(lead);
+            }
 
             userRepository.save(teamMemberUser);
         }

@@ -3,6 +3,9 @@ package com.leadstracker.leadstracker.controller;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.config.SpringApplicationContext;
+import com.leadstracker.leadstracker.entities.AuthorityEntity;
+import com.leadstracker.leadstracker.entities.UserEntity;
+import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.request.*;
 import com.leadstracker.leadstracker.response.*;
 import com.leadstracker.leadstracker.security.SecurityConstants;
@@ -24,6 +27,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -39,11 +43,15 @@ public class UserController {
     @Autowired
     Utils utils;
 
+    @Autowired
+    UserRepository userRepository;
+
 
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserRest> createUser(@RequestBody UserDetails userDetails) throws Exception {
+
         UserDto userDto = modelMapper.map(userDetails, UserDto.class);
 
         UserDto createdUser = userService.createUser(userDto);
@@ -193,6 +201,14 @@ public class UserController {
             ));
         }
 
+        // Getting user details from the database
+        UserEntity userEntity = userRepository.findByEmail(request.getEmail());
+        if (userEntity == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    Map.of("message", "User not found", "status", "FAILED")
+            );
+        }
+
         // OTP is valid. Generating JWT
 //        String jwt = SecurityConstants.generateToken(request.getEmail(), SecurityConstants.Expiration_Time_In_Seconds);
         String tokenSecret = (String) SpringApplicationContext.getBean("secretKey");
@@ -205,6 +221,8 @@ public class UserController {
 
         String token = Jwts.builder()
                 .setSubject(request.getEmail())
+                .claim("roles", userEntity.getRole().getName()) // Add role
+                .claim("authorities", getAuthorityNames(userEntity.getRole().getAuthorities())) // Add authorities
                 .setExpiration(Date.from(now.plusMillis(expirationTime)))
                 .setIssuedAt(Date.from(now))
                 .signWith(secretKey, SignatureAlgorithm.HS512)
@@ -214,6 +232,14 @@ public class UserController {
                 "token", token,
                 "status", "LOGIN_SUCCESS"
         ));
+
+    }
+
+    // Helper method to extract authority names
+    private List<String> getAuthorityNames(Collection<AuthorityEntity> authorities) {
+        return authorities.stream()
+                .map(AuthorityEntity::getName)
+                .collect(Collectors.toList());
     }
 
 

@@ -1,10 +1,18 @@
 package com.leadstracker.leadstracker.DTO;
 
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.leadstracker.leadstracker.entities.RoleEntity;
+import com.leadstracker.leadstracker.entities.UserEntity;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class UserDto implements Serializable {
     @Serial
@@ -28,6 +36,9 @@ public class UserDto implements Serializable {
 
     private String role;
 
+    @JsonIgnore
+    private transient RoleEntity roleEntity;
+
 //    default to true for new users
     private boolean defaultPassword;
 
@@ -49,7 +60,9 @@ public class UserDto implements Serializable {
 
     private String staffId;
 
-    private String teamLeadId;
+    private String teamLeadUserId;
+
+    private List<String> teamMemberIds = new ArrayList<>();
 
     public long getId() {
         return id;
@@ -187,6 +200,51 @@ public class UserDto implements Serializable {
         this.lastOtpResendTime = lastOtpResendTime;
     }
 
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(String staffId) {
+        this.staffId = staffId;
+    }
+
+    public String getTeamLeadUserId() {
+        return teamLeadUserId;
+    }
+
+    public void setTeamLeadUserId(String teamLeadUserId) {
+        this.teamLeadUserId = teamLeadUserId;
+    }
+
+    public List<String> getTeamMemberIds() {
+        return teamMemberIds;
+    }
+
+    public void setTeamMemberIds(List<String> teamMemberIds) {
+        this.teamMemberIds = teamMemberIds;
+    }
+
+    // Internal use only
+    public RoleEntity getRoleEntity() {
+        return roleEntity;
+    }
+
+    public void setRoleEntity(RoleEntity roleEntity) {
+        this.roleEntity = roleEntity;
+        if (roleEntity != null) {
+            this.role = roleEntity.getName();
+        }
+    }
+
+
     @Override
     public String toString() {
         return "UserDto{" +
@@ -207,27 +265,4 @@ public class UserDto implements Serializable {
                 '}';
     }
 
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public String getStaffId() {
-        return staffId;
-    }
-
-    public void setStaffId(String staffId) {
-        this.staffId = staffId;
-    }
-
-    public String getTeamLeadId() {
-        return teamLeadId;
-    }
-
-    public void setTeamLeadId(String teamLeadId) {
-        this.teamLeadId = teamLeadId;
-    }
 }
