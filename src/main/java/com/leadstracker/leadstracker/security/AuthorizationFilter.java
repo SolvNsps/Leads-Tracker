@@ -76,7 +76,7 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
 
         List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
 
-        // Add role with ROLE_ prefix
+        // Adding role with ROLE_ prefix
         if (role != null) {
             grantedAuthorities.add(new SimpleGrantedAuthority(role));
         }

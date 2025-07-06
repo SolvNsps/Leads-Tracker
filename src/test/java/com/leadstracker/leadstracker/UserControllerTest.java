@@ -3,6 +3,7 @@ package com.leadstracker.leadstracker;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
+import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.response.UserRest;
 import com.leadstracker.leadstracker.controller.UserController;
 import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
@@ -43,6 +44,9 @@ public class UserControllerTest {
 
     @MockitoBean
     private ModelMapper modelMapper;
+
+    @MockitoBean
+    UserRepository userRepository;
 
     @MockitoBean
     Utils utils;

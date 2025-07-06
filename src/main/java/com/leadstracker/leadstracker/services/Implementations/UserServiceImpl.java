@@ -146,7 +146,6 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-        // we'd send an email here with a link like:
         amazonSES.sendPasswordResetRequest(user.getFirstName(), user.getEmail(), token);
 
         // http://localhost:8080/reset-password?token=xyz123
@@ -345,7 +344,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto createUser(UserDto userDto) {
-        // Validate required fields
+        // Validating required fields
         if (userDto.getFirstName() == null || userDto.getFirstName().trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "First Name is required");
         }
@@ -362,7 +361,7 @@ public class UserServiceImpl implements UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role is required");
         }
 
-        // Check uniqueness
+        // Checking uniqueness
         if (userRepository.findByEmail(userDto.getEmail()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
         }
@@ -373,7 +372,7 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
         userEntity.setUserId(utils.generateUserId(30));
 
-        // Handle role
+        // Handling role
         String rawRole = userDto.getRole().trim();
         String roleName = rawRole.startsWith("ROLE_") ? rawRole : "ROLE_" + rawRole;
         RoleEntity role = roleRepository.findByName(roleName);
@@ -383,8 +382,7 @@ public class UserServiceImpl implements UserService {
         }
         userEntity.setRole(role);
 
-        // Handle team member case
-//        String normalized = rawRole.startsWith("ROLE_") ? rawRole.substring(5) : rawRole;
+        // Handling the team member case
         if (userDto.getRole().replace("ROLE_", "").equalsIgnoreCase("TEAM_MEMBER")) {
             if (userDto.getTeamLeadUserId() == null || userDto.getTeamLeadUserId().trim().isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -399,7 +397,7 @@ public class UserServiceImpl implements UserService {
             userEntity.setTeamLead(teamLead);
         }
 
-        // Set password and other defaults
+        // Setting password and other defaults
         String rawPassword = utils.generateDefaultPassword();
         userEntity.setPassword(bCryptPasswordEncoder.encode(rawPassword));
         userEntity.setEmailVerificationStatus(true);
@@ -407,9 +405,10 @@ public class UserServiceImpl implements UserService {
 
         UserEntity savedUser = userRepository.save(userEntity);
         UserDto responseDto = modelMapper.map(savedUser, UserDto.class);
-        responseDto.setRole(savedUser.getRole().getName().replace("ROLE", "")); // Explicitly set role name
+        responseDto.setRole(savedUser.getRole().getName().replace("ROLE_", ""));
+
+        amazonSES.sendOnboardingEmail(responseDto.getEmail(), responseDto.getFirstName(), rawPassword);
         return responseDto;
-//        return mapper.map(savedUser, UserDto.class);
     }
 
     /**
