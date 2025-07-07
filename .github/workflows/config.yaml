@@ -1,5 +1,7 @@
 on:
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  push:
+    branches:
+      - main  
 
 jobs:
   build-test-deploy:
