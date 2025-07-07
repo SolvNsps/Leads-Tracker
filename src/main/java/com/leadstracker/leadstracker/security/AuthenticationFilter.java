@@ -83,13 +83,14 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                             "status", "PASSWORD_RESET_REQUIRED",
                             "email", userName,
                             "message", "First time login: password reset required",
-                            "token", token,
-                            "role", userDto.getRole()
+                            "token", token
+//                            "role", userDto.getRole()
                     )
             );
         }
         else {
             // Generating OTP
+            UserEntity userEntity = userRepository.findByEmail(userName);
             String otp = String.format("%06d", new SecureRandom().nextInt(999999));
             userService.saveOtp(userName, otp, new Date(System.currentTimeMillis() + 180000));
 
@@ -103,8 +104,8 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                             "status", "OTP_SENT",
                             "email", userName,
                             "message", "OTP sent to registered email",
-                            "token", otp,
-                            "role", userDto.getRole()
+                            "otp", otp,
+                            "role", userEntity.getRole()
                     )
             );
 
