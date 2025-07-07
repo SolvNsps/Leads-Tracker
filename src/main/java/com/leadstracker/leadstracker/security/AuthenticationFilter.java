@@ -83,7 +83,8 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                             "status", "PASSWORD_RESET_REQUIRED",
                             "email", userName,
                             "message", "First time login: password reset required",
-                            "token", token
+                            "token", token,
+                            "role", userDto.getRole()
                     )
             );
         }
@@ -102,6 +103,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                             "status", "OTP_SENT",
                             "email", userName,
                             "message", "OTP sent to registered email",
+                            "token", otp,
                             "role", userDto.getRole()
                     )
             );

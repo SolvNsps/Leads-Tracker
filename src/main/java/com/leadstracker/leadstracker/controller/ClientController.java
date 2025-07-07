@@ -37,8 +37,7 @@ public class ClientController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEAM_LEAD', 'TEAM_MEMBER')")
     public ResponseEntity<ClientRest> createClient(
-            @RequestBody ClientDetails clientDetails,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+            @RequestBody ClientDetails clientDetails, @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         // Getting current logged in user
         String loggedInEmail = userPrincipal.getUsername();

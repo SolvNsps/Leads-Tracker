@@ -108,6 +108,9 @@ public class UserServiceImpl implements UserService {
 
         userEntity.setFirstName(user.getFirstName());
         userEntity.setLastName(user.getLastName());
+        userEntity.setEmail(user.getEmail());
+        userEntity.setPhoneNumber(user.getPhoneNumber());
+        userEntity.setStaffId(user.getStaffId());
         userEntity.setRole(userEntity.getRole());
 
         UserEntity updatedUser = userRepository.save(userEntity);
@@ -474,6 +477,7 @@ public class UserServiceImpl implements UserService {
                 .map(user -> modelMapper.map(user, UserDto.class))
                 .toList();
     }
+
 
 
 }
