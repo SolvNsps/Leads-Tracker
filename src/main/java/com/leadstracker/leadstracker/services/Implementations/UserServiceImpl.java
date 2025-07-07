@@ -1,5 +1,6 @@
 package com.leadstracker.leadstracker.services.Implementations;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leadstracker.leadstracker.DTO.AmazonSES;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
@@ -107,6 +108,7 @@ public class UserServiceImpl implements UserService {
 
         userEntity.setFirstName(user.getFirstName());
         userEntity.setLastName(user.getLastName());
+        userEntity.setRole(userEntity.getRole());
 
         UserEntity updatedUser = userRepository.save(userEntity);
         BeanUtils.copyProperties(updatedUser, userdto);
@@ -460,6 +462,19 @@ public class UserServiceImpl implements UserService {
         BeanUtils.copyProperties(userEntity, userDto);
         return userDto;
     }
+
+    /**
+     * @return
+     */
+    @Override
+    public List<UserDto> getAllTeamMembers() {
+        List<UserEntity> teamMemberEntities = userRepository.findByTeamLeadIsNotNull();
+
+        return teamMemberEntities.stream()
+                .map(user -> modelMapper.map(user, UserDto.class))
+                .toList();
+    }
+
 
 }
 

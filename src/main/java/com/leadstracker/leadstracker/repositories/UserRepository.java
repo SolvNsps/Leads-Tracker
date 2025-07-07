@@ -26,4 +26,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     List<UserEntity> findByTeamLead_UserId(String id);
 
     Optional<Object> findByUserIdAndTeamLead_UserId(String memberId, String userId);
+
+    List<UserEntity> findByTeamLeadIsNotNull();
 }
