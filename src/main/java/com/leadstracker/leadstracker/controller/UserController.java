@@ -77,6 +77,19 @@ public class UserController {
         return ResponseEntity.ok(userRest);
     }
 
+    //Viewing and managing the data of all team members
+    @GetMapping(path = "/team-members", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<UserRest>> getAllTeamMembers() {
+        List<UserDto> teamMembers = userService.getAllTeamMembers();
+
+        List<UserRest> response = teamMembers.stream()
+                .map(dto -> modelMapper.map(dto, UserRest.class))
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+
     //Viewing and managing the data of all the team members under a team lead
     @GetMapping(path = "/team-leads/{id}/members", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserRest>> getTeamMembers(@PathVariable String id) {
@@ -103,12 +116,15 @@ public class UserController {
 
     @PutMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserRest> updateUser(@PathVariable String id, @RequestBody UserDetails userDetails) throws Exception {
+    public ResponseEntity<?> updateUser(@PathVariable String id, @RequestBody UserDetails userDetails) throws Exception {
         UserDto userDto = modelMapper.map(userDetails, UserDto.class);
         UserDto updatedUser = userService.updateUser(id, userDto);
 
         UserRest userRest = modelMapper.map(updatedUser, UserRest.class);
-        return ResponseEntity.ok(userRest);
+        return ResponseEntity.ok(Map.of(
+                "user", userRest,
+                "status", "SUCCESS",
+                "message", "Changes saved successfully"));
     }
 
 

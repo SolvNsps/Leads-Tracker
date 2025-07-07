@@ -40,7 +40,7 @@ public class AmazonSES {
             + "<p>Hi, $firstName!</p> "
             + "Someone has requested to reset your password with our project. If it were not you, please ignore it."
             + " otherwise please click on the link below to set a new password: "
-            + "<a href=http://localhost:8080/reset-password.html?token=$tokenValue>"
+            + "<a href=http://localhost:4200/authentication/ResettingPasswordComponent>"
             + " Click this link to reset password"
             + "</a><br/><br/>"
             + "Thank you!";
@@ -50,7 +50,7 @@ public class AmazonSES {
             + "Hi, $firstName! "
             + "Someone has requested to reset your password with our project. If it were not you, please ignore it."
             + " otherwise please open the link below in your window browser to set a new password"
-            + " http://localhost:8080/reset-password.html?token=$tokenValue>"
+            + "http://localhost:4200/authentication/ResettingPasswordComponent"
             + "Thank you";
 
     // OTP Email Subject

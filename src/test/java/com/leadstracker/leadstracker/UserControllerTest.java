@@ -135,7 +135,12 @@ public class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(details)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("Updated"));
+//                .andExpect(jsonPath("$.firstName").value("Updated"))
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.message").value("Changes saved successfully"))
+                .andExpect(jsonPath("$.user.firstName").value("Updated"))
+                .andExpect(jsonPath("$.user.lastName").value("User"));
+
     }
 
 
