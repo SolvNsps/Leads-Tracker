@@ -62,12 +62,12 @@ public class ClientServiceImpl implements ClientService {
 
         // Setting the team lead
         if (creatorRole.equals("TEAM_LEAD")) {
-            clientEntity.setTeamLead(creatorEntity); // Team lead created the client
+            clientEntity.setTeamLead(creatorEntity); // Team Lead created the client
         } else {
-            if (UserEntity.getTeamLead() == null) {
+            if (creatorEntity.getTeamLead() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Team Member must be assigned to a Team Lead.");
             }
-            clientEntity.setTeamLead(UserEntity.getTeamLead()); // Team member created the client
+            clientEntity.setTeamLead(creatorEntity.getTeamLead()); // Correct way to access team lead
         }
 
         ClientEntity saved = clientRepository.save(clientEntity);
