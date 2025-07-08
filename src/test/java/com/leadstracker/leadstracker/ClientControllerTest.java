@@ -7,6 +7,7 @@ import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.controller.ClientController;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
+import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,7 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ClientController.class)
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 public class ClientControllerTest {
 
     @Autowired
@@ -73,19 +77,30 @@ public class ClientControllerTest {
         mockClientDto.setGPSLocation("Accra");
     }
 
-    @Test
-    @WithMockUser(roles = "TEAM_LEAD")
-    void testCreateClient() throws Exception {
-        when(userService.getUserByEmail(anyString())).thenReturn(mockUser);
-        when(modelMapper.map(any(ClientDetails.class), eq(ClientDto.class))).thenReturn(mockClientDto);
-        when(clientService.createClient(any(ClientDto.class))).thenReturn(mockClientDto);
-        when(modelMapper.map(any(ClientDto.class), eq(ClientRest.class))).thenReturn(new ClientRest());
+@Test
+@WithMockUser(roles = "TEAM_LEAD")
+void testCreateClient() throws Exception {
+    // Arrange
+    when(userService.getUserByEmail(anyString())).thenReturn(mockUser);
+    when(modelMapper.map(any(ClientDetails.class), eq(ClientDto.class))).thenReturn(mockClientDto);
+    when(clientService.createClient(any(ClientDto.class))).thenReturn(mockClientDto);
+    when(modelMapper.map(any(ClientDto.class), eq(ClientRest.class))).thenReturn(new ClientRest());
 
-        mockMvc.perform(post("/api/v1/clients")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(clientDetails)))
-                .andExpect(status().isOk());
-    }
+    // ✅ Mock the userPrincipal manually
+    UserPrincipal mockPrincipal = mock(UserPrincipal.class);
+    when(mockPrincipal.getUsername()).thenReturn("lead@example.com");
+
+    SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(mockPrincipal, null, List.of(new SimpleGrantedAuthority("ROLE_TEAM_LEAD")))
+    );
+
+    // Act & Assert
+    mockMvc.perform(post("/api/v1/clients")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(new ObjectMapper().writeValueAsString(clientDetails)))
+            .andExpect(status().isOk());
+}
+
 
     @Test
     @WithMockUser(roles = "TEAM_LEAD")

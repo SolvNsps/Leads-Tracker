@@ -67,7 +67,8 @@ public class ClientServiceImpl implements ClientService {
             if (creatorEntity.getTeamLead() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Team Member must be assigned to a Team Lead.");
             }
-            clientEntity.setTeamLead(creatorEntity.getTeamLead()); // Correct way to access team lead
+
+            clientEntity.setTeamLead(creatorEntity.getTeamLead()); // Team member created the client
         }
 
         ClientEntity saved = clientRepository.save(clientEntity);
@@ -80,8 +81,8 @@ public class ClientServiceImpl implements ClientService {
      */
         public TeamPerformanceDto getTeamPerformance(String duration) {
             //Getting team lead and members
-            UserEntity teamLead = UserEntity.getTeamLead();
-            List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
+            UserEntity teamLead = new  UserEntity();
+            List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead.getTeamLead());
 
             //Calculating date range
             Date[] dateRange = calculateDateRange(duration);
