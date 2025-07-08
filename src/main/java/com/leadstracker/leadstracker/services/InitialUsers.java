@@ -72,6 +72,22 @@ public class InitialUsers {
 
         }
 
+        if (userRepository.findByEmail("Devonmario00@gmail.com") == null) {
+            UserEntity adminUser2 = new UserEntity();
+            adminUser2.setFirstName("Solv");
+            adminUser2.setLastName("Admin");
+            adminUser2.setEmail("Devonmario00@gmail.com");
+            adminUser2.setUserId(utils.generateUserId(30));
+            adminUser2.setEmailVerificationStatus(true);
+            adminUser2.setPassword(bCryptPasswordEncoder.encode("2New!_Admin"));
+            adminUser2.setPhoneNumber("0547099395");
+            adminUser2.setStaffId(utils.generateUserId(10));
+            adminUser2.setRole(roleAdmin);
+
+            userRepository.save(adminUser2);
+
+        }
+
         if (userRepository.findByEmail("ewusii.priscilla@gmail.com") == null) {
             UserEntity leadUser = new UserEntity();
             leadUser.setFirstName("lead1");

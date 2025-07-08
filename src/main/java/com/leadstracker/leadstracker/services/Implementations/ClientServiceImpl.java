@@ -81,14 +81,14 @@ public class ClientServiceImpl implements ClientService {
      */
         public TeamPerformanceDto getTeamPerformance(String duration) {
             //Getting team lead and members
-            UserEntity teamLead = new  UserEntity();
+            UserEntity teamLead = new UserEntity();
             List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead.getTeamLead());
 
             //Calculating date range
             Date[] dateRange = calculateDateRange(duration);
 
             //Fetching all the clients of a team
-            List<ClientEntity> clients = clientRepository.findByCreatedByInAndCreatedDate(
+            List<ClientEntity> clients = clientRepository.findByCreatedByInAndCreatedDateBetween(
                     teamMembers, dateRange[0], dateRange[1]
             );
 
@@ -130,7 +130,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     private TeamMemberPerformanceDto teamMemberStats(UserEntity member, Date start, Date end) {
-            List<ClientEntity> memberClients = clientRepository.findByCreatedByAndCreatedDate(
+            List<ClientEntity> memberClients = clientRepository.findByCreatedByAndCreatedDateBetween(
                     member, start, end
             );
 
