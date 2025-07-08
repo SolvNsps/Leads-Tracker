@@ -1,5 +1,5 @@
 on:
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  workflow_dispatch:  # Manual trigger
 
 jobs:
   build-test-deploy:

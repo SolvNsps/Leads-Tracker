@@ -259,7 +259,7 @@ public class UserEntity implements Serializable {
         this.staffId = staffId;
     }
 
-    public UserEntity getTeamLead() {
+    public static UserEntity getTeamLead() {
         return teamLead;
     }
 

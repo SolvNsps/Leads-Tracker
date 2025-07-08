@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.controller;
 
 import com.leadstracker.leadstracker.DTO.ClientDto;
+import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
@@ -13,10 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
@@ -37,8 +35,7 @@ public class ClientController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEAM_LEAD', 'TEAM_MEMBER')")
     public ResponseEntity<ClientRest> createClient(
-            @RequestBody ClientDetails clientDetails,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+            @RequestBody ClientDetails clientDetails, @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         // Getting current logged in user
         String loggedInEmail = userPrincipal.getUsername();
@@ -48,6 +45,11 @@ public class ClientController {
         ClientDto clientDto = modelMapper.map(clientDetails, ClientDto.class);
         clientDto.setCreatedByUserId(creatorUser.getUserId());
 
+        String teamLeadId = creatorUser.getTeamLeadUserId() != null
+                ? creatorUser.getTeamLeadUserId()  // Team Member's lead
+                : creatorUser.getUserId();         // Team Lead (self)
+        clientDto.setTeamLeadId(teamLeadId);
+
         // Saving the client
         ClientDto createdClient = clientService.createClient(clientDto);
         ClientRest clientRest = modelMapper.map(createdClient, ClientRest.class);
@@ -55,4 +57,14 @@ public class ClientController {
         return ResponseEntity.ok(clientRest);
     }
 
-}
+
+    @GetMapping("/team-performance")
+    @PreAuthorize("hasRole('TEAM_LEAD')")
+        public ResponseEntity<TeamPerformanceDto> getTeamOverview(
+                @RequestParam(defaultValue = "week") String duration
+        ) {
+            return ResponseEntity.ok(clientService.getTeamPerformance(duration));
+        }
+    }
+
+

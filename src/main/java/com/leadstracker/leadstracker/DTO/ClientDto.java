@@ -15,6 +15,7 @@ public class ClientDto implements Serializable {
     private String phoneNumber;
     private String GPSLocation;
     private String createdByUserId;
+    private String teamLeadId;
     private Date createdDate;
     private Date lastUpdated;
     private String clientStatus;
@@ -89,6 +90,14 @@ public class ClientDto implements Serializable {
 
     public void setClientStatus(String clientStatus) {
         this.clientStatus = clientStatus;
+    }
+
+    public String getTeamLeadId() {
+        return teamLeadId;
+    }
+
+    public void setTeamLeadId(String teamLeadId) {
+        this.teamLeadId = teamLeadId;
     }
 
     @Override
