@@ -84,7 +84,6 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                             "email", userName,
                             "message", "First time login: password reset required",
                             "token", token
-//                            "role", userDto.getRole()
                     )
             );
         }
