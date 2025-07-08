@@ -1,6 +1,8 @@
 package com.leadstracker.leadstracker.services.Implementations;
 
 import com.leadstracker.leadstracker.DTO.ClientDto;
+import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
+import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
@@ -14,6 +16,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ClientServiceImpl implements ClientService {
@@ -50,19 +60,95 @@ public class ClientServiceImpl implements ClientService {
         // Setting the creator
         clientEntity.setCreatedBy(creatorEntity);
 
-        // Set the team lead
+        // Setting the team lead
         if (creatorRole.equals("TEAM_LEAD")) {
             clientEntity.setTeamLead(creatorEntity); // Team lead created the client
         } else {
-            if (creatorEntity.getTeamLead() == null) {
+            if (UserEntity.getTeamLead() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Team Member must be assigned to a Team Lead.");
             }
-            clientEntity.setTeamLead(creatorEntity.getTeamLead()); // Team member created the client
+            clientEntity.setTeamLead(UserEntity.getTeamLead()); // Team member created the client
         }
 
         ClientEntity saved = clientRepository.save(clientEntity);
         return modelMapper.map(saved, ClientDto.class);
     }
+
+    /**
+     * @param duration
+     * @return
+     */
+        public TeamPerformanceDto getTeamPerformance(String duration) {
+            //Getting team lead and members
+            UserEntity teamLead = UserEntity.getTeamLead();
+            List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
+
+            //Calculating date range
+            Date[] dateRange = calculateDateRange(duration);
+
+            //Fetching all the clients of a team
+            List<ClientEntity> clients = clientRepository.findByCreatedByInAndCreatedDate(
+                    teamMembers, dateRange[0], dateRange[1]
+            );
+
+            //response
+            TeamPerformanceDto response = new TeamPerformanceDto();
+            response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
+            response.setTotalClientsAdded(clients.size());
+            response.setTeamTarget(response.getNumberOfClients());
+            response.setProgressPercentage(((double) clients.size() / (response.getNumberOfClients())) * 100);
+
+            //Building the status distribution using the enum
+            response.setClientStatus(
+                    clients.stream()
+                            .collect(Collectors.groupingBy(
+                                            ClientEntity::getClientStatus,
+                                            Collectors.summingInt(c -> 1)
+                                    )
+                            ));
+
+            // Building team member stats
+            response.setTeamMembers(
+                    teamMembers.stream()
+                            .map(member -> teamMemberStats(member, dateRange[0], dateRange[1]))
+                            .collect(Collectors.toList())
+            );
+
+            return response;
+        }
+
+    private Date[] calculateDateRange(String duration) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = duration.equals("month") ?
+                endDate.minusMonths(1) : endDate.minusWeeks(1);
+
+        return new Date[] {
+                Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()),
+                Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+        };
+    }
+
+    private TeamMemberPerformanceDto teamMemberStats(UserEntity member, Date start, Date end) {
+            List<ClientEntity> memberClients = clientRepository.findByCreatedByAndCreatedDate(
+                    member, start, end
+            );
+
+            TeamMemberPerformanceDto dto = new TeamMemberPerformanceDto();
+            dto.setMemberId(member.getUserId());
+            dto.setMemberName(member.getFirstName() + " " + member.getLastName());
+            dto.setTotalClientsSubmitted(memberClients.size());
+
+            // Grouping by status enum
+            dto.setClientStatus(
+                    memberClients.stream()
+                            .collect(Collectors.groupingBy(
+                                            ClientEntity::getClientStatus,
+                                            Collectors.summingInt(c -> 1)
+                                    )
+                            ));
+
+            return dto;
+        }
 
 
     /**

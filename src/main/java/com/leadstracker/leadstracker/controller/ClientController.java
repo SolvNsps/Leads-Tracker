@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.controller;
 
 import com.leadstracker.leadstracker.DTO.ClientDto;
+import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
@@ -13,10 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
@@ -47,6 +45,11 @@ public class ClientController {
         ClientDto clientDto = modelMapper.map(clientDetails, ClientDto.class);
         clientDto.setCreatedByUserId(creatorUser.getUserId());
 
+        String teamLeadId = creatorUser.getTeamLeadUserId() != null
+                ? creatorUser.getTeamLeadUserId()  // Team Member's lead
+                : creatorUser.getUserId();         // Team Lead (self)
+        clientDto.setTeamLeadId(teamLeadId);
+
         // Saving the client
         ClientDto createdClient = clientService.createClient(clientDto);
         ClientRest clientRest = modelMapper.map(createdClient, ClientRest.class);
@@ -54,4 +57,14 @@ public class ClientController {
         return ResponseEntity.ok(clientRest);
     }
 
-}
+
+    @GetMapping("/team-performance")
+    @PreAuthorize("hasRole('TEAM_LEAD')")
+        public ResponseEntity<TeamPerformanceDto> getTeamOverview(
+                @RequestParam(defaultValue = "week") String duration
+        ) {
+            return ResponseEntity.ok(clientService.getTeamPerformance(duration));
+        }
+    }
+
+

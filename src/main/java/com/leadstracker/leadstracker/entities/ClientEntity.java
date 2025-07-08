@@ -36,7 +36,7 @@ public class ClientEntity implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "team_lead_id", nullable = false)
-    private UserEntity teamLead; // Always points to the lead responsible for the client
+    private UserEntity teamLead; // points to the team lead responsible for the client
 
 
     @Temporal(TemporalType.TIMESTAMP)

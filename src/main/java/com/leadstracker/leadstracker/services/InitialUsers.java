@@ -56,14 +56,14 @@ public class InitialUsers {
             return;
         }
 
-        if (userRepository.findByEmail("godsonsese04@gmail.com") == null) {
+        if (userRepository.findByEmail("lordiatakyi99@gmail.com") == null) {
             UserEntity adminUser = new UserEntity();
             adminUser.setFirstName("admin");
             adminUser.setLastName("admin");
-            adminUser.setEmail("godsonsese04@gmail.com");
+            adminUser.setEmail("lordiatakyi99@gmail.com");
             adminUser.setUserId(utils.generateUserId(30));
             adminUser.setEmailVerificationStatus(true);
-            adminUser.setPassword(bCryptPasswordEncoder.encode("1@Admin+user"));
+            adminUser.setPassword(bCryptPasswordEncoder.encode("Xzibit5!"));
             adminUser.setPhoneNumber("0547091395");
             adminUser.setStaffId(utils.generateUserId(10));
             adminUser.setRole(roleAdmin);
@@ -103,11 +103,11 @@ public class InitialUsers {
             userRepository.save(leadUser);
         }
 
-        if (userRepository.findByEmail("lordiatakyi99@gmail.com") == null) {
+        if (userRepository.findByEmail("godsonsese04@gmail.com") == null) {
             UserEntity teamMemberUser = new UserEntity();
             teamMemberUser.setFirstName("teamMember");
             teamMemberUser.setLastName("teamMember");
-            teamMemberUser.setEmail("lordiatakyi99@gmail.com");
+            teamMemberUser.setEmail("godsonsese04@gmail.com");
             teamMemberUser.setUserId(utils.generateUserId(30));
             teamMemberUser.setEmailVerificationStatus(true);
             teamMemberUser.setPassword(bCryptPasswordEncoder.encode("QA1@gods"));
