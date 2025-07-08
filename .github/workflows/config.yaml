@@ -1,7 +1,5 @@
 on:
-  push:
-    branches:
-      - main  
+  workflow_dispatch:  # Manual trigger
 
 jobs:
   build-test-deploy:
