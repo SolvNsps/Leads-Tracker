@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
-    List<ClientEntity> findByCreatedByAndCreatedDate(UserEntity member, Date start, Date end);
+    List<ClientEntity> findByCreatedByAndCreatedDateBetween(UserEntity member, Date start, Date end);
 
-    List<ClientEntity> findByCreatedByInAndCreatedDate(List<UserEntity> teamMembers, Date date, Date date1);
+    List<ClientEntity> findByCreatedByInAndCreatedDateBetween(List<UserEntity> teamMembers, Date date, Date date1);
 }
