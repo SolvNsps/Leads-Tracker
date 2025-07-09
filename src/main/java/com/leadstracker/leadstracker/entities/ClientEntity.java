@@ -18,6 +18,9 @@ public class ClientEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(nullable = false)
+    private String clientId;
+
     @Column(nullable=false)
     private String firstName;
 
@@ -54,6 +57,14 @@ public class ClientEntity implements Serializable {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
 
     public String getFirstName() {

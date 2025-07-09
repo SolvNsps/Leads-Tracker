@@ -60,12 +60,16 @@ public class WebSecurity {
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Login).permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Forgot_Password_Request).permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Reset_Password).permitAll()
-                        .requestMatchers(HttpMethod.GET, SecurityConstants.view_Users).hasAnyAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, SecurityConstants.view_Users,
+                                SecurityConstants.All_Team_Members).hasAnyAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, SecurityConstants.View_Team_Lead,
+                                SecurityConstants.Members_Under_Lead).hasAnyAuthority("ROLE_ADMIN", "ROLE_TEAM_LEAD")
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_Email).permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Verify_OTP).permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.Resend_OTP).permitAll()
                         .requestMatchers(HttpMethod.DELETE, SecurityConstants.Delete_User).hasAnyAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, SecurityConstants.Edit_Users).hasAnyAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, SecurityConstants.Member_Under_Lead).permitAll()
 
                         .anyRequest().authenticated())
 

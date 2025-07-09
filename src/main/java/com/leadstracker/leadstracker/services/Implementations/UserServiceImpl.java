@@ -404,9 +404,10 @@ public class UserServiceImpl implements UserService {
 
         // Setting password and other defaults
         String rawPassword = utils.generateDefaultPassword();
-        userEntity.setPassword(bCryptPasswordEncoder.encode(rawPassword));
+//        userEntity.setPassword(bCryptPasswordEncoder.encode(rawPassword));
         userEntity.setEmailVerificationStatus(true);
         userEntity.setDefaultPassword(true);
+        userEntity.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
 
         UserEntity savedUser = userRepository.save(userEntity);
         UserDto responseDto = modelMapper.map(savedUser, UserDto.class);

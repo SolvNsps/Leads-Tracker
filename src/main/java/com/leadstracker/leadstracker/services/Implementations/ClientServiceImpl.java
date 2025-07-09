@@ -1,13 +1,12 @@
 package com.leadstracker.leadstracker.services.Implementations;
 
-import com.leadstracker.leadstracker.DTO.ClientDto;
-import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
-import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
-import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.ClientRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.response.Statuses;
+import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +36,9 @@ public class ClientServiceImpl implements ClientService {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    Utils utils;
+
 
     /**
      * @param clientDto
@@ -51,7 +53,7 @@ public class ClientServiceImpl implements ClientService {
 
         String creatorRole = creatorEntity.getRole().getName();
 
-        if (!creatorRole.equals("TEAM_LEAD") && !creatorRole.equals("TEAM_MEMBER")) {
+        if (!creatorRole.equals("ROLE_TEAM_LEAD") && !creatorRole.equals("ROLE_TEAM_MEMBER")) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized to create client.");
         }
 
@@ -59,9 +61,11 @@ public class ClientServiceImpl implements ClientService {
 
         // Setting the creator
         clientEntity.setCreatedBy(creatorEntity);
+        clientEntity.setClientId(utils.generateUserId(30));
+        clientEntity.setClientStatus(Statuses.PENDING);
 
         // Setting the team lead
-        if (creatorRole.equals("TEAM_LEAD")) {
+        if (creatorRole.equals("ROLE_TEAM_LEAD")) {
             clientEntity.setTeamLead(creatorEntity); // Team Lead created the client
         } else {
             if (creatorEntity.getTeamLead() == null) {
@@ -153,12 +157,17 @@ public class ClientServiceImpl implements ClientService {
 
 
     /**
-     * @param username
+     * @param email
      * @return
      * @throws UsernameNotFoundException
      */
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return null;
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        UserEntity userEntity = userRepository.findByEmail(email);
+        System.out.println("user entity :"+ userEntity);
+
+        if (userEntity == null) throw new UsernameNotFoundException(email);
+
+        return new UserPrincipal(userEntity);
     }
 }

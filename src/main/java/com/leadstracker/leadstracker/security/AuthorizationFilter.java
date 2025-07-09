@@ -89,13 +89,13 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
         }
 
         System.out.println("Token granted authorities: " + grantedAuthorities);
-        return new UsernamePasswordAuthenticationToken(user, null, grantedAuthorities);
+//       return new UsernamePasswordAuthenticationToken(user, null, grantedAuthorities);
 
-
-//        UserEntity userEntity = userRepository.findByEmail(user);
-//        UserPrincipal userPrincipal = new UserPrincipal(userEntity);
 //
-//        return new UsernamePasswordAuthenticationToken(user, null, userPrincipal.getAuthorities());
+        UserEntity userEntity = userRepository.findByEmail(user);
+        UserPrincipal userPrincipal = new UserPrincipal(userEntity);
+
+        return new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
     }
 }
 

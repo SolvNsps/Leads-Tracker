@@ -10,6 +10,7 @@ public class ClientDto implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private long id;
+    private String clientId;
     private String firstName;
     private String lastName;
     private String phoneNumber;
@@ -26,6 +27,14 @@ public class ClientDto implements Serializable {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
 
     public String getFirstName() {

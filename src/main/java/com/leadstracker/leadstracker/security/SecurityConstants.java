@@ -31,6 +31,10 @@ public class SecurityConstants {
     public static final String Delete_User = "/api/v1/leads/delete/{id}";
     public static final String Resend_OTP = "/api/v1/leads/resend-otp";
     public static final String view_Users = "/api/v1/leads/**";
+    public static final String View_Team_Lead = "/team-leads/{id}";
+    public static final String All_Team_Members = "/api/v1/leads/team-members";
+    public static final String Members_Under_Lead = "/api/v1/leads/team-leads/{id}/members";
+    public static final String Member_Under_Lead = "api/v1/leads/team-leads/{userId}/members/{memberId}";
     public static final String Edit_Users = "/api/v1/leads/{id}";
 
 

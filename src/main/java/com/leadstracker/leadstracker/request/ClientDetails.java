@@ -40,4 +40,5 @@ public class ClientDetails {
     public void setGPSLocation(String GPSLocation) {
         this.GPSLocation = GPSLocation;
     }
+
 }
