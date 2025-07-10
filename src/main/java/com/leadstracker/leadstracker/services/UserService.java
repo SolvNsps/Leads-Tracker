@@ -9,7 +9,7 @@ import java.util.Map;
 
 public interface UserService extends UserDetailsService {
 
-    UserDto getUserByUserId(String id);
+    UserDto getUserByUserId(String userId);
 
     UserDto getUser(String userName);
 

@@ -58,13 +58,22 @@ public class ClientController {
     }
 
 
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/team-performance")
-    @PreAuthorize("hasRole('TEAM_LEAD')")
-        public ResponseEntity<TeamPerformanceDto> getTeamOverview(
+        public ResponseEntity<TeamPerformanceDto> getTeamOverview(String userId,
                 @RequestParam(defaultValue = "week") String duration
         ) {
-            return ResponseEntity.ok(clientService.getTeamPerformance(duration));
+            return ResponseEntity.ok(clientService.getTeamPerformance(userId, duration));
         }
+
+
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteClient(@PathVariable String id) {
+        clientService.deleteClient(id);
+        return ResponseEntity.ok("Client deleted successfully.");
+    }
+
     }
 
 

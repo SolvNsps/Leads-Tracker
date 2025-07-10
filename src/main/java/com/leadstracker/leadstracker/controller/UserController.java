@@ -1,5 +1,7 @@
 package com.leadstracker.leadstracker.controller;
 
+import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
+import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.config.SpringApplicationContext;
@@ -9,6 +11,7 @@ import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.request.*;
 import com.leadstracker.leadstracker.response.*;
 import com.leadstracker.leadstracker.security.SecurityConstants;
+import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.UserService;
 //import jakarta.validation.Valid;
 import io.jsonwebtoken.Jwts;
@@ -46,6 +49,9 @@ public class UserController {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    ClientService clientService;
+
 
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -61,18 +67,25 @@ public class UserController {
 
     }
 
-    //Viewing and managing the data of each team lead
-    @GetMapping(path = "/team-leads/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserRest> getUser(@PathVariable String id) throws Exception {
 
-        UserDto userDto = userService.getUserByUserId(id);
+    //Viewing and managing the data of each team lead
+    @GetMapping(path = "/team-leads/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserRest> getUser(@PathVariable String userId,
+                                            @RequestParam(required = false, defaultValue = "week") String duration) throws Exception {
+
+        UserDto userDto = userService.getUserByUserId(userId);
 
         // Checking that the user has TEAM_LEAD role
-        if (!"TEAM_LEAD".equalsIgnoreCase(userDto.getRole())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(null);
-        }
+//        if (!"ROLE_TEAM_LEAD".equalsIgnoreCase(userDto.getRole())) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                    .body(null);
+//        }
+
+        // Get team performance
+        TeamPerformanceDto performance = clientService.getTeamPerformance(userId, duration);
+
         UserRest userRest = modelMapper.map(userDto, UserRest.class);
+        userRest.setTeamPerformanceDto(performance);
 
         return ResponseEntity.ok(userRest);
     }
@@ -104,11 +117,15 @@ public class UserController {
 
     //Viewing and managing the data of a particular team member under a team lead
     @GetMapping(path = "/team-leads/{userId}/members/{memberId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserRest> getTeamMemberUnderLead(@PathVariable String userId, @PathVariable String memberId) {
+    public ResponseEntity<UserRest> getTeamMemberUnderLead(@PathVariable String userId, @PathVariable String memberId,
+                                                           @RequestParam(required = false) String duration) throws Exception {
 
         UserDto userDto = userService.getMemberUnderLead(userId, memberId);
+        // Get member performance
+        TeamMemberPerformanceDto performance = clientService.getMemberPerformance(memberId, duration);
 
         UserRest userRest = modelMapper.map(userDto, UserRest.class);
+        userRest.setMemberPerformanceDto(performance);
 
         return ResponseEntity.ok(userRest);
     }

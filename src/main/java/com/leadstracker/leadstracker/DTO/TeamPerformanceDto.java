@@ -13,6 +13,7 @@ public class TeamPerformanceDto {
     private double progressPercentage;
     private List<TeamMemberPerformanceDto> teamMembers;
     private Map<Statuses, Integer> clientStatus;
+    private int numberOfTeamMembers;
 
     public String getTeamLeadName() {
         return teamLeadName;
@@ -68,5 +69,13 @@ public class TeamPerformanceDto {
 
     public void setClientStatus(Map<Statuses, Integer> clientStatus) {
         this.clientStatus = clientStatus;
+    }
+
+    public int getNumberOfTeamMembers() {
+        return numberOfTeamMembers;
+    }
+
+    public void setNumberOfTeamMembers(int numberOfTeamMembers) {
+        this.numberOfTeamMembers = numberOfTeamMembers;
     }
 }
