@@ -84,7 +84,7 @@ public class ClientServiceImpl implements ClientService {
         public TeamPerformanceDto getTeamPerformance(String userId, String duration) {
             //Getting team lead and members
             UserEntity teamLead = userRepository.findByUserId(userId);
-            List<UserEntity> teamMembers = userRepository.findByTeamLead(userId);
+            List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
 
             //Calculating date range
             Date[] dateRange = calculateDateRange(duration);

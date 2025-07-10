@@ -484,7 +484,8 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public List<UserEntity> getAllTeamLeads() {
-        return userRepository.findByRole("TEAM_LEAD");
+        RoleEntity role = new  RoleEntity();
+        return userRepository.findByRole(role);
     }
 
 

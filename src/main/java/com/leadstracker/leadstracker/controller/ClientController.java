@@ -32,8 +32,8 @@ public class ClientController {
     @Autowired
     ClientService clientService;
 
+    @PreAuthorize("hasAnyAuthority('ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('TEAM_LEAD', 'TEAM_MEMBER')")
     public ResponseEntity<ClientRest> createClient(
             @RequestBody ClientDetails clientDetails, @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
