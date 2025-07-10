@@ -479,6 +479,14 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
+    /**
+     * @return
+     */
+    @Override
+    public List<UserEntity> getAllTeamLeads() {
+        return userRepository.findByRole("TEAM_LEAD");
+    }
+
 
 }
 

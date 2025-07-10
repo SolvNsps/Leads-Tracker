@@ -67,6 +67,13 @@ public class UserController {
 
     }
 
+    //Viewing all team leads
+    @GetMapping("/team-leads")
+    public ResponseEntity<List<UserEntity>> getAllTeamLeads() {
+        List<UserEntity> teamLeads = userService.getAllTeamLeads();
+        return ResponseEntity.ok(teamLeads);
+    }
+
 
     //Viewing and managing the data of each team lead
     @GetMapping(path = "/team-leads/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)

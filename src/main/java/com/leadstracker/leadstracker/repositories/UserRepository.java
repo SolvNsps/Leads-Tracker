@@ -31,5 +31,5 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     List<UserEntity> findByTeamLead(String teamLead);
 
-    List<UserEntity> findAllWithRoleLead();
+    List<UserEntity> findByRole(String role);
 }
