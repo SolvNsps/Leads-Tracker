@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -128,7 +129,8 @@ public class ClientServiceImpl implements ClientService {
 
         return new Date[] {
                 Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()),
-                Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+//                Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+                Date.from(endDate.atTime(23,59,59).atZone(ZoneId.systemDefault()).toInstant())
         };
     }
 

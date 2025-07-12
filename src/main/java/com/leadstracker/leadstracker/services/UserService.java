@@ -42,5 +42,5 @@ public interface UserService extends UserDetailsService {
 
     List<UserDto> getAllTeamMembers();
 
-    List<UserEntity> getAllTeamLeads();
+    List<UserDto> getAllTeamLeads();
 }

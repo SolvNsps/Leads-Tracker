@@ -13,8 +13,8 @@ public class UserRest {
     private String phoneNumber;
     private String staffId;
 //    private String teamName; // Optional -  if user is a Team Member
-    private TeamPerformanceDto teamPerformanceDto;
-    private TeamMemberPerformanceDto memberPerformanceDto;
+    private TeamPerformanceDto teamPerformance;
+    private TeamMemberPerformanceDto memberPerformance;
 
 
     public String getUserId() {
@@ -73,19 +73,19 @@ public class UserRest {
         this.staffId = staffId;
     }
 
-    public TeamPerformanceDto getTeamPerformanceDto() {
-        return teamPerformanceDto;
+    public TeamPerformanceDto getTeamPerformance() {
+        return teamPerformance;
     }
 
-    public void setTeamPerformanceDto(TeamPerformanceDto teamPerformanceDto) {
-        this.teamPerformanceDto = teamPerformanceDto;
+    public void setTeamPerformance(TeamPerformanceDto teamPerformance) {
+        this.teamPerformance = teamPerformance;
     }
 
-    public TeamMemberPerformanceDto getMemberPerformanceDto() {
-        return memberPerformanceDto;
+    public TeamMemberPerformanceDto getMemberPerformance() {
+        return memberPerformance;
     }
 
-    public void setMemberPerformanceDto(TeamMemberPerformanceDto memberPerformanceDto) {
-        this.memberPerformanceDto = memberPerformanceDto;
+    public void setMemberPerformance(TeamMemberPerformanceDto memberPerformance) {
+        this.memberPerformance = memberPerformance;
     }
 }

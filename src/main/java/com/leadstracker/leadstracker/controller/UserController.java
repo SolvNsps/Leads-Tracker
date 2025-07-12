@@ -69,9 +69,13 @@ public class UserController {
 
     //Viewing all team leads
     @GetMapping("/team-leads")
-    public ResponseEntity<List<UserEntity>> getAllTeamLeads() {
-        List<UserEntity> teamLeads = userService.getAllTeamLeads();
-        return ResponseEntity.ok(teamLeads);
+    public ResponseEntity<List<UserRest>> getAllTeamLeads() {
+        List<UserDto> teamLeads = userService.getAllTeamLeads();
+
+        List<UserRest> result = teamLeads.stream()
+                .map(user -> modelMapper.map(user, UserRest.class)).toList();
+
+        return ResponseEntity.ok(result);
     }
 
 
@@ -82,7 +86,7 @@ public class UserController {
 
         UserDto userDto = userService.getUserByUserId(userId);
 
-        // Checking that the user has TEAM_LEAD role
+//         Checking that the user has the TEAM_LEAD role
 //        if (!"ROLE_TEAM_LEAD".equalsIgnoreCase(userDto.getRole())) {
 //            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 //                    .body(null);
@@ -92,7 +96,7 @@ public class UserController {
         TeamPerformanceDto performance = clientService.getTeamPerformance(userId, duration);
 
         UserRest userRest = modelMapper.map(userDto, UserRest.class);
-        userRest.setTeamPerformanceDto(performance);
+        userRest.setTeamPerformance(performance);
 
         return ResponseEntity.ok(userRest);
     }
@@ -132,7 +136,7 @@ public class UserController {
         TeamMemberPerformanceDto performance = clientService.getMemberPerformance(memberId, duration);
 
         UserRest userRest = modelMapper.map(userDto, UserRest.class);
-        userRest.setMemberPerformanceDto(performance);
+        userRest.setMemberPerformance(performance);
 
         return ResponseEntity.ok(userRest);
     }
