@@ -1,17 +1,17 @@
 package com.leadstracker.leadstracker.response;
 
 public class ClientRest {
-    private String userId;
+    private String clientId;
     private String firstName;
     private String lastName;
     private String phoneNumber;
 
-    public String getUserId() {
-        return userId;
+    public String getClientId() {
+        return clientId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
 
     public String getFirstName() {

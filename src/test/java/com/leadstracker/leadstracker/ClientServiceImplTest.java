@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker;
 
 import com.leadstracker.leadstracker.DTO.ClientDto;
+import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.RoleEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
@@ -38,6 +39,9 @@ public class ClientServiceImplTest {
     @Mock
     private ModelMapper modelMapper;
 
+    @Mock
+    Utils utils;
+
     private ClientDto clientDto;
     private ClientEntity clientEntity;
     private UserEntity teamLead;
@@ -66,10 +70,10 @@ public class ClientServiceImplTest {
         teamMember.setLastName("User");
 
         teamLeadRole = new RoleEntity();
-        teamLeadRole.setName("TEAM_LEAD");
+        teamLeadRole.setName("ROLE_TEAM_LEAD");
 
         teamMemberRole = new RoleEntity();
-        teamMemberRole.setName("TEAM_MEMBER");
+        teamMemberRole.setName("ROLE_TEAM_MEMBER");
     }
 
     @Test

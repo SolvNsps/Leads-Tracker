@@ -6,6 +6,8 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
 import com.amazonaws.services.simpleemail.model.*;
+import com.leadstracker.leadstracker.entities.ClientEntity;
+import com.leadstracker.leadstracker.entities.UserEntity;
 import org.springframework.stereotype.Service;
 
 @Service("amazonSES")
@@ -154,5 +156,19 @@ public class AmazonSES {
         );
 
         sendSimpleEmail(email, subject, body);
+    }
+
+    public void sendOverdueFollowUpEmail(UserEntity teamLead, ClientEntity client, long daysPending) {
+        String subject = "Follow-up Required: Client " + client.getFirstName() + " Status Overdue";
+
+        String body = "Hello " + teamLead.getFirstName() + ",\n\n" +
+                "This is a reminder that a client assigned to you has remained in the " + client.getClientStatus() +
+                " state for " + daysPending + " days.\n\n" +
+                "Client Name: " + client.getFirstName() + " " + client.getLastName() + "\n" +
+                "Phone Number: " + client.getPhoneNumber() + "\n" +
+                "Status: " + client.getClientStatus() + "\n" +
+                "Date Added: " + client.getCreatedDate() + "\n\n" +
+                "Kind regards,\nLeads Tracker System";
+
     }
 }

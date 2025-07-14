@@ -72,6 +72,21 @@ public class InitialUsers {
 
         }
 
+        if (userRepository.findByEmail("kofisese04@gmail.com") == null) {
+            UserEntity admin3 = new UserEntity();
+            admin3.setFirstName("Kofi");
+            admin3.setLastName("Sese");
+            admin3.setEmail("kofisese04@gmail.com");
+            admin3.setUserId(utils.generateUserId(30));
+            admin3.setEmailVerificationStatus(true);
+            admin3.setPassword(bCryptPasswordEncoder.encode("Kofi+Sese1"));
+            admin3.setPhoneNumber("0547091444");
+            admin3.setStaffId(utils.generateUserId(10));
+            admin3.setRole(roleAdmin);
+
+            userRepository.save(admin3);
+        }
+
         if (userRepository.findByEmail("Devonmario00@gmail.com") == null) {
             UserEntity adminUser2 = new UserEntity();
             adminUser2.setFirstName("Solv");
@@ -117,6 +132,51 @@ public class InitialUsers {
             leadUser.setRole(roleTeamLead);
 
             userRepository.save(leadUser);
+        }
+
+        if (userRepository.findByEmail("samuelali1200@gmail.com") == null) {
+            UserEntity leadUser = new UserEntity();
+            leadUser.setFirstName("Samuel");
+            leadUser.setLastName("Ali");
+            leadUser.setEmail("samuelali1200@gmail.com");
+            leadUser.setUserId(utils.generateUserId(30));
+            leadUser.setEmailVerificationStatus(true);
+            leadUser.setPassword(bCryptPasswordEncoder.encode("1@Jordan"));
+            leadUser.setPhoneNumber("0542121395");
+            leadUser.setStaffId(utils.generateUserId(10));
+            leadUser.setRole(roleTeamLead);
+
+            userRepository.save(leadUser);
+        }
+
+        if (userRepository.findByEmail("melinagreen412121@gmail.com") == null) {
+            UserEntity lead4 = new UserEntity();
+            lead4.setFirstName("Melina");
+            lead4.setLastName("Green");
+            lead4.setEmail("melinagreen412121@gmail.com");
+            lead4.setUserId(utils.generateUserId(30));
+            lead4.setEmailVerificationStatus(true);
+            lead4.setPassword(bCryptPasswordEncoder.encode("MellyGreen1!"));
+            lead4.setPhoneNumber("0542132395");
+            lead4.setStaffId(utils.generateUserId(10));
+            lead4.setRole(roleTeamLead);
+
+            userRepository.save(lead4);
+        }
+
+        if (userRepository.findByEmail("jakeskyei69@gmail.com") == null) {
+            UserEntity lead5 = new UserEntity();
+            lead5.setFirstName("Jakes");
+            lead5.setLastName("Kyei");
+            lead5.setEmail("jakeskyei69@gmail.com");
+            lead5.setUserId(utils.generateUserId(30));
+            lead5.setEmailVerificationStatus(true);
+            lead5.setPassword(bCryptPasswordEncoder.encode("Jakes69@Jachin"));
+            lead5.setPhoneNumber("0542137645");
+            lead5.setStaffId(utils.generateUserId(10));
+            lead5.setRole(roleTeamLead);
+
+            userRepository.save(lead5);
         }
 
         if (userRepository.findByEmail("godsonsese04@gmail.com") == null) {

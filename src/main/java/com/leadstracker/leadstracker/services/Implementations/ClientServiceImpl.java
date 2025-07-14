@@ -1,13 +1,12 @@
 package com.leadstracker.leadstracker.services.Implementations;
 
-import com.leadstracker.leadstracker.DTO.ClientDto;
-import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
-import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
-import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.ClientRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.response.Statuses;
+import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +19,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +34,9 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    Utils utils;
 
 
     /**
@@ -51,7 +52,7 @@ public class ClientServiceImpl implements ClientService {
 
         String creatorRole = creatorEntity.getRole().getName();
 
-        if (!creatorRole.equals("TEAM_LEAD") && !creatorRole.equals("TEAM_MEMBER")) {
+        if (!creatorRole.equals("ROLE_TEAM_LEAD") && !creatorRole.equals("ROLE_TEAM_MEMBER")) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized to create client.");
         }
 
@@ -59,9 +60,11 @@ public class ClientServiceImpl implements ClientService {
 
         // Setting the creator
         clientEntity.setCreatedBy(creatorEntity);
+        clientEntity.setClientId(utils.generateUserId(30));
+        clientEntity.setClientStatus(Statuses.PENDING);
 
         // Setting the team lead
-        if (creatorRole.equals("TEAM_LEAD")) {
+        if (creatorRole.equals("ROLE_TEAM_LEAD")) {
             clientEntity.setTeamLead(creatorEntity); // Team Lead created the client
         } else {
             if (creatorEntity.getTeamLead() == null) {
@@ -72,6 +75,8 @@ public class ClientServiceImpl implements ClientService {
         }
 
         ClientEntity saved = clientRepository.save(clientEntity);
+
+
         return modelMapper.map(saved, ClientDto.class);
     }
 
@@ -79,10 +84,10 @@ public class ClientServiceImpl implements ClientService {
      * @param duration
      * @return
      */
-        public TeamPerformanceDto getTeamPerformance(String duration) {
+        public TeamPerformanceDto getTeamPerformance(String userId, String duration) {
             //Getting team lead and members
-            UserEntity teamLead = new UserEntity();
-            List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead.getTeamLead());
+            UserEntity teamLead = userRepository.findByUserId(userId);
+            List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
 
             //Calculating date range
             Date[] dateRange = calculateDateRange(duration);
@@ -98,6 +103,7 @@ public class ClientServiceImpl implements ClientService {
             response.setTotalClientsAdded(clients.size());
             response.setTeamTarget(response.getNumberOfClients());
             response.setProgressPercentage(((double) clients.size() / (response.getNumberOfClients())) * 100);
+            response.setNumberOfTeamMembers(teamMembers.size());
 
             //Building the status distribution using the enum
             response.setClientStatus(
@@ -125,8 +131,17 @@ public class ClientServiceImpl implements ClientService {
 
         return new Date[] {
                 Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()),
-                Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+//                Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+                Date.from(endDate.atTime(23,59,59).atZone(ZoneId.systemDefault()).toInstant())
         };
+    }
+
+    @Override
+    public TeamMemberPerformanceDto getMemberPerformance(String memberId, String duration) {
+        UserEntity member = userRepository.findByUserId(memberId);
+        Date[] dateRange = calculateDateRange(duration);
+        return teamMemberStats(member, dateRange[0], dateRange[1]);
+
     }
 
     private TeamMemberPerformanceDto teamMemberStats(UserEntity member, Date start, Date end) {
@@ -153,12 +168,28 @@ public class ClientServiceImpl implements ClientService {
 
 
     /**
-     * @param username
+     * @param email
      * @return
      * @throws UsernameNotFoundException
      */
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return null;
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        UserEntity userEntity = userRepository.findByEmail(email);
+        System.out.println("user entity :"+ userEntity);
+
+        if (userEntity == null) throw new UsernameNotFoundException(email);
+
+        return new UserPrincipal(userEntity);
     }
+
+
+    /**
+     * @param userId
+     */
+    @Override
+    public void deleteClient(String userId) {
+        ClientEntity clientEntity = clientRepository.findByClientId(userId);
+        clientRepository.delete(clientEntity);
+    }
+
 }

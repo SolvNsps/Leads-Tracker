@@ -13,4 +13,6 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
     List<ClientEntity> findByCreatedByAndCreatedDateBetween(UserEntity member, Date start, Date end);
 
     List<ClientEntity> findByCreatedByInAndCreatedDateBetween(List<UserEntity> teamMembers, Date date, Date date1);
+
+    ClientEntity findByClientId(String clientId);
 }

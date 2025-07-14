@@ -1,6 +1,9 @@
 package com.leadstracker.leadstracker.response;
 
 
+import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
+import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
+
 public class UserRest {
     private String userId;
     private String firstName;
@@ -9,7 +12,9 @@ public class UserRest {
     private String role;
     private String phoneNumber;
     private String staffId;
-    private String teamName;        // Optional - show if user is a Team Member
+//    private String teamName; // Optional -  if user is a Team Member
+    private TeamPerformanceDto teamPerformance;
+    private TeamMemberPerformanceDto memberPerformance;
 
 
     public String getUserId() {
@@ -68,11 +73,19 @@ public class UserRest {
         this.staffId = staffId;
     }
 
-    public String getTeamName() {
-        return teamName;
+    public TeamPerformanceDto getTeamPerformance() {
+        return teamPerformance;
     }
 
-    public void setTeamName(String teamName) {
-        this.teamName = teamName;
+    public void setTeamPerformance(TeamPerformanceDto teamPerformance) {
+        this.teamPerformance = teamPerformance;
+    }
+
+    public TeamMemberPerformanceDto getMemberPerformance() {
+        return memberPerformance;
+    }
+
+    public void setMemberPerformance(TeamMemberPerformanceDto memberPerformance) {
+        this.memberPerformance = memberPerformance;
     }
 }

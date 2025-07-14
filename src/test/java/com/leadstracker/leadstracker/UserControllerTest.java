@@ -9,6 +9,7 @@ import com.leadstracker.leadstracker.controller.UserController;
 import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
 import com.leadstracker.leadstracker.request.ResetPassword;
 import com.leadstracker.leadstracker.request.UserDetails;
+import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.UserService;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
@@ -47,6 +48,9 @@ public class UserControllerTest {
 
     @MockitoBean
     UserRepository userRepository;
+
+    @MockitoBean
+    ClientService clientService;
 
     @MockitoBean
     Utils utils;

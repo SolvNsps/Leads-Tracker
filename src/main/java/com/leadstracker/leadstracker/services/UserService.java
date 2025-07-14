@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.services;
 
 import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.entities.UserEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.Date;
@@ -9,7 +10,7 @@ import java.util.Map;
 
 public interface UserService extends UserDetailsService {
 
-    UserDto getUserByUserId(String id);
+    UserDto getUserByUserId(String userId);
 
     UserDto getUser(String userName);
 
@@ -41,4 +42,5 @@ public interface UserService extends UserDetailsService {
 
     List<UserDto> getAllTeamMembers();
 
+    List<UserDto> getAllTeamLeads();
 }

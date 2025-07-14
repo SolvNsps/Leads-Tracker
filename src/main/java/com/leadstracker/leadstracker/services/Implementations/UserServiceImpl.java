@@ -404,9 +404,10 @@ public class UserServiceImpl implements UserService {
 
         // Setting password and other defaults
         String rawPassword = utils.generateDefaultPassword();
-        userEntity.setPassword(bCryptPasswordEncoder.encode(rawPassword));
+//        userEntity.setPassword(bCryptPasswordEncoder.encode(rawPassword));
         userEntity.setEmailVerificationStatus(true);
         userEntity.setDefaultPassword(true);
+        userEntity.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
 
         UserEntity savedUser = userRepository.save(userEntity);
         UserDto responseDto = modelMapper.map(savedUser, UserDto.class);
@@ -477,5 +478,24 @@ public class UserServiceImpl implements UserService {
                 .map(user -> modelMapper.map(user, UserDto.class))
                 .toList();
     }
+
+
+    /**
+     * @return
+     */
+    @Override
+    public List<UserDto> getAllTeamLeads() {
+
+        RoleEntity role = roleRepository.findByName("ROLE_TEAM_LEAD");
+        if (role == null) {
+            role = new RoleEntity("ROLE_TEAM_LEAD");
+            roleRepository.save(role);
+        }
+
+        List<UserEntity> teamLeadEntities = userRepository.findByRole(role);
+        return  teamLeadEntities.stream().map(teamLead -> modelMapper.map(teamLead, UserDto.class))
+                .toList();
+    }
+    
 }
 
