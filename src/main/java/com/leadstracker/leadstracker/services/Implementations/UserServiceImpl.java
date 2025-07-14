@@ -479,6 +479,7 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
+
     /**
      * @return
      */
@@ -495,7 +496,6 @@ public class UserServiceImpl implements UserService {
         return  teamLeadEntities.stream().map(teamLead -> modelMapper.map(teamLead, UserDto.class))
                 .toList();
     }
-
-
+    
 }
 

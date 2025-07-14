@@ -75,6 +75,8 @@ public class ClientServiceImpl implements ClientService {
         }
 
         ClientEntity saved = clientRepository.save(clientEntity);
+
+
         return modelMapper.map(saved, ClientDto.class);
     }
 

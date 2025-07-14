@@ -3,10 +3,12 @@ package com.leadstracker.leadstracker.controller;
 import com.leadstracker.leadstracker.DTO.ClientDto;
 import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
+//import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
+//import com.leadstracker.leadstracker.services.NotificationService;
 import com.leadstracker.leadstracker.services.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 
 @RestController
@@ -31,6 +34,10 @@ public class ClientController {
 
     @Autowired
     ClientService clientService;
+
+//    @Autowired
+//    NotificationService notificationService;
+
 
     @PreAuthorize("hasAnyAuthority('ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -60,11 +67,11 @@ public class ClientController {
 
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/team-performance")
-        public ResponseEntity<TeamPerformanceDto> getTeamOverview(String userId,
-                @RequestParam(defaultValue = "week") String duration
-        ) {
-            return ResponseEntity.ok(clientService.getTeamPerformance(userId, duration));
-        }
+    public ResponseEntity<TeamPerformanceDto> getTeamOverview(String userId,
+                                                              @RequestParam(defaultValue = "week") String duration
+    ) {
+        return ResponseEntity.ok(clientService.getTeamPerformance(userId, duration));
+    }
 
 
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
@@ -74,6 +81,19 @@ public class ClientController {
         return ResponseEntity.ok("Client deleted successfully.");
     }
 
-    }
+//    @PreAuthorize("hasRole('ROLE_ADMIN')")
+//    @GetMapping("/admin/notifications")
+//    public List<NotificationEntity> getAllUnresolvedNotifications() {
+//        return notificationService.getUnresolvedNotifications();
+//    }
+//
+//
+//    @PreAuthorize("hasRole('ROLE_ADMIN')")
+//    @PostMapping("/admin/notifications/{id}/resolve")
+//    public ResponseEntity<String> resolveNotification(@PathVariable Long id) {
+//        notificationService.resolveNotification(id);
+//        return ResponseEntity.ok("Notification resolved");
+//    }
+}
 
 
