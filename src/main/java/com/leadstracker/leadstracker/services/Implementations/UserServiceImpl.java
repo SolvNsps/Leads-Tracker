@@ -477,8 +477,5 @@ public class UserServiceImpl implements UserService {
                 .map(user -> modelMapper.map(user, UserDto.class))
                 .toList();
     }
-
-
-
 }
 
