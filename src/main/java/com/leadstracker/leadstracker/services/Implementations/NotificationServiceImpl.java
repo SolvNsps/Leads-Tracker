@@ -50,7 +50,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         notificationRepository.save(notification);
 
-//        emailService.sendOverdueFollowUpEmail(teamLead, client, daysPending);
+        amazonSES.sendOverdueFollowUpEmail(teamLead, client, daysPending, client.getCreatedBy());
     }
 
     @Override
