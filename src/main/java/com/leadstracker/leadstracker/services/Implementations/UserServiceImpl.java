@@ -109,7 +109,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(String userId, UserDto user) {
-//        UserDto userdto = new UserDto();
 
         UserEntity userEntity = userRepository.findByUserId(userId);
 
@@ -127,11 +126,7 @@ public class UserServiceImpl implements UserService {
         //email
         //staffId
         //phoneNumber
-        // the origin account doesn't get deleted, so make sure you delete it before saving the update
-
         UserEntity updatedUser = userRepository.save(userEntity);
-//        BeanUtils.copyProperties(updatedUser, userdto);
-
         return modelMapper.map(updatedUser, UserDto.class);
     }
 
@@ -167,7 +162,7 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-//        amazonSES.sendPasswordResetRequest(user.getFirstName(), user.getEmail(), token);
+        amazonSES.sendPasswordResetRequest(user.getFirstName(), user.getEmail(), token);
 
         // http://localhost:8080/reset-password?token=xyz123
         System.out.println("Password reset link: http://localhost:8080/reset-password?token=" + token);
@@ -363,7 +358,7 @@ public class UserServiceImpl implements UserService {
         user.setLastOtpResendTime(LocalDateTime.now());
         userRepository.save(user);
 
-//        amazonSES.sendLoginOtpEmail(user.getFirstName(), email, newOtp);
+        amazonSES.sendLoginOtpEmail(user.getFirstName(), email, newOtp);
 
         return Map.of(
                 "status", "SUCCESS",
@@ -441,7 +436,7 @@ public class UserServiceImpl implements UserService {
         UserDto responseDto = modelMapper.map(savedUser, UserDto.class);
         responseDto.setRole(savedUser.getRole().getName().replace("ROLE_", ""));
 
-//       amazonSES.sendOnboardingEmail(responseDto.getEmail(), responseDto.getFirstName(), rawPassword);
+       amazonSES.sendOnboardingEmail(responseDto.getEmail(), responseDto.getFirstName(), rawPassword);
         return responseDto;
     }
 
