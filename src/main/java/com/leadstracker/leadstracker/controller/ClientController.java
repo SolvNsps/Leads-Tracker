@@ -3,12 +3,13 @@ package com.leadstracker.leadstracker.controller;
 import com.leadstracker.leadstracker.DTO.ClientDto;
 import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
-//import com.leadstracker.leadstracker.entities.NotificationEntity;
+import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
+import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
-//import com.leadstracker.leadstracker.services.NotificationService;
+import com.leadstracker.leadstracker.services.NotificationService;
 import com.leadstracker.leadstracker.services.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +36,9 @@ public class ClientController {
     @Autowired
     ClientService clientService;
 
-//    @Autowired
-//    NotificationService notificationService;
+    @Autowired
+    NotificationService notificationService;
+
 
 
     @PreAuthorize("hasAnyAuthority('ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
@@ -45,6 +47,7 @@ public class ClientController {
             @RequestBody ClientDetails clientDetails, @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         // Getting current logged in user
+
         String loggedInEmail = userPrincipal.getUsername();
         UserDto creatorUser = userService.getUserByEmail(loggedInEmail);
 
@@ -81,19 +84,19 @@ public class ClientController {
         return ResponseEntity.ok("Client deleted successfully.");
     }
 
-//    @PreAuthorize("hasRole('ROLE_ADMIN')")
-//    @GetMapping("/admin/notifications")
-//    public List<NotificationEntity> getAllUnresolvedNotifications() {
-//        return notificationService.getUnresolvedNotifications();
-//    }
-//
-//
-//    @PreAuthorize("hasRole('ROLE_ADMIN')")
-//    @PostMapping("/admin/notifications/{id}/resolve")
-//    public ResponseEntity<String> resolveNotification(@PathVariable Long id) {
-//        notificationService.resolveNotification(id);
-//        return ResponseEntity.ok("Notification resolved");
-//    }
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @GetMapping("/admin/notifications")
+    public List<NotificationEntity> getAllUnresolvedNotifications() {
+        return notificationService.getUnresolvedNotifications();
+    }
+
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PostMapping("/admin/notifications/{id}/resolve")
+    public ResponseEntity<String> resolveNotification(@PathVariable Long id) {
+        notificationService.resolveNotification(id);
+        return ResponseEntity.ok("Notification resolved");
+    }
 }
 
 

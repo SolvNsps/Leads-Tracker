@@ -14,10 +14,10 @@ import java.util.Date;
 public class SecurityConstants {
     public static final long Expiration_Time_In_Seconds = 3600000;    // 1 hour
     public static final long Password_Reset_Expiration_Time = 1800000; // 30 minutes for password reset
-    public static final int Max_Temp_Attempts = 3;
-    public static final int Max_Perm_Attempts = 5;
+    public static final int Max_Temp_Attempts = 2;
+    public static final int Max_Perm_Attempts = 4;
     public static final long Temp_Block_Duration = 900000; // temporarily locked for 15 minutes
-    public static final int Max_Resend_Attempts = 3;
+    public static final int Max_Resend_Attempts = 2;
     public static final Duration Resend_Cooldown = Duration.ofMinutes(5);
     public static final String Token_Prefix = "Bearer ";
     public static final String Token_Header = "Authorization";
@@ -34,7 +34,7 @@ public class SecurityConstants {
     public static final String View_Team_Lead = "/api/v1/leads/team-leads/{userId}";
     public static final String All_Team_Members = "/api/v1/leads/team-members";
     public static final String Members_Under_Lead = "/api/v1/leads/team-leads/{id}/members";
-    public static final String Member_Under_Lead = "api/v1/leads/team-leads/{userId}/members/{memberId}";
+    public static final String Member_Under_Lead = "/api/v1/leads/team-leads/{userId}/members/{memberId}";
     public static final String Edit_Users = "/api/v1/leads/{id}";
 
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.response.PerfRest;
 import com.leadstracker.leadstracker.response.UserRest;
 import com.leadstracker.leadstracker.controller.UserController;
 import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
@@ -93,17 +94,17 @@ public class UserControllerTest {
 
     @Test
     @WithMockUser
-    void getUserById_ShouldReturnUserRest() throws Exception {
+    void getUserById_ShouldReturnPerfRest() throws Exception {
         UserDto dto = new UserDto();
         dto.setUserId("abc123");
         dto.setEmail("john@gmail.com");
         dto.setRole("TEAM_LEAD");
 
-        UserRest userRest = new UserRest();
-        userRest.setEmail("john@gmail.com");
+        PerfRest perfRest = new PerfRest();
+        perfRest.setEmail("john@gmail.com");
 
         when(userService.getUserByUserId("abc123")).thenReturn(dto);
-        when(modelMapper.map(dto, UserRest.class)).thenReturn(userRest);
+        when(modelMapper.map(dto, PerfRest.class)).thenReturn(perfRest);
 
         mockMvc.perform(get("/api/v1/leads/team-leads/abc123")
                         .accept(MediaType.APPLICATION_JSON))

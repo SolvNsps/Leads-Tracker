@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -168,19 +169,19 @@ public class ClientServiceImpl implements ClientService {
 
 
     /**
-     * @param email
-     * @return
-     * @throws UsernameNotFoundException
-     */
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        UserEntity userEntity = userRepository.findByEmail(email);
-        System.out.println("user entity :"+ userEntity);
-
-        if (userEntity == null) throw new UsernameNotFoundException(email);
-
-        return new UserPrincipal(userEntity);
-    }
+//     * @param email
+//     * @return
+//     * @throws UsernameNotFoundException
+//     */
+//    @Override
+//    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+//        UserEntity userEntity = userRepository.findByEmail(email);
+//        System.out.println("user entity :"+ userEntity);
+//
+//        if (userEntity == null) throw new UsernameNotFoundException(email);
+//
+//        return new UserPrincipal(userEntity);
+//    }
 
 
     /**

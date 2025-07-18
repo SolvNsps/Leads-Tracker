@@ -5,10 +5,12 @@ import com.leadstracker.leadstracker.DTO.ClientDto;
 import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.controller.ClientController;
+import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
+import com.leadstracker.leadstracker.services.NotificationService;
 import com.leadstracker.leadstracker.services.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,11 +48,9 @@ public class ClientControllerTest {
     @MockitoBean
     private ModelMapper modelMapper;
 
-//    @MockitoBean
-//    private JwtAuthenticationFilter jwtAuthenticationFilter;
-//
-//    @MockitoBean
-//    private CustomUserDetailsService customUserDetailsService;
+    @MockitoBean
+    private NotificationService notificationService;
+
 
     private UserDto mockUser;
     private ClientDto mockClientDto;
@@ -86,7 +86,7 @@ void testCreateClient() throws Exception {
     when(clientService.createClient(any(ClientDto.class))).thenReturn(mockClientDto);
     when(modelMapper.map(any(ClientDto.class), eq(ClientRest.class))).thenReturn(new ClientRest());
 
-    // ✅ Mock the userPrincipal manually
+    //  Mock the userPrincipal manually
     UserPrincipal mockPrincipal = mock(UserPrincipal.class);
     when(mockPrincipal.getUsername()).thenReturn("lead@example.com");
 
@@ -115,6 +115,29 @@ void testCreateClient() throws Exception {
                         .param("duration", "week"))
                 .andExpect(status().isOk())
                 .andReturn();
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testGetAllUnresolvedNotifications() throws Exception {
+        List<NotificationEntity> notifications = List.of(new NotificationEntity(), new NotificationEntity());
+        when(notificationService.getUnresolvedNotifications()).thenReturn(notifications);
+
+        mockMvc.perform(get("/api/v1/clients/admin/notifications"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testResolveNotification() throws Exception {
+        Long notificationId = 1L;
+
+        mockMvc.perform(post("/api/v1/clients/admin/notifications/{id}/resolve", notificationId))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Notification resolved"));
+
+        verify(notificationService, times(1)).resolveNotification(notificationId);
     }
 
 }
