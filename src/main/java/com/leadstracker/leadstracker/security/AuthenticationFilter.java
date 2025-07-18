@@ -102,8 +102,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                     Map.of(
                             "status", "OTP_SENT",
                             "email", userName,
-                            "message", "OTP sent to registered email",
-                            "otp", otp
+                            "message", "OTP sent to registered email"
 //                            "role", userEntity.getRole()
                     )
             );
