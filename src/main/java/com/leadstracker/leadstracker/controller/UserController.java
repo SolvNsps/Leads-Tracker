@@ -10,6 +10,7 @@ import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.request.*;
 import com.leadstracker.leadstracker.response.*;
+import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.SecurityConstants;
 import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.UserService;
@@ -19,6 +20,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -53,7 +55,6 @@ public class UserController {
     ClientService clientService;
 
 
-
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserRest> createUser(@RequestBody UserDetails userDetails) throws Exception {
@@ -81,7 +82,7 @@ public class UserController {
 
     //Viewing and managing the data of each team lead
     @GetMapping(path = "/team-leads/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserRest> getUser(@PathVariable String userId,
+    public ResponseEntity<PerfRest> getUser(@PathVariable String userId,
                                             @RequestParam(required = false, defaultValue = "week") String duration) throws Exception {
 
         UserDto userDto = userService.getUserByUserId(userId);
@@ -95,10 +96,10 @@ public class UserController {
         // Get team performance
         TeamPerformanceDto performance = clientService.getTeamPerformance(userId, duration);
 
-        UserRest userRest = modelMapper.map(userDto, UserRest.class);
-        userRest.setTeamPerformance(performance);
+        PerfRest perfRest = modelMapper.map(userDto, PerfRest.class);
+        perfRest.setTeamPerformance(performance);
 
-        return ResponseEntity.ok(userRest);
+        return ResponseEntity.ok(perfRest);
     }
 
     //Viewing and managing the data of all team members
@@ -128,17 +129,17 @@ public class UserController {
 
     //Viewing and managing the data of a particular team member under a team lead
     @GetMapping(path = "/team-leads/{userId}/members/{memberId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserRest> getTeamMemberUnderLead(@PathVariable String userId, @PathVariable String memberId,
+    public ResponseEntity<PerfRest> getTeamMemberUnderLead(@PathVariable String userId, @PathVariable String memberId,
                                                            @RequestParam(required = false) String duration) throws Exception {
 
         UserDto userDto = userService.getMemberUnderLead(userId, memberId);
         // Get member performance
         TeamMemberPerformanceDto performance = clientService.getMemberPerformance(memberId, duration);
 
-        UserRest userRest = modelMapper.map(userDto, UserRest.class);
-        userRest.setMemberPerformance(performance);
+        PerfRest perfRest = modelMapper.map(userDto, PerfRest.class);
+        perfRest.setMemberPerformance(performance);
 
-        return ResponseEntity.ok(userRest);
+        return ResponseEntity.ok(perfRest);
     }
 
 
@@ -253,29 +254,29 @@ public class UserController {
             );
         }
 
-        // OTP is valid. Generating JWT
+            // OTP is valid. Generating JWT
 //        String jwt = SecurityConstants.generateToken(request.getEmail(), SecurityConstants.Expiration_Time_In_Seconds);
-        String tokenSecret = (String) SpringApplicationContext.getBean("secretKey");
+            String tokenSecret = (String) SpringApplicationContext.getBean("secretKey");
 
-        byte[] secretKeyBytes = Base64.getEncoder().encode(tokenSecret.getBytes());
-        SecretKey secretKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS512.getJcaName());
-        Instant now = Instant.now();
+            byte[] secretKeyBytes = Base64.getEncoder().encode(tokenSecret.getBytes());
+            SecretKey secretKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS512.getJcaName());
+            Instant now = Instant.now();
 
-        long expirationTime = SecurityConstants.Expiration_Time_In_Seconds;
+            long expirationTime = SecurityConstants.Expiration_Time_In_Seconds;
 
-        String token = Jwts.builder()
-                .setSubject(request.getEmail())
-                .claim("roles", userEntity.getRole().getName()) // Add role
-                .claim("authorities", getAuthorityNames(userEntity.getRole().getAuthorities())) // Add authorities
-                .setExpiration(Date.from(now.plusMillis(expirationTime)))
-                .setIssuedAt(Date.from(now))
-                .signWith(secretKey, SignatureAlgorithm.HS512)
-                .compact();
+            String token = Jwts.builder()
+                    .setSubject(request.getEmail())
+                    .claim("roles", userEntity.getRole().getName()) // Add role
+                    .claim("authorities", getAuthorityNames(userEntity.getRole().getAuthorities())) // Add authorities
+                    .setExpiration(Date.from(now.plusMillis(expirationTime)))
+                    .setIssuedAt(Date.from(now))
+                    .signWith(secretKey, SignatureAlgorithm.HS512)
+                    .compact();
 
-        return ResponseEntity.ok(Map.of(
-                "token", token,
-                "status", "LOGIN_SUCCESS"
-        ));
+            return ResponseEntity.ok(Map.of(
+                    "token", token,
+                    "status", "LOGIN_SUCCESS"
+            ));
 
     }
 

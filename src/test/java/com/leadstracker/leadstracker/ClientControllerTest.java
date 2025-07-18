@@ -9,6 +9,7 @@ import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
+import com.leadstracker.leadstracker.services.NotificationService;
 import com.leadstracker.leadstracker.services.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,11 +47,9 @@ public class ClientControllerTest {
     @MockitoBean
     private ModelMapper modelMapper;
 
-//    @MockitoBean
-//    private JwtAuthenticationFilter jwtAuthenticationFilter;
-//
-//    @MockitoBean
-//    private CustomUserDetailsService customUserDetailsService;
+    @MockitoBean
+    private NotificationService notificationService;
+
 
     private UserDto mockUser;
     private ClientDto mockClientDto;
@@ -86,7 +85,7 @@ void testCreateClient() throws Exception {
     when(clientService.createClient(any(ClientDto.class))).thenReturn(mockClientDto);
     when(modelMapper.map(any(ClientDto.class), eq(ClientRest.class))).thenReturn(new ClientRest());
 
-    // ✅ Mock the userPrincipal manually
+    //  Mock the userPrincipal manually
     UserPrincipal mockPrincipal = mock(UserPrincipal.class);
     when(mockPrincipal.getUsername()).thenReturn("lead@example.com");
 

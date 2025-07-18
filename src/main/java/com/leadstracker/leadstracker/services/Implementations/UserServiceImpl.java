@@ -8,18 +8,22 @@ import com.leadstracker.leadstracker.entities.RoleEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.RoleRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -54,6 +58,13 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     BCryptPasswordEncoder bCryptPasswordEncoder;
+
+
+    @Value("${OTP_Default_Value:}")
+    private String otpDefaultValue;
+
+    @Value("${OTP_Default_Boolean_Value:}")
+    private Boolean otpDefaultBooleanValue;
 
 
     @Override
@@ -98,7 +109,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(String userId, UserDto user) {
-        UserDto userdto = new UserDto();
+//        UserDto userdto = new UserDto();
 
         UserEntity userEntity = userRepository.findByUserId(userId);
 
@@ -113,10 +124,15 @@ public class UserServiceImpl implements UserService {
         userEntity.setStaffId(user.getStaffId());
         userEntity.setRole(userEntity.getRole());
 
-        UserEntity updatedUser = userRepository.save(userEntity);
-        BeanUtils.copyProperties(updatedUser, userdto);
+        //email
+        //staffId
+        //phoneNumber
+        // the origin account doesn't get deleted, so make sure you delete it before saving the update
 
-        return userdto;
+        UserEntity updatedUser = userRepository.save(userEntity);
+//        BeanUtils.copyProperties(updatedUser, userdto);
+
+        return modelMapper.map(updatedUser, UserDto.class);
     }
 
     @Override
@@ -151,7 +167,7 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-        amazonSES.sendPasswordResetRequest(user.getFirstName(), user.getEmail(), token);
+//        amazonSES.sendPasswordResetRequest(user.getFirstName(), user.getEmail(), token);
 
         // http://localhost:8080/reset-password?token=xyz123
         System.out.println("Password reset link: http://localhost:8080/reset-password?token=" + token);
@@ -229,6 +245,16 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Account temporarily blocked. Try again in " + remainingTime + " minutes.");
         }
 
+        // Allowing QA default OTP if enabled and matched
+        if (otpDefaultBooleanValue && otpDefaultValue.equals(otp)) {
+            // Resetting failed attempts and unblock the user if previously blocked
+            user.setOtpFailedAttempts(0);
+            user.setOtp(null);
+            user.setTempBlockTime(null);
+            userRepository.save(user);
+            return true;
+        }
+
         // Validate OTP
         if (user.getOtp() == null || !otp.equals(user.getOtp())) {
             user.setOtpFailedAttempts(user.getOtpFailedAttempts() + 1);
@@ -238,14 +264,16 @@ public class UserServiceImpl implements UserService {
                     user.getOtpFailedAttempts() < Max_Perm_Attempts) {
                 user.setTempBlockTime(new Date());
                 userRepository.save(user);
-                throw new RuntimeException("Too many attempts. Account temporarily blocked for 15 minutes.");
+                throw new ResponseStatusException(HttpStatus.LOCKED,
+                        "Too many attempts. Account temporarily blocked for 15 minutes.");
             }
 
             // Permanently locking on the 5th attempt
             if (user.getOtpFailedAttempts() >= Max_Perm_Attempts) {
                 user.setAccountLocked(true);
                 userRepository.save(user);
-                throw new RuntimeException("Too many attempts. Account permanently locked.");
+                throw new ResponseStatusException(HttpStatus.LOCKED,
+                        "Too many attempts. Account permanently locked.");
             }
 
             userRepository.save(user);
@@ -335,7 +363,7 @@ public class UserServiceImpl implements UserService {
         user.setLastOtpResendTime(LocalDateTime.now());
         userRepository.save(user);
 
-        amazonSES.sendLoginOtpEmail(user.getFirstName(), email, newOtp);
+//        amazonSES.sendLoginOtpEmail(user.getFirstName(), email, newOtp);
 
         return Map.of(
                 "status", "SUCCESS",
@@ -413,7 +441,7 @@ public class UserServiceImpl implements UserService {
         UserDto responseDto = modelMapper.map(savedUser, UserDto.class);
         responseDto.setRole(savedUser.getRole().getName().replace("ROLE_", ""));
 
-       amazonSES.sendOnboardingEmail(responseDto.getEmail(), responseDto.getFirstName(), rawPassword);
+//       amazonSES.sendOnboardingEmail(responseDto.getEmail(), responseDto.getFirstName(), rawPassword);
         return responseDto;
     }
 

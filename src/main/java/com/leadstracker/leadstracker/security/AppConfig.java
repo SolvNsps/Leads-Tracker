@@ -19,10 +19,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @Configuration
 public class AppConfig {
 
-    @Value("${aws.secretKey}")
+    @Value("${AWS_SECRET_KEY:}")
     private String awsSecretKey;
 
-    @Value("${aws.accessKey}")
+    @Value("${AWS_ACCESS_KEY:}")
     private String awsAccessKey;
 
     @Bean
@@ -61,7 +61,7 @@ public class AppConfig {
 
 
     @Bean
-    public String secretKey( @Value("${token.secret}") String key) {
+    public String secretKey( @Value("${token.secret:}") String key) {
         return key;
     }
 

@@ -3,6 +3,9 @@ package com.leadstracker.leadstracker.security;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.services.UserService;
+import jakarta.servlet.Filter;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -43,7 +46,7 @@ public class WebSecurity {
 
 
     @Bean
-    SecurityFilterChain configure(HttpSecurity http) throws Exception {
+    SecurityFilterChain configure(HttpSecurity http, String secretKey) throws Exception {
 
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder);
@@ -53,6 +56,8 @@ public class WebSecurity {
         //Customize Login URL path
         AuthenticationFilter authenticationFilter = new AuthenticationFilter(authenticationManager, userRepository);
         authenticationFilter.setFilterProcessesUrl("/leads/login");
+
+
 
         http
                 .cors(Customizer.withDefaults())
@@ -73,8 +78,10 @@ public class WebSecurity {
                         .requestMatchers(HttpMethod.DELETE, SecurityConstants.Delete_User).hasAnyAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, SecurityConstants.Edit_Users).hasAnyAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, SecurityConstants.Member_Under_Lead).permitAll()
+                        .requestMatchers("/error").permitAll()
 
-                        .anyRequest().authenticated())
+                        .anyRequest().authenticated()
+                )
 
                 .authenticationManager(authenticationManager)
                 .addFilter(authenticationFilter)
@@ -85,6 +92,8 @@ public class WebSecurity {
         return http.build();
 
     }
+
+
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

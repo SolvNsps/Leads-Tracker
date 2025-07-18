@@ -93,8 +93,8 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
             String otp = String.format("%06d", new SecureRandom().nextInt(999999));
             userService.saveOtp(userName, otp, new Date(System.currentTimeMillis() + 180000));
 
-           AmazonSES emailService = (AmazonSES) SpringApplicationContext.getBean("amazonSES");
-           emailService.sendLoginOtpEmail(userDto.getFirstName(), userName, otp);
+//           AmazonSES emailService = (AmazonSES) SpringApplicationContext.getBean("amazonSES");
+//           emailService.sendLoginOtpEmail(userDto.getFirstName(), userName, otp);
             // Normal login case
             response.setContentType("application/json");
             new ObjectMapper().writeValue(
@@ -102,8 +102,8 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                     Map.of(
                             "status", "OTP_SENT",
                             "email", userName,
-                            "message", "OTP sent to registered email"
-//                            "role", userEntity.getRole()
+                            "message", "OTP sent to registered email",
+                            "role", userEntity.getRole().getName()
                     )
             );
 

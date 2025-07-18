@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
 @Service
-public interface ClientService extends UserDetailsService {
+public interface ClientService {
     ClientDto createClient(ClientDto clientDto);
 
     TeamPerformanceDto getTeamPerformance(String userId, String duration);
