@@ -177,17 +177,29 @@ public class AmazonSES {
         sendSimpleEmail(email, subject, body);
     }
 
-    public void sendOverdueFollowUpEmail(UserEntity teamLead, ClientEntity client, long daysPending) {
+    public void sendOverdueFollowUpEmail(UserEntity teamLead, ClientEntity client, long daysPending, UserEntity createdBy) {
         String subject = "Follow-up Required: Client " + client.getFirstName() + " Status Overdue";
 
         String body = "Hello " + teamLead.getFirstName() + ",\n\n" +
                 "This is a reminder that a client assigned to you has remained in the " + client.getClientStatus() +
-                " state for " + daysPending + " days.\n\n" +
-                "Client Name: " + client.getFirstName() + " " + client.getLastName() + "\n" +
+                " state beyond the allowed follow-up period.\n\n" +
+                "Below are the client details for your action:\n\n" +
+                "Client Details\n" +
+                "Name: " + client.getFirstName() + " " + client.getLastName() + "\n" +
                 "Phone Number: " + client.getPhoneNumber() + "\n" +
                 "Status: " + client.getClientStatus() + "\n" +
-                "Date Added: " + client.getCreatedDate() + "\n\n" +
-                "Kind regards,\nLeads Tracker System";
+                "Date Added: " + client.getCreatedDate() + "\n" +
+                "Time Since Last Action: " + daysPending + " days\n" +
+                "Forwarded By: " + (createdBy != null ? createdBy.getFirstName() + " " + createdBy.getLastName() : "N/A") + "\n\n" +
+                "Why You’re Receiving This:\n" +
+                "Our records show that no follow-up or status update has been made for this client in the last " + daysPending + " working days. " +
+                "To maintain effective engagement and accurate reporting, we encourage you to follow up promptly.\n\n" +
+                "Next Steps:\n" +
+                "Please log in to your dashboard and review the client’s profile to take appropriate action.\n\n" +
+                "If you’ve already addressed this, you may disregard this notice.\n\n" +
+                "Kind regards,\n" +
+                "System Administrator\n" +
+                "Leads Tracker Team";
 
     }
 }

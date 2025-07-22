@@ -5,6 +5,7 @@ import com.leadstracker.leadstracker.DTO.ClientDto;
 import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.controller.ClientController;
+import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
 import com.leadstracker.leadstracker.security.UserPrincipal;
@@ -114,6 +115,29 @@ void testCreateClient() throws Exception {
                         .param("duration", "week"))
                 .andExpect(status().isOk())
                 .andReturn();
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testGetAllUnresolvedNotifications() throws Exception {
+        List<NotificationEntity> notifications = List.of(new NotificationEntity(), new NotificationEntity());
+        when(notificationService.getUnresolvedNotifications()).thenReturn(notifications);
+
+        mockMvc.perform(get("/api/v1/clients/admin/notifications"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testResolveNotification() throws Exception {
+        Long notificationId = 1L;
+
+        mockMvc.perform(post("/api/v1/clients/admin/notifications/{id}/resolve", notificationId))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Notification resolved"));
+
+        verify(notificationService, times(1)).resolveNotification(notificationId);
     }
 
 }
