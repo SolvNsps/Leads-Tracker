@@ -11,12 +11,20 @@ import com.leadstracker.leadstracker.services.ClientService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
@@ -38,6 +46,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     Utils utils;
+
 
 
     /**
@@ -169,28 +178,69 @@ public class ClientServiceImpl implements ClientService {
 
 
     /**
-//     * @param email
-//     * @return
-//     * @throws UsernameNotFoundException
-//     */
-//    @Override
-//    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-//        UserEntity userEntity = userRepository.findByEmail(email);
-//        System.out.println("user entity :"+ userEntity);
-//
-//        if (userEntity == null) throw new UsernameNotFoundException(email);
-//
-//        return new UserPrincipal(userEntity);
-//    }
-
-
-    /**
-     * @param userId
+     * @param clientId
      */
     @Override
-    public void deleteClient(String userId) {
-        ClientEntity clientEntity = clientRepository.findByClientId(userId);
+    public void deleteClient(String clientId) {
+        ClientEntity clientEntity = clientRepository.findByClientId(clientId);
         clientRepository.delete(clientEntity);
     }
 
+    /**
+     * @param clientId
+     * @param clientDto
+     * @return
+     */
+    @Override
+    public ClientDto updateClient(String clientId, ClientDto clientDto) {
+        ClientEntity clientEntity = clientRepository.findByClientId(clientId);
+
+        if (clientEntity == null) {
+            throw new UsernameNotFoundException("User with ID: " + clientId + "not found");
+        }
+
+        //system preventing status change if internet connection is lost or server error occurs
+        if (!isInternetAvailable()) {
+            throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to update client.");
+        }
+
+        clientEntity.setFirstName(clientDto.getFirstName());
+        clientEntity.setLastName(clientDto.getLastName());
+        clientEntity.setPhoneNumber(clientDto.getPhoneNumber());
+        clientEntity.setGPSLocation(clientDto.getGPSLocation());
+
+        clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
+        clientEntity.setLastUpdated(Date.from(Instant.now()));
+        ClientEntity updatedClient = clientRepository.save(clientEntity);
+
+        return modelMapper.map(updatedClient, ClientDto.class);
+    }
+
+    public boolean isInternetAvailable() {
+        try {
+            // Trying to connect to a reliable server
+            URL url = new URL("https://www.google.com");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(5000); // setting 5 seconds timeout
+            connection.connect();
+
+            return connection.getResponseCode() == 200;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+
+
+    /**
+     * @return
+     */
+    @Override
+    public List<ClientDto> getAllClients() {
+        List<ClientEntity> clients = clientRepository.findAll();
+
+        return clients.stream()
+                .map(user -> modelMapper.map(user, ClientDto.class))
+                .toList();
+    }
 }

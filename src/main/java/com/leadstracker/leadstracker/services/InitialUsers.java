@@ -94,7 +94,7 @@ public class InitialUsers {
             adminUser2.setEmail("Devonmario00@gmail.com");
             adminUser2.setUserId(utils.generateUserId(30));
             adminUser2.setEmailVerificationStatus(true);
-            adminUser2.setPassword(bCryptPasswordEncoder.encode("2New!_Admin"));
+            adminUser2.setPassword(bCryptPasswordEncoder.encode("New!_1Admin"));
             adminUser2.setPhoneNumber("0547099395");
             adminUser2.setStaffId(utils.generateUserId(10));
             adminUser2.setRole(roleAdmin);
@@ -156,7 +156,7 @@ public class InitialUsers {
             lead4.setEmail("melinagreen412121@gmail.com");
             lead4.setUserId(utils.generateUserId(30));
             lead4.setEmailVerificationStatus(true);
-            lead4.setPassword(bCryptPasswordEncoder.encode("MellyGreen1!"));
+            lead4.setPassword(bCryptPasswordEncoder.encode("Xzibit5+"));
             lead4.setPhoneNumber("0542132395");
             lead4.setStaffId(utils.generateUserId(10));
             lead4.setRole(roleTeamLead);

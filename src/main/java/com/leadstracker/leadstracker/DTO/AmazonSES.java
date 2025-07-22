@@ -77,7 +77,7 @@ public class AmazonSES {
     final String LOGIN_OTP_SUBJECT = "Your One-Time Password (OTP) for Leads Tracker";
 
     // HTML body for OTP email
-    final String LOGIN_OTP_HTMLBODY = "<h1>Your Login OTP</h1>"
+    final String LOGIN_OTP_HTMLBODY = "<h1 style=\"color: #2c3e50;\">Your Login OTP</h1>"
             + "<p>Hi, $firstName!</p>"
             + "<p>Your One-Time Password (OTP) for login is: <strong>$otp</strong></p>"
             + "<p>This OTP is valid for 3 minutes. Do not share it with anyone.</p>"

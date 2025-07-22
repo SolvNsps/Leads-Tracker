@@ -255,7 +255,7 @@ public class UserServiceImpl implements UserService {
             user.setOtpFailedAttempts(user.getOtpFailedAttempts() + 1);
 
             // Temporary block on the 3rd attempt
-            if (user.getOtpFailedAttempts() >= Max_Temp_Attempts &&
+            if (user.getOtpFailedAttempts() > Max_Temp_Attempts &&
                     user.getOtpFailedAttempts() < Max_Perm_Attempts) {
                 user.setTempBlockTime(new Date());
                 userRepository.save(user);
@@ -264,11 +264,11 @@ public class UserServiceImpl implements UserService {
             }
 
             // Permanently locking on the 5th attempt
-            if (user.getOtpFailedAttempts() >= Max_Perm_Attempts) {
+            if (user.getOtpFailedAttempts() > Max_Perm_Attempts) {
                 user.setAccountLocked(true);
                 userRepository.save(user);
                 throw new ResponseStatusException(HttpStatus.LOCKED,
-                        "Too many attempts. Account permanently locked.");
+                        "Too many attempts. Account permanently locked. Contact support");
             }
 
             userRepository.save(user);
@@ -334,6 +334,8 @@ public class UserServiceImpl implements UserService {
 
         int attempts = Optional.ofNullable(user.getResendOtpAttempts()).orElse(0);
         LocalDateTime lastResendTime = user.getLastOtpResendTime();
+        int remainingAttempts = Math.max(0, Max_Resend_Attempts - (attempts + 1));
+
 
         //  Validating resend attempts
         if (attempts >= Max_Resend_Attempts &&
@@ -364,7 +366,7 @@ public class UserServiceImpl implements UserService {
                 "status", "SUCCESS",
                 "message", "New OTP sent successfully",
                 "timestamp", LocalDateTime.now(),
-                "details", Map.of("resendAttemptsRemaining", Max_Resend_Attempts - (attempts +1))
+                "resendAttemptsRemaining", remainingAttempts
         );
     }
 

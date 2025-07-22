@@ -2,10 +2,11 @@ package com.leadstracker.leadstracker.entities;
 
 import jakarta.persistence.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
-public class NotificationEntity {
+public class NotificationEntity implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

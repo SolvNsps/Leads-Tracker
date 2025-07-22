@@ -5,6 +5,7 @@ public class ClientDetails {
     private String lastName;
     private String phoneNumber;
     private String GPSLocation;
+    private String clientStatus;
 
     public ClientDetails() {
     }
@@ -41,4 +42,11 @@ public class ClientDetails {
         this.GPSLocation = GPSLocation;
     }
 
+    public String getClientStatus() {
+        return clientStatus;
+    }
+
+    public void setClientStatus(String status) {
+        this.clientStatus = status;
+    }
 }

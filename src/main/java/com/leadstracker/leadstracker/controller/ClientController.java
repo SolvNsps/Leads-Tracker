@@ -5,7 +5,9 @@ import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
+import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
+import com.leadstracker.leadstracker.response.UserRest;
 import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -47,7 +50,6 @@ public class ClientController {
             @RequestBody ClientDetails clientDetails, @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         // Getting current logged in user
-
         String loggedInEmail = userPrincipal.getUsername();
         UserDto creatorUser = userService.getUserByEmail(loggedInEmail);
 
@@ -96,6 +98,33 @@ public class ClientController {
     public ResponseEntity<String> resolveNotification(@PathVariable Long id) {
         notificationService.resolveNotification(id);
         return ResponseEntity.ok("Notification resolved");
+    }
+
+
+
+    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    @PutMapping(path = "/{id}")
+    public ResponseEntity<?> updateClient(@PathVariable String id, @RequestBody ClientDetails clientDetails) throws Exception {
+        ClientDto clientDto = modelMapper.map(clientDetails, ClientDto.class);
+        ClientDto updatedClient = clientService.updateClient(id, clientDto);
+
+        ClientRest clientRest = modelMapper.map(updatedClient, ClientRest.class);
+        return ResponseEntity.ok(Map.of(
+                "user", clientRest,
+                "status", "SUCCESS",
+                "message", "Client status updated successfully"));
+    }
+
+    //Viewing all team leads
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/all-clients")
+    public ResponseEntity<List<ClientRest>> getAllClients() {
+        List<ClientDto> allClients = clientService.getAllClients();
+
+        List<ClientRest> result = allClients.stream()
+                .map(user -> modelMapper.map(user, ClientRest.class)).toList();
+
+        return ResponseEntity.ok(result);
     }
 }
 
