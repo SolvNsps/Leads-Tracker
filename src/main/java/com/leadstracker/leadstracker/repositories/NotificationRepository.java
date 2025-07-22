@@ -12,4 +12,6 @@ import java.util.List;
 @Repository
 public interface NotificationRepository  extends JpaRepository<NotificationEntity, Long> {
     List<NotificationEntity> findByResolvedFalse();
+    List<NotificationEntity> findByTeamLeadIdAndResolvedFalse(String teamLeadId);
+    void alertTeamLead(Long notificationId);
 }

@@ -84,10 +84,13 @@ public class ClientController {
         return ResponseEntity.ok("Client deleted successfully.");
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/admin/notifications")
     public List<NotificationEntity> getAllUnresolvedNotifications() {
         return notificationService.getUnresolvedNotifications();
+
+        //from the figma table, the above notifications should be seen by the admin where we get all clients in the system
+
     }
 
 
@@ -97,6 +100,21 @@ public class ClientController {
         notificationService.resolveNotification(id);
         return ResponseEntity.ok("Notification resolved");
     }
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PostMapping("/admin/notifications/{id}/alert")
+    public ResponseEntity<String> alertTeamLead(@PathVariable Long id) {
+        notificationService.alertTeamLead(id);
+        return ResponseEntity.ok("Team Lead alerted successfully.");
+    }
+
+    @PreAuthorize("hasRole('TEAM_LEAD')")
+    @GetMapping("/notifications/team-lead")
+    public List<NotificationEntity> getTeamLeadNotifications(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        String teamLeadId = userService.getUserByEmail(userPrincipal.getUsername()).getUserId();
+        return notificationService.getNotificationsForTeamLead(teamLeadId);
+    }
+
 }
 
 
