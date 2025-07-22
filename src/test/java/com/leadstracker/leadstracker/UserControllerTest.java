@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.response.GlobalExceptionHandler;
 import com.leadstracker.leadstracker.response.PerfRest;
 import com.leadstracker.leadstracker.response.UserRest;
 import com.leadstracker.leadstracker.controller.UserController;
@@ -55,6 +56,9 @@ public class UserControllerTest {
 
     @MockitoBean
     Utils utils;
+
+    @MockitoBean
+    private GlobalExceptionHandler globalExceptionHandler;
 
     @Autowired
     private ObjectMapper objectMapper;

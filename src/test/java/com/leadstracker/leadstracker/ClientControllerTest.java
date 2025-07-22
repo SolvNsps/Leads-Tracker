@@ -8,6 +8,7 @@ import com.leadstracker.leadstracker.controller.ClientController;
 import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
+import com.leadstracker.leadstracker.response.GlobalExceptionHandler;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.NotificationService;
@@ -50,6 +51,9 @@ public class ClientControllerTest {
 
     @MockitoBean
     private NotificationService notificationService;
+
+    @MockitoBean
+    private GlobalExceptionHandler globalExceptionHandler;
 
 
     private UserDto mockUser;
@@ -174,9 +178,12 @@ void testCreateClient() throws Exception {
         when(userService.getUserByEmail(email)).thenReturn(mockUser);
         when(notificationService.getNotificationsForTeamLead(teamLeadId)).thenReturn(mockNotifications);
 
-        mockMvc.perform(get("/api/v1/clients/notifications/team-lead")
-                        .principal(() -> mockPrincipal.getUsername()))
+        mockMvc.perform(get("/api/v1/clients/team-lead/notifications")
+                        .principal(new UsernamePasswordAuthenticationToken(
+                                mockPrincipal, null, List.of(new SimpleGrantedAuthority("ROLE_TEAM_LEAD"))
+                        )))
                 .andExpect(status().isOk());
+
 
         verify(userService, times(1)).getUserByEmail(email);
         verify(notificationService, times(1)).getNotificationsForTeamLead(teamLeadId);

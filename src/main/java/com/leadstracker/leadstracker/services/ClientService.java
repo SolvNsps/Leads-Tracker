@@ -7,6 +7,8 @@ import com.leadstracker.leadstracker.DTO.UserDto;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public interface ClientService {
     ClientDto createClient(ClientDto clientDto);
@@ -16,4 +18,8 @@ public interface ClientService {
     TeamMemberPerformanceDto getMemberPerformance(String memberId, String duration);
 
     void deleteClient(String userId);
+
+    ClientDto updateClient(String id, ClientDto clientDto);
+
+    List<ClientDto> getAllClients();
 }

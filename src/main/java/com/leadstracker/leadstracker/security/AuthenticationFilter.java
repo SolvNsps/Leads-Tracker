@@ -28,6 +28,8 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
 
+import static com.leadstracker.leadstracker.security.SecurityConstants.Password_Reset_Expiration_Time;
+
 
 public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final UserRepository userRepository;
@@ -73,7 +75,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
             // Save token to the database
             UserEntity userEntity = userRepository.findByEmail(userName);
             userEntity.setPasswordResetToken(token);
-            userEntity.setPasswordResetExpiration(new Date(System.currentTimeMillis() + 1800000)); // 30 min
+            userEntity.setPasswordResetExpiration(new Date(System.currentTimeMillis() + Password_Reset_Expiration_Time)); // 30 min
             userRepository.save(userEntity);
 
             response.setContentType("application/json");
