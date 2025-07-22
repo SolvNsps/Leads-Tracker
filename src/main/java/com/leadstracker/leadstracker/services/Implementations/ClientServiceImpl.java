@@ -9,6 +9,7 @@ import com.leadstracker.leadstracker.response.Statuses;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.retry.annotation.Backoff;
@@ -46,7 +47,8 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     Utils utils;
-
+    @Autowired
+    private AmazonSES amazonSES;
 
 
     /**
@@ -199,6 +201,8 @@ public class ClientServiceImpl implements ClientService {
             throw new UsernameNotFoundException("User with ID: " + clientId + "not found");
         }
 
+        UserDto user = new UserDto();
+
         //system preventing status change if internet connection is lost or server error occurs
         if (!isInternetAvailable()) {
             throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to update client.");
@@ -208,10 +212,12 @@ public class ClientServiceImpl implements ClientService {
         clientEntity.setLastName(clientDto.getLastName());
         clientEntity.setPhoneNumber(clientDto.getPhoneNumber());
         clientEntity.setGPSLocation(clientDto.getGPSLocation());
-
         clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
         clientEntity.setLastUpdated(Date.from(Instant.now()));
+
         ClientEntity updatedClient = clientRepository.save(clientEntity);
+
+//        amazonSES.sendClientUpdateNotificationEmail(user.getEmail(), clientEntity.getFirstName(), user.getTeamLeadUserId(),);
 
         return modelMapper.map(updatedClient, ClientDto.class);
     }
@@ -231,7 +237,6 @@ public class ClientServiceImpl implements ClientService {
     }
 
 
-
     /**
      * @return
      */
@@ -242,5 +247,21 @@ public class ClientServiceImpl implements ClientService {
         return clients.stream()
                 .map(user -> modelMapper.map(user, ClientDto.class))
                 .toList();
+    }
+
+    /**
+     * @param clientId
+     * @return
+     */
+    @Override
+    public ClientDto getClientByClientId(String clientId) {
+        ClientDto returnClient = new ClientDto();
+        ClientEntity clientEntity = clientRepository.findByClientId(clientId);
+
+        if (clientEntity == null) {
+            throw new UsernameNotFoundException("User with ID: " + clientId + "not found");
+        }
+        BeanUtils.copyProperties(clientEntity, returnClient);
+        return returnClient;
     }
 }

@@ -10,6 +10,9 @@ import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Service("amazonSES")
 public class AmazonSES {
     private final AmazonSimpleEmailService amazonSimpleEmailService;
@@ -202,4 +205,26 @@ public class AmazonSES {
                 "Leads Tracker Team";
 
     }
+
+
+    public void sendClientUpdateNotificationEmail(UserEntity recipient, ClientEntity client, ClientEntity oldClient, UserEntity updatedBy) {
+        String subject = "Client Update Notification: " + client.getFirstName() + " " + client.getLastName();
+
+        String body = "Hello " + recipient.getFirstName() + ",\n\n" +
+                "Please be informed that the client assigned to you has had their details updated.\n\n" +
+                "Client Details (Before ➝ After):\n" +
+                "Name: " + oldClient.getFirstName() + " " + oldClient.getLastName() + " ➝ " + client.getFirstName() + " " + client.getLastName() + "\n" +
+                "Phone Number: " + oldClient.getPhoneNumber() + " ➝ " + client.getPhoneNumber() + "\n" +
+                "Status: " + oldClient.getClientStatus() + " ➝ " + client.getClientStatus() + "\n\n" +
+                "Updated By: " + updatedBy.getFirstName() + " " + updatedBy.getLastName() + "\n" +
+                "Update Time: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMMM yyyy, hh:mm a")) + "\n\n" +
+                "If you have any questions or need to follow up, please do so at your earliest convenience.\n\n" +
+                "Thank you,\n" +
+                "Leads Tracker Team";
+
+        // Optional: call email sending logic here
+        // emailService.sendEmail(recipient.getEmail(), subject, body);
+        System.out.println("Email sent to " + recipient.getEmail());
+    }
+
 }

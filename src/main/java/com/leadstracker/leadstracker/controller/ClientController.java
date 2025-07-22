@@ -14,6 +14,7 @@ import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.NotificationService;
 import com.leadstracker.leadstracker.services.UserService;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -98,6 +99,19 @@ public class ClientController {
     public ResponseEntity<String> resolveNotification(@PathVariable Long id) {
         notificationService.resolveNotification(id);
         return ResponseEntity.ok("Notification resolved");
+    }
+
+
+    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    @GetMapping(path = "/{id}")
+
+    public ClientRest getUser(@PathVariable String id) {
+        ClientRest returnClient = new ClientRest();
+
+        ClientDto clientDto = clientService.getClientByClientId(id);
+        BeanUtils.copyProperties(clientDto, returnClient);
+
+        return returnClient;
     }
 
 

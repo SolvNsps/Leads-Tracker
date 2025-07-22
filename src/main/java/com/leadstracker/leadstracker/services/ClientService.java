@@ -22,4 +22,6 @@ public interface ClientService {
     ClientDto updateClient(String id, ClientDto clientDto);
 
     List<ClientDto> getAllClients();
+
+    ClientDto getClientByClientId(String clientId);
 }
