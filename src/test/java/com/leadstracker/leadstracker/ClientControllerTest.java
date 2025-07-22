@@ -8,6 +8,7 @@ import com.leadstracker.leadstracker.controller.ClientController;
 import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
+import com.leadstracker.leadstracker.response.GlobalExceptionHandler;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.NotificationService;
@@ -50,6 +51,9 @@ public class ClientControllerTest {
 
     @MockitoBean
     private NotificationService notificationService;
+
+    @MockitoBean
+    private GlobalExceptionHandler globalExceptionHandler;
 
 
     private UserDto mockUser;
