@@ -36,8 +36,8 @@ public class NotificationServiceImpl implements NotificationService {
                 " was forwarded to " + teamLead.getFirstName());
         notification.setType("FORWARDED_CLIENT");
         notification.setCreatedAt(LocalDateTime.now());
-        notification.setClientId(client.getClientId());
-        notification.setTeamLeadId(teamLead.getUserId());
+        notification.setClient(client);
+        notification.setTeamLead(teamLead);
 
         notificationRepository.save(notification);
     }
@@ -49,8 +49,8 @@ public class NotificationServiceImpl implements NotificationService {
                 " is still in '" + client.getClientStatus() + "' status for " + daysPending + " days.");
         notification.setType("OVERDUE_FOLLOWUP");
         notification.setCreatedAt(LocalDateTime.now());
-        notification.setClientId(client.getClientId());
-        notification.setTeamLeadId(teamLead.getUserId());
+        notification.setClient(client);
+        notification.setTeamLead(teamLead);
 
         notificationRepository.save(notification);
 
@@ -76,7 +76,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
     @Override
     public List<NotificationEntity> getNotificationsForTeamLead(String teamLeadId) {
-        return notificationRepository.findByTeamLeadIdAndResolvedFalse(teamLeadId);
+        return notificationRepository.findByTeamLead_UserIdAndResolvedFalse(teamLeadId);
     }
 
 

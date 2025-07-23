@@ -22,6 +22,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -172,18 +173,27 @@ void testCreateClient() throws Exception {
         mockUser.setUserId(teamLeadId);
         mockUser.setEmail(email);
 
-        List<NotificationEntity> mockNotifications = List.of(new NotificationEntity());
 
+        UserPrincipal mockPrincipal = mock(UserPrincipal.class);
+        when(mockPrincipal.getUsername()).thenReturn(email);
+
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken(mockPrincipal, null, List.of(new SimpleGrantedAuthority("ROLE_TEAM_LEAD"))));
+        SecurityContextHolder.setContext(securityContext);
+
+
+        List<NotificationEntity> mockNotifications = List.of(new NotificationEntity());
         when(userService.getUserByEmail(email)).thenReturn(mockUser);
         when(notificationService.getNotificationsForTeamLead(teamLeadId)).thenReturn(mockNotifications);
 
-        mockMvc.perform(get("/api/v1/clients/notifications/team-lead"))
+        mockMvc.perform(get("/api/v1/clients/notifications/team-lead")
+                        .principal(new UsernamePasswordAuthenticationToken(
+                                mockPrincipal, null, List.of(new SimpleGrantedAuthority("ROLE_TEAM_LEAD"))
+                        )))
                 .andExpect(status().isOk());
 
         verify(userService, times(1)).getUserByEmail(email);
         verify(notificationService, times(1)).getNotificationsForTeamLead(teamLeadId);
     }
-
-
 
 }

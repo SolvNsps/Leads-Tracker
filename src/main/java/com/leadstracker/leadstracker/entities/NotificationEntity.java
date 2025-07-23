@@ -20,11 +20,6 @@ public class NotificationEntity implements Serializable {
 
     private String type; // e.g. FORWARDED_CLIENT, OVERDUE_FOLLOWUP
 
-    private String clientId;
-
-    private String teamLeadId;
-
-
     @ManyToOne
     @JoinColumn(name = "admin_id")
     private UserEntity admin;
@@ -76,22 +71,6 @@ public class NotificationEntity implements Serializable {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getTeamLeadId() {
-        return teamLeadId;
-    }
-
-    public void setTeamLeadId(String teamLeadId) {
-        this.teamLeadId = teamLeadId;
     }
 
     public UserEntity getAdmin() {
