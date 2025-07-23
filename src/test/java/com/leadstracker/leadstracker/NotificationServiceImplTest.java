@@ -15,6 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,24 +39,33 @@ public class NotificationServiceImplTest {
     @Mock
     private UserService userService;
 
+    private NotificationEntity mockNotification;
     private ClientEntity mockClient;
     private UserEntity mockTeamLead;
+    private UserEntity mockForwardedBy;
 
     @BeforeEach
     void setUp() {
-        mockClient = new ClientEntity();
-        mockClient.setClientId("client123");
-        mockClient.setFirstName("John");
-        mockClient.setLastName("Doe");
-        mockClient.setClientStatus(Statuses.PENDING);
-
-        UserEntity createdBy = new UserEntity();
-        createdBy.setFirstName("TeamMember");
-        mockClient.setCreatedBy(createdBy);
+        mockForwardedBy = new UserEntity();
+        mockForwardedBy.setUserId("user1");
+        mockForwardedBy.setFirstName("Peter");
 
         mockTeamLead = new UserEntity();
-        mockTeamLead.setUserId("lead123");
-        mockTeamLead.setFirstName("Jane");
+        mockTeamLead.setUserId("lead1");
+        mockTeamLead.setFirstName("John");
+
+        mockClient = new ClientEntity();
+        mockClient.setClientId("client1");
+        mockClient.setFirstName("Kwame");
+        mockClient.setLastName("Boateng");
+        mockClient.setClientStatus(Statuses.PENDING);
+        mockClient.setTeamLead(mockTeamLead);
+        mockClient.setCreatedBy(mockForwardedBy);
+        mockClient.setLastUpdated(Date.from(LocalDate.now().minusDays(3).atStartOfDay(ZoneId.systemDefault()).toInstant()));
+
+        mockNotification = new NotificationEntity();
+        mockNotification.setId(1L);
+        mockNotification.setClient(mockClient);
     }
 
     @Test
@@ -104,5 +116,51 @@ public class NotificationServiceImplTest {
         assertThrows(RuntimeException.class, () -> notificationService.resolveNotification(1L));
 
         verify(notificationRepository, never()).save(any(NotificationEntity.class));
+    }
+
+    @Test
+    void testGetNotificationsForTeamLead_ShouldReturnNotifications() {
+        // Arrange
+        String teamLeadId = "lead1";
+        List<NotificationEntity> expectedNotifications = List.of(mockNotification);
+
+        when(notificationRepository.findByTeamLeadIdAndResolvedFalse(teamLeadId))
+                .thenReturn(expectedNotifications);
+
+        // Act
+        List<NotificationEntity> result = notificationService.getNotificationsForTeamLead(teamLeadId);
+
+        // Assert
+        assertEquals(expectedNotifications, result);
+        verify(notificationRepository, times(1)).findByTeamLeadIdAndResolvedFalse(teamLeadId);
+    }
+
+    @Test
+    void testAlertTeamLead_ShouldSendEmail() {
+        // Arrange
+        when(notificationRepository.findById(1L)).thenReturn(Optional.of(mockNotification));
+
+        // Act
+        notificationService.alertTeamLead(1L);
+
+        // Assert
+        verify(notificationRepository, times(1)).findById(1L);
+        verify(amazonSES, times(1)).sendOverdueFollowUpEmail(
+                eq(mockTeamLead),
+                eq(mockClient),
+                eq(3L),  // 3 days since last update
+                eq(mockForwardedBy)
+        );
+    }
+
+    @Test
+    void testAlertTeamLead_NotificationNotFound_ShouldThrowException() {
+        // Arrange
+        when(notificationRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> notificationService.alertTeamLead(1L));
+        verify(notificationRepository, times(1)).findById(1L);
+        verifyNoInteractions(amazonSES);
     }
 }

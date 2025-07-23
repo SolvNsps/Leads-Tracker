@@ -29,6 +29,15 @@ public class NotificationEntity implements Serializable {
     @JoinColumn(name = "admin_id")
     private UserEntity admin;
 
+    @ManyToOne
+    @JoinColumn(name = "team_lead_id")
+    private UserEntity teamLead;
+
+    @ManyToOne
+    @JoinColumn(name = "client_id")
+    private ClientEntity client;
+
+
     public Long getId() {
         return id;
     }
@@ -91,5 +100,21 @@ public class NotificationEntity implements Serializable {
 
     public void setAdmin(UserEntity admin) {
         this.admin = admin;
+    }
+
+    public UserEntity getTeamLead() {
+        return teamLead;
+    }
+
+    public void setTeamLead(UserEntity teamLead) {
+        this.teamLead = teamLead;
+    }
+
+    public ClientEntity getClient() {
+        return client;
+    }
+
+    public void setClient(ClientEntity client) {
+        this.client = client;
     }
 }

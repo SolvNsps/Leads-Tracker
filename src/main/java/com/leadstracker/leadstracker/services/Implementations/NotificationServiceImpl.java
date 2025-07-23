@@ -11,7 +11,10 @@ import com.leadstracker.leadstracker.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -54,7 +57,6 @@ public class NotificationServiceImpl implements NotificationService {
 
         amazonSES.sendOverdueFollowUpEmail(teamLead, client, daysPending, client.getCreatedBy());
 
-//        emailService.sendOverdueFollowUpEmail(teamLead, client, daysPending);
 
     }
 
@@ -69,6 +71,31 @@ public class NotificationServiceImpl implements NotificationService {
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
 
         notification.setResolved(true);
+
         notificationRepository.save(notification);
     }
+    @Override
+    public List<NotificationEntity> getNotificationsForTeamLead(String teamLeadId) {
+        return notificationRepository.findByTeamLeadIdAndResolvedFalse(teamLeadId);
+    }
+
+
+    @Override
+    public void alertTeamLead(Long notificationId) {
+        NotificationEntity notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+
+        // Fetch related client and team lead
+        ClientEntity client = notification.getClient();
+        UserEntity teamLead = client.getTeamLead();
+        UserEntity forwardedBy = client.getCreatedBy();
+
+        long daysSinceAction = ChronoUnit.DAYS.between(
+                client.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                LocalDate.now()
+        );
+
+        amazonSES.sendOverdueFollowUpEmail(teamLead, client, daysSinceAction, forwardedBy);
+    }
+
 }

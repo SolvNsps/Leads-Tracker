@@ -144,4 +144,46 @@ void testCreateClient() throws Exception {
         verify(notificationService, times(1)).resolveNotification(notificationId);
     }
 
+    // Test for alertTeamLead endpoint
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testAlertTeamLead() throws Exception {
+        Long notificationId = 1L;
+
+        // Mock behavior
+        doNothing().when(notificationService).alertTeamLead(notificationId);
+
+        mockMvc.perform(post("/api/v1/clients/admin/notifications/{id}/alert", notificationId))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Team Lead alerted successfully."));
+
+        verify(notificationService, times(1)).alertTeamLead(notificationId);
+    }
+
+
+    // Test for getTeamLeadNotifications endpoint
+    @Test
+    @WithMockUser(username = "lead@example.com", roles = "TEAM_LEAD")
+    void testGetTeamLeadNotifications() throws Exception {
+        String email = "lead@example.com";
+        String teamLeadId = "teamLead123";
+
+        UserDto mockUser = new UserDto();
+        mockUser.setUserId(teamLeadId);
+        mockUser.setEmail(email);
+
+        List<NotificationEntity> mockNotifications = List.of(new NotificationEntity());
+
+        when(userService.getUserByEmail(email)).thenReturn(mockUser);
+        when(notificationService.getNotificationsForTeamLead(teamLeadId)).thenReturn(mockNotifications);
+
+        mockMvc.perform(get("/api/v1/clients/notifications/team-lead"))
+                .andExpect(status().isOk());
+
+        verify(userService, times(1)).getUserByEmail(email);
+        verify(notificationService, times(1)).getNotificationsForTeamLead(teamLeadId);
+    }
+
+
+
 }

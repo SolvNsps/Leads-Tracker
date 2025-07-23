@@ -12,4 +12,7 @@ public interface NotificationService {
     void createOverdueFollowUpNotification(ClientEntity client, UserEntity teamLead, long daysPending);
     List<NotificationEntity> getUnresolvedNotifications();
     void resolveNotification(Long notificationId);
+    List<NotificationEntity> getNotificationsForTeamLead(String teamLeadId);
+    void alertTeamLead(Long notificationId);
+
 }
