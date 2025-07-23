@@ -210,7 +210,8 @@ public class AmazonSES {
     public void sendClientUpdateNotificationEmail(UserEntity recipient, ClientEntity client, ClientEntity oldClient, UserEntity updatedBy) {
         String subject = "Client Update Notification: " + client.getFirstName() + " " + client.getLastName();
 
-        String body = "Hello " + recipient.getFirstName() + ",\n\n" +
+        String body =
+                "Hello " + recipient.getFirstName() + ",\n\n" +
                 "Please be informed that the client assigned to you has had their details updated.\n\n" +
                 "Client Details (Before ➝ After):\n" +
                 "Name: " + oldClient.getFirstName() + " " + oldClient.getLastName() + " ➝ " + client.getFirstName() + " " + client.getLastName() + "\n" +
@@ -222,8 +223,7 @@ public class AmazonSES {
                 "Thank you,\n" +
                 "Leads Tracker Team";
 
-        // Optional: call email sending logic here
-        // emailService.sendEmail(recipient.getEmail(), subject, body);
+//        sendEmail(recipient.getEmail(), subject, body);
         System.out.println("Email sent to " + recipient.getEmail());
     }
 

@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.controller;
 
 import com.leadstracker.leadstracker.DTO.ClientDto;
+import com.leadstracker.leadstracker.DTO.NotificationDto;
 import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.entities.NotificationEntity;
@@ -86,11 +87,26 @@ public class ClientController {
         clientService.deleteClient(id);
         return ResponseEntity.ok("Client deleted successfully.");
     }
+//
+//    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
+//    @GetMapping("/admin/notifications")
+//    public List<NotificationEntity> getAllUnresolvedNotifications() {
+//        return notificationService.getUnresolvedNotifications();
+//
+//        //from the figma table, the above notifications should be seen by the admin where we get all clients in the system
+//
+//    }
+
 
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/admin/notifications")
-    public List<NotificationEntity> getAllUnresolvedNotifications() {
-        return notificationService.getUnresolvedNotifications();
+        public ResponseEntity<List<ClientRest>> getUnresolvedNotifications() {
+        List<NotificationDto> client = notificationService.getUnresolvedNotifications();
+
+        List<ClientRest> result = client.stream()
+                .map(user -> modelMapper.map(user, ClientRest.class)).toList();
+
+        return ResponseEntity.ok(result);
 
         //from the figma table, the above notifications should be seen by the admin where we get all clients in the system
 
@@ -108,7 +124,7 @@ public class ClientController {
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
     @GetMapping(path = "/{id}")
 
-    public ClientRest getUser(@PathVariable String id) {
+    public ClientRest getClient(@PathVariable String id) {
         ClientRest returnClient = new ClientRest();
 
         ClientDto clientDto = clientService.getClientByClientId(id);

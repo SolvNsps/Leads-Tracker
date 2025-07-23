@@ -1,10 +1,13 @@
 package com.leadstracker.leadstracker.response;
 
+import java.time.LocalDateTime;
+
 public class ClientRest {
     private String clientId;
     private String firstName;
     private String lastName;
     private String phoneNumber;
+    private LocalDateTime lastUpdated;
 
     public String getClientId() {
         return clientId;
@@ -36,5 +39,13 @@ public class ClientRest {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
     }
 }

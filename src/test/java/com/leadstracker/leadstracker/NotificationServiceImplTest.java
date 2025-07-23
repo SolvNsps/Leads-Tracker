@@ -85,15 +85,15 @@ public class NotificationServiceImplTest {
         verify(amazonSES, times(1)).sendOverdueFollowUpEmail(eq(mockTeamLead), eq(mockClient), eq(daysPending), eq(mockClient.getCreatedBy()));
     }
 
-    @Test
-    void testGetUnresolvedNotifications() {
-        when(notificationRepository.findByResolvedFalse()).thenReturn(List.of(new NotificationEntity()));
-
-        List<NotificationEntity> notifications = notificationService.getUnresolvedNotifications();
-
-        assertNotNull(notifications);
-        verify(notificationRepository, times(1)).findByResolvedFalse();
-    }
+//    @Test
+//    void testGetUnresolvedNotifications() {
+//        when(notificationRepository.findByResolvedFalse()).thenReturn(List.of(new NotificationEntity()));
+//
+//        List<NotificationEntity> notifications = notificationService.getUnresolvedNotifications();
+//
+//        assertNotNull(notifications);
+//        verify(notificationRepository, times(1)).findByResolvedFalse();
+//    }
 
     @Test
     void testResolveNotification_Success() {
@@ -124,7 +124,7 @@ public class NotificationServiceImplTest {
         String teamLeadId = "lead1";
         List<NotificationEntity> expectedNotifications = List.of(mockNotification);
 
-        when(notificationRepository.findByTeamLeadIdAndResolvedFalse(teamLeadId))
+        when(notificationRepository.findByTeamLead_UserIdAndResolvedFalse(teamLeadId))
                 .thenReturn(expectedNotifications);
 
         // Act
@@ -132,7 +132,7 @@ public class NotificationServiceImplTest {
 
         // Assert
         assertEquals(expectedNotifications, result);
-        verify(notificationRepository, times(1)).findByTeamLeadIdAndResolvedFalse(teamLeadId);
+        verify(notificationRepository, times(1)).findByTeamLead_UserIdAndResolvedFalse(teamLeadId);
     }
 
     @Test

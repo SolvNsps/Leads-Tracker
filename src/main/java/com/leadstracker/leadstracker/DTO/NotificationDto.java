@@ -1,16 +1,16 @@
-package com.leadstracker.leadstracker.entities;
+package com.leadstracker.leadstracker.DTO;
 
-import jakarta.persistence.*;
+import com.leadstracker.leadstracker.entities.ClientEntity;
+import com.leadstracker.leadstracker.entities.UserEntity;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@Entity
-public class NotificationEntity implements Serializable {
+public class NotificationDto implements Serializable {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private String message;
 
@@ -22,26 +22,11 @@ public class NotificationEntity implements Serializable {
 
     private String type; // e.g. FORWARDED_CLIENT, OVERDUE_FOLLOWUP
 
-    @ManyToOne
-    @JoinColumn(name = "admin_id")
     private UserEntity admin;
 
-    @ManyToOne
-    @JoinColumn(name = "team_lead_id")
     private UserEntity teamLead;
 
-    @ManyToOne
-    @JoinColumn(name = "client_id")
     private ClientEntity client;
-
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getMessage() {
         return message;
@@ -51,12 +36,20 @@ public class NotificationEntity implements Serializable {
         this.message = message;
     }
 
-    public boolean isResolved() {
-        return resolved;
+    public String getType() {
+        return type;
     }
 
-    public void setResolved(boolean resolved) {
-        this.resolved = resolved;
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -67,12 +60,12 @@ public class NotificationEntity implements Serializable {
         this.createdAt = createdAt;
     }
 
-    public String getType() {
-        return type;
+    public boolean isResolved() {
+        return resolved;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setResolved(boolean resolved) {
+        this.resolved = resolved;
     }
 
     public UserEntity getAdmin() {
@@ -97,13 +90,5 @@ public class NotificationEntity implements Serializable {
 
     public void setClient(ClientEntity client) {
         this.client = client;
-    }
-
-    public LocalDateTime getLastUpdated() {
-        return lastUpdated;
-    }
-
-    public void setLastUpdated(LocalDateTime lastUpdated) {
-        this.lastUpdated = lastUpdated;
     }
 }

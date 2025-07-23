@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
@@ -68,12 +69,14 @@ public class ClientServiceImpl implements ClientService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized to create client.");
         }
 
-        ClientEntity clientEntity = modelMapper.map(clientDto, ClientEntity.class);
+        if (!isInternetAvailable()) {
+            throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to add client.");
+        }
 
-        // Setting the creator
+        ClientEntity clientEntity = modelMapper.map(clientDto, ClientEntity.class);
         clientEntity.setCreatedBy(creatorEntity);
         clientEntity.setClientId(utils.generateUserId(30));
-        clientEntity.setClientStatus(Statuses.PENDING);
+        clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
 
         // Setting the team lead
         if (creatorRole.equals("ROLE_TEAM_LEAD")) {
@@ -193,17 +196,22 @@ public class ClientServiceImpl implements ClientService {
      * @param clientDto
      * @return
      */
+
     @Override
     public ClientDto updateClient(String clientId, ClientDto clientDto) {
         ClientEntity clientEntity = clientRepository.findByClientId(clientId);
 
         if (clientEntity == null) {
-            throw new UsernameNotFoundException("User with ID: " + clientId + "not found");
+            throw new UsernameNotFoundException("User with ID: " + clientId + " not found");
         }
 
-        UserDto user = new UserDto();
+        // Saving a copy of the old client for comparison
+        ClientEntity oldClient = new ClientEntity();
+        oldClient.setFirstName(clientEntity.getFirstName());
+        oldClient.setLastName(clientEntity.getLastName());
+        oldClient.setPhoneNumber(clientEntity.getPhoneNumber());
+        oldClient.setClientStatus(clientEntity.getClientStatus());
 
-        //system preventing status change if internet connection is lost or server error occurs
         if (!isInternetAvailable()) {
             throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to update client.");
         }
@@ -217,10 +225,18 @@ public class ClientServiceImpl implements ClientService {
 
         ClientEntity updatedClient = clientRepository.save(clientEntity);
 
-//        amazonSES.sendClientUpdateNotificationEmail(user.getEmail(), clientEntity.getFirstName(), user.getTeamLeadUserId(),);
+        // Fetching who updated the client (e.g., from security context)
+        String loggedInUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity updatedBy = userRepository.findByEmail(loggedInUsername);
+
+        // Fetching the team member (recipient of the email)
+        UserEntity teamMember = clientEntity.getCreatedBy();
+
+        amazonSES.sendClientUpdateNotificationEmail(teamMember, updatedClient, oldClient, updatedBy);
 
         return modelMapper.map(updatedClient, ClientDto.class);
     }
+
 
     public boolean isInternetAvailable() {
         try {
