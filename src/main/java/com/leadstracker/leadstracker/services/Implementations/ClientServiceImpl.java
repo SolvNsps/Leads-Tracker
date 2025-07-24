@@ -58,7 +58,7 @@ public class ClientServiceImpl implements ClientService {
      */
     @Override
     public ClientDto createClient(ClientDto clientDto) {
-        String creatorUserId = clientDto.getCreatedByUserId();
+        String creatorUserId = clientDto.getCreatedBy().getUserId();
 
         // Fetching the user
         UserEntity creatorEntity = userRepository.findByUserId(creatorUserId);

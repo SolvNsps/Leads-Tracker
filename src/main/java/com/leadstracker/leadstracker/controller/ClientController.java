@@ -24,6 +24,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +49,6 @@ public class ClientController {
     NotificationService notificationService;
 
 
-
     @PreAuthorize("hasAnyAuthority('ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ClientRest> createClient(
@@ -57,7 +60,7 @@ public class ClientController {
 
         // Setting creator in the DTO
         ClientDto clientDto = modelMapper.map(clientDetails, ClientDto.class);
-        clientDto.setCreatedByUserId(creatorUser.getUserId());
+        clientDto.setCreatedBy(creatorUser);
 
         String teamLeadId = creatorUser.getTeamLeadUserId() != null
                 ? creatorUser.getTeamLeadUserId()  // Team Member's lead
@@ -100,7 +103,7 @@ public class ClientController {
 
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/admin/notifications")
-        public ResponseEntity<List<ClientRest>> getUnresolvedNotifications() {
+    public ResponseEntity<List<ClientRest>> getUnresolvedNotifications() {
         List<NotificationDto> client = notificationService.getUnresolvedNotifications();
 
         List<ClientRest> result = client.stream()
@@ -149,7 +152,6 @@ public class ClientController {
     }
 
 
-
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
     @PutMapping(path = "/{id}")
     public ResponseEntity<?> updateClient(@PathVariable String id, @RequestBody ClientDetails clientDetails) throws Exception {
@@ -169,11 +171,42 @@ public class ClientController {
     public ResponseEntity<List<ClientRest>> getAllClients() {
         List<ClientDto> allClients = clientService.getAllClients();
 
-        List<ClientRest> result = allClients.stream()
-                .map(user -> modelMapper.map(user, ClientRest.class)).toList();
+        List<ClientRest> result = allClients.stream().map(dto -> {
+            ClientRest rest = modelMapper.map(dto, ClientRest.class);
 
+            rest.setClientId(dto.getClientId());
+            rest.setFirstName(dto.getFirstName());
+            rest.setLastName(dto.getLastName());
+            rest.setPhoneNumber(dto.getPhoneNumber());
+            rest.setClientStatus(dto.getClientStatus());
+
+            // Convert Date to LocalDateTime
+            if (dto.getCreatedDate() != null) {
+                rest.setCreatedAt(dto.getCreatedDate().toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
+            }
+
+            if (dto.getLastUpdated() != null) {
+                rest.setLastUpdated(dto.getLastUpdated().toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
+
+                // Calculate days since last update
+                long days = ChronoUnit.DAYS.between(
+                        dto.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                        LocalDate.now()
+                );
+                rest.setLastAction(days);
+            }
+
+            // Getting creator
+            if (dto.getCreatedBy() != null) {
+                UserDto creator = dto.getCreatedBy();
+                rest.setCreatedBy(creator.getFirstName() + " " + creator.getLastName());
+            }
+
+            return rest;
+        }).toList();
         return ResponseEntity.ok(result);
     }
 }
-
 

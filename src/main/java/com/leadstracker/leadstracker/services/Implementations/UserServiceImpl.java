@@ -77,6 +77,10 @@ public class UserServiceImpl implements UserService {
             throw new UsernameNotFoundException("User with ID: " + userId + "not found");
         }
         BeanUtils.copyProperties(userEntity, userDto);
+
+        if (userEntity.getRole() != null) {
+            userDto.setRole(userEntity.getRole().getName());
+        }
         return userDto;
 
     }

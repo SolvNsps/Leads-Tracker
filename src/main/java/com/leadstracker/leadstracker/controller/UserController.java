@@ -117,12 +117,16 @@ public class UserController {
 
     //Viewing and managing the data of all the team members under a team lead
     @GetMapping(path = "/team-leads/{id}/members", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<UserRest>> getTeamMembers(@PathVariable String id) {
+    public ResponseEntity<List<PerfRest>> getTeamMembers(@PathVariable String id,
+                                                         @RequestParam(required = false) String duration) {
         List<UserDto> teamMembers = userService.getMembersUnderLead(id);
 
-        List<UserRest> response = teamMembers.stream()
-                .map(dto -> modelMapper.map(dto, UserRest.class))
+        TeamMemberPerformanceDto performance = clientService.getMemberPerformance(id, duration);
+
+        List<PerfRest> response = teamMembers.stream()
+                .map(dto -> modelMapper.map(dto, PerfRest.class))
                 .toList();
+
 
         return ResponseEntity.ok(response);
     }
@@ -309,6 +313,15 @@ public class UserController {
     public ResponseEntity<String> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
         return ResponseEntity.ok("User deleted successfully.");
+    }
+
+    //Getting a user
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserRest> getUserById(@PathVariable String userId) {
+        UserDto userDto = userService.getUserByUserId(userId);
+        UserRest response = modelMapper.map(userDto, UserRest.class);
+        return ResponseEntity.ok(response);
     }
 
 

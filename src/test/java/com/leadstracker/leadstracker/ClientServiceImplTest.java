@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker;
 
 import com.leadstracker.leadstracker.DTO.ClientDto;
+import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.RoleEntity;
@@ -54,7 +55,8 @@ public class ClientServiceImplTest {
         MockitoAnnotations.openMocks(this);
 
         clientDto = new ClientDto();
-        clientDto.setCreatedByUserId("creator-id");
+        UserDto creator = new UserDto();
+        clientDto.setCreatedBy(creator);
 
         clientEntity = new ClientEntity();
         clientEntity.setClientStatus(Statuses.PENDING);
@@ -79,8 +81,11 @@ public class ClientServiceImplTest {
     @Test
     void testCreateClient_AsTeamLead_Success() {
         // Arrange
+        UserDto creator = new UserDto();
+        creator.setUserId("creator-id");
         teamLead.setRole(teamLeadRole);
         clientDto.setClientStatus("PENDING");
+        clientDto.setCreatedBy(creator);
         when(userRepository.findByUserId("creator-id")).thenReturn(teamLead);
         when(modelMapper.map(clientDto, ClientEntity.class)).thenReturn(clientEntity);
         when(clientRepository.save(any(ClientEntity.class))).thenReturn(clientEntity);
@@ -92,15 +97,18 @@ public class ClientServiceImplTest {
         // Assert
         assertNotNull(result);
         verify(clientRepository).save(clientEntity);
-        assertEquals(clientDto.getCreatedByUserId(), result.getCreatedByUserId());
+        assertEquals(clientDto.getCreatedBy(), result.getCreatedBy());
     }
 
     @Test
     void testCreateClient_AsTeamMemberWithTeamLead_Success() {
         // Arrange
+        UserDto creator = new UserDto();
+        creator.setUserId("creator-id");
         teamMember.setRole(teamMemberRole);
         teamMember.setTeamLead(teamLead);
         clientDto.setClientStatus("PENDING");
+        clientDto.setCreatedBy(creator);
 
         when(userRepository.findByUserId("creator-id")).thenReturn(teamMember);
         when(modelMapper.map(clientDto, ClientEntity.class)).thenReturn(clientEntity);
@@ -119,6 +127,9 @@ public class ClientServiceImplTest {
     void testCreateClient_AsTeamMemberWithoutTeamLead_ThrowsException() {
         // Arrange
         teamMember.setRole(teamMemberRole); // no teamLead set
+        UserDto creator = new UserDto();
+        creator.setUserId("creator-id");
+        clientDto.setCreatedBy(creator);
         when(userRepository.findByUserId("creator-id")).thenReturn(teamMember);
         when(modelMapper.map(clientDto, ClientEntity.class)).thenReturn(new ClientEntity());
 
@@ -136,6 +147,9 @@ public class ClientServiceImplTest {
     @Test
     void testCreateClient_AsUnauthorizedRole_ThrowsForbidden() {
         // Arrange
+        UserDto creator = new UserDto();
+        creator.setUserId("creator-id");
+        clientDto.setCreatedBy(creator);
         RoleEntity randomRole = new RoleEntity();
         randomRole.setName("ADMIN");
         teamLead.setRole(randomRole); // not TEAM_LEAD or TEAM_MEMBER

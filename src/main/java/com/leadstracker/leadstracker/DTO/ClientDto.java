@@ -2,6 +2,7 @@ package com.leadstracker.leadstracker.DTO;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 public class ClientDto implements Serializable {
@@ -15,7 +16,7 @@ public class ClientDto implements Serializable {
     private String lastName;
     private String phoneNumber;
     private String GPSLocation;
-    private String createdByUserId;
+    private UserDto createdBy;
     private String teamLeadId;
     private Date createdDate;
     private Date lastUpdated;
@@ -69,12 +70,12 @@ public class ClientDto implements Serializable {
         this.GPSLocation = GPSLocation;
     }
 
-    public String getCreatedByUserId() {
-        return createdByUserId;
+    public UserDto getCreatedBy() {
+        return createdBy;
     }
 
-    public void setCreatedByUserId(String createdByUserId) {
-        this.createdByUserId = createdByUserId;
+    public void setCreatedBy(UserDto createdBy) {
+        this.createdBy = createdBy;
     }
 
     public Date getCreatedDate() {
@@ -117,7 +118,7 @@ public class ClientDto implements Serializable {
                 ", lastName='" + lastName + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", GPSLocation='" + GPSLocation + '\'' +
-                ", createdByUserId=" + createdByUserId +
+                ", createdBy=" + createdBy +
                 ", createdDate=" + createdDate +
                 ", lastUpdated=" + lastUpdated +
                 ", clientStatus=" + clientStatus +

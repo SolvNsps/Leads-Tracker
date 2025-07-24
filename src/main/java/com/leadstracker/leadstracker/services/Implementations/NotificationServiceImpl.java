@@ -79,10 +79,10 @@ public class NotificationServiceImpl implements NotificationService {
     public List<NotificationDto> getUnresolvedNotifications() {
 
         List<NotificationEntity> notificationEntities = notificationRepository.findByResolvedFalse();
-//        ClientEntity client = new ClientEntity();
 
         for (NotificationEntity notification : notificationEntities) {
-            ClientEntity client = notification.getClient(); // get actual client from notification
+            // getting the actual client from notification
+            ClientEntity client = notification.getClient();
             if (client == null || client.getLastUpdated() == null) continue;
 
             long daysPending = ChronoUnit.DAYS.between(
@@ -93,6 +93,7 @@ public class NotificationServiceImpl implements NotificationService {
             if (daysPending > 5 && EnumSet.of(PENDING, INTERESTED, AWAITING_DOCUMENTATION).contains(client.getClientStatus())) {
                 UserEntity teamLead = client.getTeamLead();
 //                notificationService.createOverdueFollowUpNotification(client, teamLead, daysPending);
+//                amazonSES.sendOverdueFollowUpEmail(teamLead, client, daysPending, client.getCreatedBy());
             }
         }
 
