@@ -21,6 +21,7 @@ public class ClientDto implements Serializable {
     private Date createdDate;
     private Date lastUpdated;
     private String clientStatus;
+    private UserDto assignedTo;
 
     public long getId() {
         return id;
@@ -108,6 +109,14 @@ public class ClientDto implements Serializable {
 
     public void setTeamLeadId(String teamLeadId) {
         this.teamLeadId = teamLeadId;
+    }
+
+    public UserDto getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(UserDto assignedTo) {
+        this.assignedTo = assignedTo;
     }
 
     @Override

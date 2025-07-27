@@ -1,9 +1,6 @@
 package com.leadstracker.leadstracker.controller;
 
-import com.leadstracker.leadstracker.DTO.ClientDto;
-import com.leadstracker.leadstracker.DTO.NotificationDto;
-import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
-import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.request.UserDetails;
@@ -24,10 +21,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +44,9 @@ public class ClientController {
     @Autowired
     NotificationService notificationService;
 
+    @Autowired
+    Utils utils;
+
 
     @PreAuthorize("hasAnyAuthority('ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -64,12 +63,33 @@ public class ClientController {
 
         String teamLeadId = creatorUser.getTeamLeadUserId() != null
                 ? creatorUser.getTeamLeadUserId()  // Team Member's lead
-                : creatorUser.getUserId();         // Team Lead (self)
+                : creatorUser.getUserId();         // Team Lead (self)wh
         clientDto.setTeamLeadId(teamLeadId);
 
         // Saving the client
         ClientDto createdClient = clientService.createClient(clientDto);
         ClientRest clientRest = modelMapper.map(createdClient, ClientRest.class);
+
+
+        if (createdClient.getCreatedBy() != null) {
+            UserDto creator = createdClient.getCreatedBy();
+            clientRest.setCreatedBy(creator.getFirstName() + " " + creator.getLastName());
+        }
+
+        if (createdClient.getCreatedDate() != null) {
+            clientRest.setCreatedAt(createdClient.getCreatedDate()
+                    .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
+
+        if (createdClient.getLastUpdated() != null) {
+            clientRest.setLastUpdated(createdClient.getLastUpdated()
+                    .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
+
+        if (createdClient.getAssignedTo() != null) {
+            UserDto teamLead = createdClient.getAssignedTo();
+            clientRest.setAssignedTo(teamLead.getFirstName() + " " + teamLead.getLastName());
+        }
 
         return ResponseEntity.ok(clientRest);
     }
@@ -103,17 +123,47 @@ public class ClientController {
 
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/admin/notifications")
-    public ResponseEntity<List<ClientRest>> getUnresolvedNotifications() {
-        List<NotificationDto> client = notificationService.getUnresolvedNotifications();
+    public ResponseEntity<List<ClientRest>> getOverdueClients() {
+        List<ClientDto> overdueClients = clientService.getOverdueClients();
 
-        List<ClientRest> result = client.stream()
-                .map(user -> modelMapper.map(user, ClientRest.class)).toList();
+        List<ClientRest> result = overdueClients.stream().map(dto -> {
+            ClientRest rest = modelMapper.map(dto, ClientRest.class);
+
+            rest.setClientId(dto.getClientId());
+            rest.setFirstName(dto.getFirstName());
+            rest.setLastName(dto.getLastName());
+            rest.setPhoneNumber(dto.getPhoneNumber());
+            rest.setClientStatus(dto.getClientStatus());
+
+            if (dto.getCreatedDate() != null) {
+                rest.setCreatedAt(dto.getCreatedDate().toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
+            }
+
+            if (dto.getLastUpdated() != null) {
+                rest.setLastUpdated(dto.getLastUpdated().toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
+
+                Instant lastUpdatedInstant = dto.getLastUpdated().toInstant();
+                Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
+
+                rest.setLastAction(utils.getExactDuration(duration));
+            }
+
+            if (dto.getCreatedBy() != null) {
+                rest.setCreatedBy(dto.getCreatedBy().getFirstName() + " " + dto.getCreatedBy().getLastName());
+            }
+
+            if (dto.getAssignedTo() != null) {
+                rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
+            }
+
+            return rest;
+        }).toList();
 
         return ResponseEntity.ok(result);
-
-        //from the figma table, the above notifications should be seen by the admin where we get all clients in the system
-
     }
+
 
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -124,7 +174,8 @@ public class ClientController {
     }
 
 
-    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    //Get a client
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping(path = "/{id}")
 
     public ClientRest getClient(@PathVariable String id) {
@@ -165,13 +216,78 @@ public class ClientController {
                 "message", "Client status updated successfully"));
     }
 
-    //Viewing all team leads
+    //Viewing all clients
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/all-clients")
-    public ResponseEntity<List<ClientRest>> getAllClients() {
-        List<ClientDto> allClients = clientService.getAllClients();
+    public ResponseEntity<List<ClientRest>> getAllClients(@RequestParam(value = "page", defaultValue = "0")
+                                 int page, @RequestParam(value = "limit", defaultValue = "10") int limit) {
 
-        List<ClientRest> result = allClients.stream().map(dto -> {
+        List<ClientRest> clientRest = new ArrayList<>();
+        List<ClientDto> allClients = clientService.getAllClients(page, limit);
+
+        List<ClientRest> result = null;
+        for (ClientDto clientDto : allClients) {
+
+            result = allClients.stream().map(dto -> {
+                ClientRest rest = modelMapper.map(dto, ClientRest.class);
+
+                rest.setClientId(dto.getClientId());
+                rest.setFirstName(dto.getFirstName());
+                rest.setLastName(dto.getLastName());
+                rest.setPhoneNumber(dto.getPhoneNumber());
+                rest.setClientStatus(dto.getClientStatus());
+
+                // Converting Date to LocalDateTime
+                if (dto.getCreatedDate() != null) {
+                    rest.setCreatedAt(dto.getCreatedDate().toInstant()
+                            .atZone(ZoneId.systemDefault()).toLocalDateTime());
+                }
+
+                if (dto.getLastUpdated() != null) {
+                    rest.setLastUpdated(dto.getLastUpdated().toInstant()
+                            .atZone(ZoneId.systemDefault()).toLocalDateTime());
+
+                    // Calculating days since last update
+                    // Converting Date to Instant
+                    Instant lastUpdatedInstant = dto.getLastUpdated().toInstant();
+                    Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
+
+                    String exactDuration = utils.getExactDuration(duration);
+                    rest.setLastAction(exactDuration);
+
+                }
+
+                // Getting creator
+                if (dto.getCreatedBy() != null) {
+                    UserDto creator = dto.getCreatedBy();
+                    rest.setCreatedBy(creator.getFirstName() + " " + creator.getLastName());
+                }
+
+                if(dto.getAssignedTo() !=null) {
+                    UserDto teamLead = dto.getAssignedTo();
+                    rest.setAssignedTo(teamLead.getFirstName() + " " + teamLead.getLastName());
+                }
+
+                return rest;
+            }).toList();
+        }
+        return ResponseEntity.ok(result);
+    }
+
+
+    //getting all clients under a user
+    @GetMapping("/all-clients/{userId}")
+    public ResponseEntity<List<ClientRest>> getMyClients(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "limit", defaultValue = "10") int limit) {
+
+        String email = userPrincipal.getUsername();
+        UserDto currentUser = userService.getUserByEmail(email);
+
+        List<ClientDto> clientDtos = clientService.getClientsUnderUser(currentUser.getUserId(), page, limit);
+
+        List<ClientRest> results = clientDtos.stream().map(dto -> {
             ClientRest rest = modelMapper.map(dto, ClientRest.class);
 
             rest.setClientId(dto.getClientId());
@@ -180,7 +296,6 @@ public class ClientController {
             rest.setPhoneNumber(dto.getPhoneNumber());
             rest.setClientStatus(dto.getClientStatus());
 
-            // Convert Date to LocalDateTime
             if (dto.getCreatedDate() != null) {
                 rest.setCreatedAt(dto.getCreatedDate().toInstant()
                         .atZone(ZoneId.systemDefault()).toLocalDateTime());
@@ -190,23 +305,27 @@ public class ClientController {
                 rest.setLastUpdated(dto.getLastUpdated().toInstant()
                         .atZone(ZoneId.systemDefault()).toLocalDateTime());
 
-                // Calculate days since last update
-                long days = ChronoUnit.DAYS.between(
-                        dto.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-                        LocalDate.now()
-                );
-                rest.setLastAction(days);
+                Instant lastUpdatedInstant = dto.getLastUpdated().toInstant();
+                Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
+
+                String humanReadable = utils.getExactDuration(duration);
+                rest.setLastAction(humanReadable);
             }
 
-            // Getting creator
             if (dto.getCreatedBy() != null) {
-                UserDto creator = dto.getCreatedBy();
-                rest.setCreatedBy(creator.getFirstName() + " " + creator.getLastName());
+                rest.setCreatedBy(dto.getCreatedBy().getFirstName() + " " + dto.getCreatedBy().getLastName());
+            }
+
+            if (dto.getAssignedTo() != null) {
+                rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
             }
 
             return rest;
         }).toList();
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity.ok(results);
     }
+
+
 }
 

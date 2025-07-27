@@ -21,7 +21,11 @@ public interface ClientService {
 
     ClientDto updateClient(String id, ClientDto clientDto);
 
-    List<ClientDto> getAllClients();
+    List<ClientDto> getAllClients(int limit, int page);
 
     ClientDto getClientByClientId(String clientId);
+
+    List<ClientDto> getClientsUnderUser(String userId, int page, int limit);
+
+    List<ClientDto> getOverdueClients();
 }
