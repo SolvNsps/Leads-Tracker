@@ -63,7 +63,7 @@ public class ClientController {
 
         String teamLeadId = creatorUser.getTeamLeadUserId() != null
                 ? creatorUser.getTeamLeadUserId()  // Team Member's lead
-                : creatorUser.getUserId();         // Team Lead (self)wh
+                : creatorUser.getUserId();         // Team Lead (self)
         clientDto.setTeamLeadId(teamLeadId);
 
         // Saving the client
@@ -210,6 +210,26 @@ public class ClientController {
         ClientDto updatedClient = clientService.updateClient(id, clientDto);
 
         ClientRest clientRest = modelMapper.map(updatedClient, ClientRest.class);
+        if (updatedClient.getCreatedBy() != null) {
+            String fullName = updatedClient.getCreatedBy().getFirstName() + " " + updatedClient.getCreatedBy().getLastName();
+            clientRest.setCreatedBy(fullName);
+        }
+
+        if (updatedClient.getAssignedTo() != null) {
+            UserDto teamLead = updatedClient.getAssignedTo();
+            clientRest.setAssignedTo(teamLead.getFirstName() + " " + teamLead.getLastName());
+        }
+
+        if (updatedClient.getCreatedDate() != null) {
+            clientRest.setCreatedAt(updatedClient.getCreatedDate().toInstant()
+                    .atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
+
+        if (updatedClient.getLastUpdated() != null) {
+            clientRest.setLastUpdated(updatedClient.getLastUpdated().toInstant()
+                    .atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
+
         return ResponseEntity.ok(Map.of(
                 "user", clientRest,
                 "status", "SUCCESS",
@@ -295,6 +315,7 @@ public class ClientController {
             rest.setLastName(dto.getLastName());
             rest.setPhoneNumber(dto.getPhoneNumber());
             rest.setClientStatus(dto.getClientStatus());
+            rest.setGpslocation(dto.getGPSLocation());
 
             if (dto.getCreatedDate() != null) {
                 rest.setCreatedAt(dto.getCreatedDate().toInstant()
@@ -313,11 +334,13 @@ public class ClientController {
             }
 
             if (dto.getCreatedBy() != null) {
-                rest.setCreatedBy(dto.getCreatedBy().getFirstName() + " " + dto.getCreatedBy().getLastName());
+                rest.setCreatedBy(dto.getCreatedBy().getFirstName() + " "
+                        + dto.getCreatedBy().getLastName());
             }
 
             if (dto.getAssignedTo() != null) {
-                rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
+                rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " "
+                        + dto.getAssignedTo().getLastName());
             }
 
             return rest;

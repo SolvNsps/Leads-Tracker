@@ -222,6 +222,7 @@ public class ClientServiceImpl implements ClientService {
         oldClient.setLastName(clientEntity.getLastName());
         oldClient.setPhoneNumber(clientEntity.getPhoneNumber());
         oldClient.setClientStatus(clientEntity.getClientStatus());
+        oldClient.setGPSLocation(clientEntity.getGPSLocation());
 
         if (!isInternetAvailable()) {
             throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to update client.");
@@ -229,14 +230,15 @@ public class ClientServiceImpl implements ClientService {
 
         clientEntity.setFirstName(clientDto.getFirstName());
         clientEntity.setLastName(clientDto.getLastName());
-        clientEntity.setPhoneNumber(clientDto.getPhoneNumber());
+//        clientEntity.setPhoneNumber(clientDto.getPhoneNumber());
         clientEntity.setGPSLocation(clientDto.getGPSLocation());
         clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
+        clientEntity.setGPSLocation(clientDto.getGPSLocation());
         clientEntity.setLastUpdated(Date.from(Instant.now()));
 
         ClientEntity updatedClient = clientRepository.save(clientEntity);
 
-        // Fetching who updated the client (e.g., from security context)
+        // Fetching who updated the client
         String loggedInUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity updatedBy = userRepository.findByEmail(loggedInUsername);
 
@@ -363,7 +365,9 @@ public class ClientServiceImpl implements ClientService {
         List<ClientDto> overdueClients = new ArrayList<>();
 
         for (ClientEntity client : allClients) {
-            if (client.getLastUpdated() == null) continue;
+            if (client.getLastUpdated() == null) {
+                continue;
+            }
 
             long daysPending = ChronoUnit.DAYS.between(
                     client.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
