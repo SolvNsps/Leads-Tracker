@@ -19,6 +19,13 @@ public class SecurityConstants {
     public static final long Temp_Block_Duration = 900000; // temporarily locked for 15 minutes
     public static final int Max_Resend_Attempts = 3;
     public static final Duration Resend_Cooldown = Duration.ofMinutes(15);
+
+    public static final long Minute_In_Seconds = 60;
+    public static final long Hour_In_Seconds = 3600;
+    public static final long Day_In_Seconds = 86400;
+    public static final long Month_In_Seconds = 2592000;
+    public static final long Year_In_Seconds = 31536000;
+
     public static final String Token_Prefix = "Bearer ";
     public static final String Token_Header = "Authorization";
     public static final String Token_Secret = "bvgshg73hue7739349nfewywfw9wldsa73waada13948uewjew2d4f5z0s6xv";

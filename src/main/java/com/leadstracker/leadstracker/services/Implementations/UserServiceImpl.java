@@ -162,7 +162,7 @@ public class UserServiceImpl implements UserService {
     }
         String token = utils.generatePasswordResetToken();
         user.setPasswordResetToken(token);
-        user.setPasswordResetExpiration(new Date(System.currentTimeMillis() + 1800000)); //  30 minutes from now
+        user.setPasswordResetExpiration(new Date(System.currentTimeMillis() + Password_Reset_Expiration_Time));
 
         userRepository.save(user);
 

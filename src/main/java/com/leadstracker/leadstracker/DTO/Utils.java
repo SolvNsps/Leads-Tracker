@@ -5,12 +5,14 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Random;
@@ -78,5 +80,30 @@ public class Utils {
     public String generateDefaultPassword() {
         return generatePassword(10);
     }
+
+
+    public String getExactDuration(Duration duration) {
+        long seconds = duration.getSeconds();
+
+        if (seconds < SecurityConstants.Minute_In_Seconds) {
+            return "Just now";
+        }
+        else if (seconds < SecurityConstants.Hour_In_Seconds) {
+            return (seconds / SecurityConstants.Minute_In_Seconds) + " minutes";
+        }
+        else if (seconds < SecurityConstants.Day_In_Seconds) {
+            return (seconds / SecurityConstants.Hour_In_Seconds) + " hours";
+        }
+        else if (seconds < SecurityConstants.Month_In_Seconds) {
+            return (seconds / SecurityConstants.Day_In_Seconds) + " days";
+        }
+        else if (seconds < SecurityConstants.Year_In_Seconds) {
+            return (seconds / SecurityConstants.Month_In_Seconds) + " months";
+        }
+        else {
+            return (seconds / SecurityConstants.Year_In_Seconds) + " years";
+        }
+    }
+
 
 }

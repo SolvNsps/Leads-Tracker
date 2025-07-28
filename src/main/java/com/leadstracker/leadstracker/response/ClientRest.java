@@ -10,8 +10,9 @@ public class ClientRest {
     private String clientStatus;
     private LocalDateTime lastUpdated;
     private LocalDateTime createdAt;
-    private long lastAction;
+    private String lastAction;
     private String createdBy;
+    private String assignedTo;
 
     public String getClientId() {
         return clientId;
@@ -69,11 +70,11 @@ public class ClientRest {
         this.createdAt = createdAt;
     }
 
-    public long getLastAction() {
+    public String getLastAction() {
         return lastAction;
     }
 
-    public void setLastAction(long lastAction) {
+    public void setLastAction(String lastAction) {
         this.lastAction = lastAction;
     }
 
@@ -83,5 +84,13 @@ public class ClientRest {
 
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public String getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(String assignedTo) {
+        this.assignedTo = assignedTo;
     }
 }

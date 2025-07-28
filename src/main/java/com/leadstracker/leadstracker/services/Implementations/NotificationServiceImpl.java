@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -79,6 +80,9 @@ public class NotificationServiceImpl implements NotificationService {
     public List<NotificationDto> getUnresolvedNotifications() {
 
         List<NotificationEntity> notificationEntities = notificationRepository.findByResolvedFalse();
+        System.out.println("Unresolved notifications: " + notificationEntities.size());
+
+        List<NotificationDto> filteredNotifications = new ArrayList<>();
 
         for (NotificationEntity notification : notificationEntities) {
             // getting the actual client from notification
@@ -90,17 +94,16 @@ public class NotificationServiceImpl implements NotificationService {
                     LocalDate.now()
             );
 
-            if (daysPending > 5 && EnumSet.of(PENDING, INTERESTED, AWAITING_DOCUMENTATION).contains(client.getClientStatus())) {
+            if (daysPending > 1 && EnumSet.of(PENDING, INTERESTED, AWAITING_DOCUMENTATION).contains(client.getClientStatus())) {
                 UserEntity teamLead = client.getTeamLead();
 //                notificationService.createOverdueFollowUpNotification(client, teamLead, daysPending);
 //                amazonSES.sendOverdueFollowUpEmail(teamLead, client, daysPending, client.getCreatedBy());
+
+                filteredNotifications.add(modelMapper.map(notification, NotificationDto.class));
             }
         }
 
-
-        return notificationEntities.stream()
-                .map(user -> modelMapper.map(user, NotificationDto.class))
-                .toList();
+        return filteredNotifications;
     }
 
     @Override

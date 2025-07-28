@@ -11,6 +11,9 @@ import com.leadstracker.leadstracker.services.ClientService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -29,9 +32,8 @@ import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -91,8 +93,17 @@ public class ClientServiceImpl implements ClientService {
 
         ClientEntity saved = clientRepository.save(clientEntity);
 
+        // Map back to DTO
+        ClientDto result = modelMapper.map(saved, ClientDto.class);
 
-        return modelMapper.map(saved, ClientDto.class);
+//  Add team lead manually
+        UserDto assignedToDto = modelMapper.map(saved.getTeamLead(), UserDto.class);
+        result.setAssignedTo(assignedToDto);
+
+        return result;
+
+
+//        return modelMapper.map(saved, ClientDto.class);
     }
 
     /**
@@ -257,12 +268,28 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public List<ClientDto> getAllClients() {
-        List<ClientEntity> clients = clientRepository.findAll();
+    public List<ClientDto> getAllClients(int page, int limit) {
+        List<ClientDto> returnUsers = new ArrayList<>();
+        //not necessarily starting the page from 0
+        if (page > 0) {
+            page -= 1;
+        }
+        Pageable pageableRequest = PageRequest.of(page, limit);
+        Page<ClientEntity> usersPage = clientRepository.findAll(pageableRequest);
+        List<ClientEntity> users = usersPage.getContent();
 
-        return clients.stream()
-                .map(user -> modelMapper.map(user, ClientDto.class))
-                .toList();
+        for (ClientEntity clientEntity : users) {
+            ClientDto clientDto = modelMapper.map(clientEntity, ClientDto.class);
+
+            if (clientEntity.getTeamLead() != null) {
+                UserDto teamLeadDto = modelMapper.map(clientEntity.getTeamLead(), UserDto.class);
+                clientDto.setAssignedTo(teamLeadDto);
+            }
+            returnUsers.add(clientDto);
+        }
+
+        return returnUsers;
+
     }
 
     /**
@@ -280,4 +307,89 @@ public class ClientServiceImpl implements ClientService {
         BeanUtils.copyProperties(clientEntity, returnClient);
         return returnClient;
     }
+
+
+    /**
+     * @param userId
+     * @param page
+     * @param limit
+     * @return
+     */
+    @Override
+    public List<ClientDto> getClientsUnderUser(String userId, int page, int limit) {
+        if (page > 0) {
+            page--;
+        }
+
+        Pageable pageable = PageRequest.of(page, limit);
+        UserEntity userEntity = userRepository.findByUserId(userId);
+
+        List<ClientEntity> clients;
+
+        if (userEntity.getRole().getName().equals("ROLE_TEAM_LEAD")) {
+            // Getting clients created by this lead or their team members
+            clients = clientRepository.findByTeamLead(userEntity, pageable);
+        } else {
+            // Getting clients created by team member
+            clients = clientRepository.findByCreatedBy(userEntity, pageable);
+        }
+
+        List<ClientDto> returnList = new ArrayList<>();
+        for (ClientEntity entity : clients) {
+            ClientDto dto = modelMapper.map(entity, ClientDto.class);
+
+            if (entity.getCreatedBy() != null) {
+                dto.setCreatedBy(modelMapper.map(entity.getCreatedBy(), UserDto.class));
+            }
+
+            if (entity.getTeamLead() != null) {
+                dto.setAssignedTo(modelMapper.map(entity.getTeamLead(), UserDto.class));
+            }
+
+            dto.setClientStatus(entity.getClientStatus().toString());
+            returnList.add(dto);
+        }
+
+        return returnList;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public List<ClientDto> getOverdueClients() {
+        List<ClientEntity> allClients = clientRepository.findAll();
+
+        List<ClientDto> overdueClients = new ArrayList<>();
+
+        for (ClientEntity client : allClients) {
+            if (client.getLastUpdated() == null) continue;
+
+            long daysPending = ChronoUnit.DAYS.between(
+                    client.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                    LocalDate.now()
+            );
+
+            if (daysPending > 5 &&
+                    EnumSet.of(Statuses.PENDING, Statuses.INTERESTED, Statuses.AWAITING_DOCUMENTATION)
+                            .contains(client.getClientStatus())) {
+
+                ClientDto dto = modelMapper.map(client, ClientDto.class);
+
+                if (client.getCreatedBy() != null) {
+                    dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
+                }
+
+                if (client.getTeamLead() != null) {
+                    dto.setAssignedTo(modelMapper.map(client.getTeamLead(), UserDto.class));
+                }
+
+                dto.setClientStatus(client.getClientStatus().toString());
+                overdueClients.add(dto);
+            }
+        }
+
+        return overdueClients;
+    }
+
 }
