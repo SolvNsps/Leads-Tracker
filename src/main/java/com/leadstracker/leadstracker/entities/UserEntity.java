@@ -91,6 +91,10 @@ public class UserEntity implements Serializable {
             inverseJoinColumns = @JoinColumn(name = "roles_id", referencedColumnName = "id"))
     private RoleEntity role;
 
+    @ManyToOne
+    @JoinColumn(name = "teams_id")
+    private TeamsEntity team;
+
     public String getPasswordResetToken() {
         return passwordResetToken;
     }
@@ -259,8 +263,6 @@ public class UserEntity implements Serializable {
         this.staffId = staffId;
     }
 
-
-
     public UserEntity getTeamLead() {
         return teamLead;
     }
@@ -275,5 +277,21 @@ public class UserEntity implements Serializable {
 
     public void setTeamMembers(List<UserEntity> teamMembers) {
         this.teamMembers = teamMembers;
+    }
+
+    public List<ClientEntity> getClients() {
+        return clients;
+    }
+
+    public void setClients(List<ClientEntity> clients) {
+        this.clients = clients;
+    }
+
+    public TeamsEntity getTeam() {
+        return team;
+    }
+
+    public void setTeam(TeamsEntity team) {
+        this.team = team;
     }
 }

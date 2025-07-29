@@ -1,5 +1,6 @@
 package com.leadstracker.leadstracker.services;
 
+import com.leadstracker.leadstracker.DTO.TeamDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -43,4 +44,6 @@ public interface UserService extends UserDetailsService {
     List<UserDto> getAllTeamMembers();
 
     List<UserDto> getAllTeamLeads();
+
+    TeamDto createTeam(TeamDto teamDto);
 }

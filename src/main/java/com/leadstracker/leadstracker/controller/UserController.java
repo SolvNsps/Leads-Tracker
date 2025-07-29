@@ -1,9 +1,6 @@
 package com.leadstracker.leadstracker.controller;
 
-import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
-import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
-import com.leadstracker.leadstracker.DTO.UserDto;
-import com.leadstracker.leadstracker.DTO.Utils;
+import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.config.SpringApplicationContext;
 import com.leadstracker.leadstracker.entities.AuthorityEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
@@ -23,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
@@ -63,6 +61,7 @@ public class UserController {
 
         UserDto createdUser = userService.createUser(userDto);
         UserRest userRest = modelMapper.map(createdUser, UserRest.class);
+        userRest.setTeam(userDto.getTeam());
 
         return ResponseEntity.ok(userRest);
 
@@ -325,4 +324,18 @@ public class UserController {
     }
 
 
+    @PostMapping(value = "/team", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createTeam(@RequestBody TeamDetails teamDetails) throws Exception {
+
+        TeamDto teamDto = modelMapper.map(teamDetails, TeamDto.class);
+
+        TeamDto createdTeam = userService.createTeam(teamDto);
+        TeamRest teamRest = modelMapper.map(createdTeam, TeamRest.class);
+
+        return ResponseEntity.ok(Map.of(
+                "teamName", teamRest,
+                "message", "Team created successfully"
+        ));
+
+    }
 }

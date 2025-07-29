@@ -8,7 +8,8 @@ public class UserDetails {
     private String phoneNumber;
     private String staffId;
     private String teamLeadUserId;
-    public String role;
+    private String role;
+    private String team;
 
     public UserDetails() {}
 
@@ -74,5 +75,13 @@ public class UserDetails {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team;
     }
 }

@@ -36,6 +36,8 @@ public class UserDto implements Serializable {
 
     private String role;
 
+    private String team;
+
     @JsonIgnore
     private transient RoleEntity roleEntity;
 
@@ -237,11 +239,21 @@ public class UserDto implements Serializable {
         return roleEntity;
     }
 
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team;
+    }
+
     public void setRoleEntity(RoleEntity roleEntity) {
         this.roleEntity = roleEntity;
         if (roleEntity != null) {
             this.role = roleEntity.getName();
         }
+
+
     }
 
 
