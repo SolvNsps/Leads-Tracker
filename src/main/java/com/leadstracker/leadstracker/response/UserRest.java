@@ -12,6 +12,7 @@ public class UserRest {
     private String role;
     private String phoneNumber;
     private String staffId;
+    private String team;
 //    private String teamName; // Optional -  if user is a Team Member
 //    private TeamPerformanceDto teamPerformance;
 //    private TeamMemberPerformanceDto memberPerformance;
@@ -73,19 +74,11 @@ public class UserRest {
         this.staffId = staffId;
     }
 
-//    public TeamPerformanceDto getTeamPerformance() {
-//        return teamPerformance;
-//    }
+    public String getTeam() {
+        return team;
+    }
 
-//    public void setTeamPerformance(TeamPerformanceDto teamPerformance) {
-//        this.teamPerformance = teamPerformance;
-//    }
-//
-//    public TeamMemberPerformanceDto getMemberPerformance() {
-//        return memberPerformance;
-//    }
-//
-//    public void setMemberPerformance(TeamMemberPerformanceDto memberPerformance) {
-//        this.memberPerformance = memberPerformance;
-//    }
+    public void setTeam(String team) {
+        this.team = team;
+    }
 }

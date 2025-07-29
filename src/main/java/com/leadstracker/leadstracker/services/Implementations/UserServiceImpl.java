@@ -2,11 +2,14 @@ package com.leadstracker.leadstracker.services.Implementations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leadstracker.leadstracker.DTO.AmazonSES;
+import com.leadstracker.leadstracker.DTO.TeamDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.RoleEntity;
+import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.RoleRepository;
+import com.leadstracker.leadstracker.repositories.TeamsRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
@@ -58,6 +61,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Autowired
+    TeamsRepository teamsRepository;
 
 
     @Value("${OTP_Default_Value:}")
@@ -431,6 +437,16 @@ public class UserServiceImpl implements UserService {
             userEntity.setTeamLead(teamLead);
         }
 
+//        //setting team of a user
+        TeamsEntity team = teamsRepository.findByName(userDto.getTeam());
+
+        if (team == null) {
+            throw new RuntimeException("Team not found");
+        }
+
+        UserEntity teamName = modelMapper.map(userDto, UserEntity.class);
+        teamName.setTeam(team);
+
         // Setting password and other defaults
         String rawPassword = utils.generateDefaultPassword();
 //        userEntity.setPassword(bCryptPasswordEncoder.encode(rawPassword));
@@ -525,6 +541,26 @@ public class UserServiceImpl implements UserService {
         return  teamLeadEntities.stream().map(teamLead -> modelMapper.map(teamLead, UserDto.class))
                 .toList();
     }
-    
+
+    /**
+     * @param teamDto
+     * @return
+     */
+    @Override
+    public TeamDto createTeam(TeamDto teamDto) {
+        // Checking if team name already exists
+        if (teamsRepository.findByName(teamDto.getName()) != null) {
+            throw new RuntimeException("Team with this name already exists");
+        }
+
+        TeamsEntity teamEntity = modelMapper.map(teamDto, TeamsEntity.class);
+
+        // Saving the team entity
+        TeamsEntity savedTeam = teamsRepository.save(teamEntity);
+
+        return modelMapper.map(savedTeam, TeamDto.class);
+
+    }
+
 }
 

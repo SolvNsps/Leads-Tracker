@@ -5,8 +5,10 @@ import com.leadstracker.leadstracker.DTO.AmazonSES;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.RoleEntity;
+import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.RoleRepository;
+import com.leadstracker.leadstracker.repositories.TeamsRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.services.Implementations.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +49,9 @@ class UserServiceImplTest {
 
     @Mock
     private RoleRepository roleRepository;
+
+    @Mock
+    private TeamsRepository teamsRepository;
 
 
     @Mock
@@ -89,6 +94,7 @@ class UserServiceImplTest {
         when(bCryptPasswordEncoder.encode(anyString())).thenReturn("encodedPassword");
         userDto.setPhoneNumber("1234567890");
         userDto.setStaffId("123456");
+        userDto.setTeam("Team Alpha");
 
 
         var role = new RoleEntity();
@@ -106,10 +112,15 @@ class UserServiceImplTest {
         mappedDto.setFirstName(userDto.getFirstName());
         mappedDto.setLastName(userDto.getLastName());
 
+        TeamsEntity team = new TeamsEntity();
+        team.setName("Team Alpha");
+        teamsRepository.save(team);
+
         when(modelMapper.map(any(UserEntity.class), eq(UserDto.class)))
                 .thenReturn(mappedDto);
         when(roleRepository.findByName(anyString())).thenReturn(role);
         when(userRepository.save(any(UserEntity.class))).thenReturn(mappedEntity);
+        when(teamsRepository.findByName("Team Alpha")).thenReturn(team);
 
         // Act
         UserDto savedUser = userService.createUser(userDto);
