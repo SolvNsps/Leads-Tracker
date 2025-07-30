@@ -95,6 +95,8 @@ public class UserEntity implements Serializable {
     @JoinColumn(name = "teams_id")
     private TeamsEntity team;
 
+    private LocalDateTime createdDate;
+
     public String getPasswordResetToken() {
         return passwordResetToken;
     }
@@ -293,5 +295,13 @@ public class UserEntity implements Serializable {
 
     public void setTeam(TeamsEntity team) {
         this.team = team;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
     }
 }

@@ -444,8 +444,7 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Team not found");
         }
 
-        UserEntity teamName = modelMapper.map(userDto, UserEntity.class);
-        teamName.setTeam(team);
+        userEntity.setTeam(team);
 
         // Setting password and other defaults
         String rawPassword = utils.generateDefaultPassword();

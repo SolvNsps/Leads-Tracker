@@ -114,7 +114,7 @@ public class UserController {
     }
 
 
-    //Viewing and managing the data of all the team members under a team lead
+    //Viewing and managing the performance of all the team members under a team lead
     @GetMapping(path = "/team-leads/{id}/members", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<PerfRest>> getTeamMembers(@PathVariable String id,
                                                          @RequestParam(required = false) String duration) {
@@ -126,9 +126,9 @@ public class UserController {
                 .map(dto -> modelMapper.map(dto, PerfRest.class))
                 .toList();
 
-
         return ResponseEntity.ok(response);
     }
+
 
     //Viewing and managing the data of a particular team member under a team lead
     @GetMapping(path = "/team-leads/{userId}/members/{memberId}", produces = MediaType.APPLICATION_JSON_VALUE)

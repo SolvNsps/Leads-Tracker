@@ -4,6 +4,8 @@ package com.leadstracker.leadstracker.response;
 import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
 import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 
+import java.time.LocalDateTime;
+
 public class UserRest {
     private String userId;
     private String firstName;
@@ -13,6 +15,7 @@ public class UserRest {
     private String phoneNumber;
     private String staffId;
     private String team;
+    private LocalDateTime createdDate;
 //    private String teamName; // Optional -  if user is a Team Member
 //    private TeamPerformanceDto teamPerformance;
 //    private TeamMemberPerformanceDto memberPerformance;
@@ -80,5 +83,13 @@ public class UserRest {
 
     public void setTeam(String team) {
         this.team = team;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
     }
 }
