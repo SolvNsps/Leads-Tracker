@@ -6,6 +6,7 @@ import com.leadstracker.leadstracker.DTO.ClientDto;
 import com.leadstracker.leadstracker.DTO.NotificationDto;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.NotificationEntity;
+import com.leadstracker.leadstracker.entities.TeamTargetEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.ClientRepository;
 import com.leadstracker.leadstracker.repositories.NotificationRepository;
@@ -139,6 +140,22 @@ public class NotificationServiceImpl implements NotificationService {
         );
 
         amazonSES.sendOverdueFollowUpEmail(teamLead, client, daysSinceAction, forwardedBy);
+    }
+
+    @Override
+    public void createTeamTargetAssignedNotification(UserEntity teamLead, TeamTargetEntity target) {
+        NotificationEntity notification = new NotificationEntity();
+
+        String message = "Your team has been assigned a new target of "
+                + target.getTargetValue()
+                + " due on "
+                + target.getDueDate() + ".";
+
+        notification.setMessage(message);
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setResolved(false);
+
+        notificationRepository.save(notification);
     }
 
 }

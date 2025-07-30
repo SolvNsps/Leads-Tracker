@@ -10,6 +10,7 @@ import com.leadstracker.leadstracker.response.*;
 import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.SecurityConstants;
 import com.leadstracker.leadstracker.services.ClientService;
+import com.leadstracker.leadstracker.services.TeamTargetService;
 import com.leadstracker.leadstracker.services.UserService;
 //import jakarta.validation.Valid;
 import io.jsonwebtoken.Jwts;
@@ -51,6 +52,10 @@ public class UserController {
 
     @Autowired
     ClientService clientService;
+
+    @Autowired
+    TeamTargetService teamTargetService;
+
 
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -338,4 +343,19 @@ public class UserController {
         ));
 
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/assign")
+    public ResponseEntity<TeamTargetResponseDto> assignTarget(@RequestBody TeamTargetRequestDto dto) {
+        TeamTargetResponseDto response = teamTargetService.assignTargetToTeam(dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/api/v1/leads/targets")
+    public ResponseEntity<List<TeamTargetResponseDto>> getAllTargets() {
+        List<TeamTargetResponseDto> targets = teamTargetService.getAllTargets();
+        return ResponseEntity.ok(targets);
+    }
+
 }
