@@ -4,6 +4,7 @@ import com.leadstracker.leadstracker.DTO.ClientDto;
 import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
 import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +22,11 @@ public interface ClientService {
 
     ClientDto updateClient(String id, ClientDto clientDto);
 
-    List<ClientDto> getAllClients(int limit, int page);
+     Page<ClientDto> getAllClients(int limit, int page);
 
     ClientDto getClientByClientId(String clientId);
 
     List<ClientDto> getClientsUnderUser(String userId, int page, int limit);
 
-    List<ClientDto> getOverdueClients();
+    Page<ClientDto> getOverdueClients(int page, int limit);
 }

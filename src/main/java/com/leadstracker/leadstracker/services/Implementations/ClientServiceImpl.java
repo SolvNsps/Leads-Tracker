@@ -110,55 +110,55 @@ public class ClientServiceImpl implements ClientService {
      * @param duration
      * @return
      */
-        public TeamPerformanceDto getTeamPerformance(String userId, String duration) {
-            //Getting team lead and members
-            UserEntity teamLead = userRepository.findByUserId(userId);
-            List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
+    public TeamPerformanceDto getTeamPerformance(String userId, String duration) {
+        //Getting team lead and members
+        UserEntity teamLead = userRepository.findByUserId(userId);
+        List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
 
-            //Calculating date range
-            Date[] dateRange = calculateDateRange(duration);
+        //Calculating date range
+        Date[] dateRange = calculateDateRange(duration);
 
-            //Fetching all the clients of a team
-            List<ClientEntity> clients = clientRepository.findByCreatedByInAndCreatedDateBetween(
-                    teamMembers, dateRange[0], dateRange[1]
-            );
+        //Fetching all the clients of a team
+        List<ClientEntity> clients = clientRepository.findByCreatedByInAndCreatedDateBetween(
+                teamMembers, dateRange[0], dateRange[1]
+        );
 
-            //response
-            TeamPerformanceDto response = new TeamPerformanceDto();
-            response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
-            response.setTotalClientsAdded(clients.size());
-            response.setTeamTarget(response.getNumberOfClients());
-            response.setProgressPercentage(((double) clients.size() / (response.getNumberOfClients())) * 100);
-            response.setNumberOfTeamMembers(teamMembers.size());
+        //response
+        TeamPerformanceDto response = new TeamPerformanceDto();
+        response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
+        response.setTotalClientsAdded(clients.size());
+        response.setTeamTarget(response.getNumberOfClients());
+        response.setProgressPercentage(((double) clients.size() / (response.getNumberOfClients())) * 100);
+        response.setNumberOfTeamMembers(teamMembers.size());
 
-            //Building the status distribution using the enum
-            response.setClientStatus(
-                    clients.stream()
-                            .collect(Collectors.groupingBy(
-                                            ClientEntity::getClientStatus,
-                                            Collectors.summingInt(c -> 1)
-                                    )
-                            ));
+        //Building the status distribution using the enum
+        response.setClientStatus(
+                clients.stream()
+                        .collect(Collectors.groupingBy(
+                                        ClientEntity::getClientStatus,
+                                        Collectors.summingInt(c -> 1)
+                                )
+                        ));
 
-            // Building team member stats
-            response.setTeamMembers(
-                    teamMembers.stream()
-                            .map(member -> teamMemberStats(member, dateRange[0], dateRange[1]))
-                            .collect(Collectors.toList())
-            );
+        // Building team member stats
+        response.setTeamMembers(
+                teamMembers.stream()
+                        .map(member -> teamMemberStats(member, dateRange[0], dateRange[1]))
+                        .collect(Collectors.toList())
+        );
 
-            return response;
-        }
+        return response;
+    }
 
     private Date[] calculateDateRange(String duration) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = duration.equals("month") ?
                 endDate.minusMonths(1) : endDate.minusWeeks(1);
 
-        return new Date[] {
+        return new Date[]{
                 Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()),
 //                Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
-                Date.from(endDate.atTime(23,59,59).atZone(ZoneId.systemDefault()).toInstant())
+                Date.from(endDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
         };
     }
 
@@ -171,26 +171,26 @@ public class ClientServiceImpl implements ClientService {
     }
 
     private TeamMemberPerformanceDto teamMemberStats(UserEntity member, Date start, Date end) {
-            List<ClientEntity> memberClients = clientRepository.findByCreatedByAndCreatedDateBetween(
-                    member, start, end
-            );
+        List<ClientEntity> memberClients = clientRepository.findByCreatedByAndCreatedDateBetween(
+                member, start, end
+        );
 
-            TeamMemberPerformanceDto dto = new TeamMemberPerformanceDto();
-            dto.setMemberId(member.getUserId());
-            dto.setMemberName(member.getFirstName() + " " + member.getLastName());
-            dto.setTotalClientsSubmitted(memberClients.size());
+        TeamMemberPerformanceDto dto = new TeamMemberPerformanceDto();
+        dto.setMemberId(member.getUserId());
+        dto.setMemberName(member.getFirstName() + " " + member.getLastName());
+        dto.setTotalClientsSubmitted(memberClients.size());
 
-            // Grouping by status enum
-            dto.setClientStatus(
-                    memberClients.stream()
-                            .collect(Collectors.groupingBy(
-                                            ClientEntity::getClientStatus,
-                                            Collectors.summingInt(c -> 1)
-                                    )
-                            ));
+        // Grouping by status enum
+        dto.setClientStatus(
+                memberClients.stream()
+                        .collect(Collectors.groupingBy(
+                                        ClientEntity::getClientStatus,
+                                        Collectors.summingInt(c -> 1)
+                                )
+                        ));
 
-            return dto;
-        }
+        return dto;
+    }
 
 
     /**
@@ -270,29 +270,26 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public List<ClientDto> getAllClients(int page, int limit) {
-        List<ClientDto> returnUsers = new ArrayList<>();
-        //not necessarily starting the page from 0
+    public Page<ClientDto> getAllClients(int page, int limit) {
         if (page > 0) {
             page -= 1;
         }
-        Pageable pageableRequest = PageRequest.of(page, limit);
-        Page<ClientEntity> usersPage = clientRepository.findAll(pageableRequest);
-        List<ClientEntity> users = usersPage.getContent();
 
-        for (ClientEntity clientEntity : users) {
-            ClientDto clientDto = modelMapper.map(clientEntity, ClientDto.class);
+        Pageable pageableRequest = PageRequest.of(page, limit);
+        Page<ClientEntity> clientPage = clientRepository.findAll(pageableRequest);
+
+        return clientPage.map(clientEntity -> {
+            ClientDto dto = modelMapper.map(clientEntity, ClientDto.class);
 
             if (clientEntity.getTeamLead() != null) {
                 UserDto teamLeadDto = modelMapper.map(clientEntity.getTeamLead(), UserDto.class);
-                clientDto.setAssignedTo(teamLeadDto);
+                dto.setAssignedTo(teamLeadDto);
             }
-            returnUsers.add(clientDto);
-        }
 
-        return returnUsers;
-
+            return dto;
+        });
     }
+
 
     /**
      * @param clientId
@@ -359,8 +356,10 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public List<ClientDto> getOverdueClients() {
-        List<ClientEntity> allClients = clientRepository.findAll();
+    public Page<ClientDto> getOverdueClients(int page, int limit) {
+
+        Pageable pageableRequest = PageRequest.of(page, limit);
+        Page<ClientEntity> allClients = clientRepository.findAll(pageableRequest);
 
         List<ClientDto> overdueClients = new ArrayList<>();
 
@@ -393,7 +392,9 @@ public class ClientServiceImpl implements ClientService {
             }
         }
 
-        return overdueClients;
+        return allClients.map(clientEntity -> {
+            ClientDto dto = modelMapper.map(clientEntity, ClientDto.class);
+            return dto;
+        });
     }
-
 }

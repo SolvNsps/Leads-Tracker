@@ -66,6 +66,8 @@ public class UserDto implements Serializable {
 
     private List<String> teamMemberIds = new ArrayList<>();
 
+    private LocalDateTime createdDate;
+
     public long getId() {
         return id;
     }
@@ -239,6 +241,13 @@ public class UserDto implements Serializable {
         return roleEntity;
     }
 
+    public void setRoleEntity(RoleEntity roleEntity) {
+        this.roleEntity = roleEntity;
+        if (roleEntity != null) {
+            this.role = roleEntity.getName();
+        }
+    }
+
     public String getTeam() {
         return team;
     }
@@ -247,15 +256,13 @@ public class UserDto implements Serializable {
         this.team = team;
     }
 
-    public void setRoleEntity(RoleEntity roleEntity) {
-        this.roleEntity = roleEntity;
-        if (roleEntity != null) {
-            this.role = roleEntity.getName();
-        }
-
-
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
     }
 
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
 
     @Override
     public String toString() {

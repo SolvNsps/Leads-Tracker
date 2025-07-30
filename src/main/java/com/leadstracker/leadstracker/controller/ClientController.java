@@ -5,6 +5,7 @@ import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
+import com.leadstracker.leadstracker.response.PaginatedResponse;
 import com.leadstracker.leadstracker.response.UserRest;
 import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
@@ -14,6 +15,7 @@ import com.leadstracker.leadstracker.services.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -123,8 +125,11 @@ public class ClientController {
 
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/admin/notifications")
-    public ResponseEntity<List<ClientRest>> getOverdueClients() {
-        List<ClientDto> overdueClients = clientService.getOverdueClients();
+    public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "limit", defaultValue = "10") int limit) {
+
+        Page<ClientDto> overdueClients = clientService.getOverdueClients(page, limit);
 
         List<ClientRest> result = overdueClients.stream().map(dto -> {
             ClientRest rest = modelMapper.map(dto, ClientRest.class);
@@ -161,7 +166,16 @@ public class ClientController {
             return rest;
         }).toList();
 
-        return ResponseEntity.ok(result);
+        PaginatedResponse<ClientRest> res = new PaginatedResponse<>();
+        res.setData(result);
+        res.setCurrentPage(overdueClients.getNumber());
+        res.setTotalPages(overdueClients.getTotalPages());
+        res.setTotalItems(2);
+        res.setPageSize(overdueClients.getSize());
+        res.setHasNext(overdueClients.hasNext());
+        res.setHasPrevious(overdueClients.hasPrevious());
+
+        return ResponseEntity.ok(res);
     }
 
 
@@ -239,59 +253,57 @@ public class ClientController {
     //Viewing all clients
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/all-clients")
-    public ResponseEntity<List<ClientRest>> getAllClients(@RequestParam(value = "page", defaultValue = "0")
-                                 int page, @RequestParam(value = "limit", defaultValue = "10") int limit) {
+    public ResponseEntity<PaginatedResponse<ClientRest>> getAllClients(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "limit", defaultValue = "10") int limit) {
 
-        List<ClientRest> clientRest = new ArrayList<>();
-        List<ClientDto> allClients = clientService.getAllClients(page, limit);
+        Page<ClientDto> pagedClients = clientService.getAllClients(page, limit);
 
-        List<ClientRest> result = null;
-        for (ClientDto clientDto : allClients) {
+        List<ClientRest> clientRestList = pagedClients.getContent().stream().map(dto -> {
+            ClientRest rest = modelMapper.map(dto, ClientRest.class);
 
-            result = allClients.stream().map(dto -> {
-                ClientRest rest = modelMapper.map(dto, ClientRest.class);
+            rest.setClientId(dto.getClientId());
+            rest.setFirstName(dto.getFirstName());
+            rest.setLastName(dto.getLastName());
+            rest.setPhoneNumber(dto.getPhoneNumber());
+            rest.setClientStatus(dto.getClientStatus());
 
-                rest.setClientId(dto.getClientId());
-                rest.setFirstName(dto.getFirstName());
-                rest.setLastName(dto.getLastName());
-                rest.setPhoneNumber(dto.getPhoneNumber());
-                rest.setClientStatus(dto.getClientStatus());
+            if (dto.getCreatedDate() != null) {
+                rest.setCreatedAt(dto.getCreatedDate().toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
+            }
 
-                // Converting Date to LocalDateTime
-                if (dto.getCreatedDate() != null) {
-                    rest.setCreatedAt(dto.getCreatedDate().toInstant()
-                            .atZone(ZoneId.systemDefault()).toLocalDateTime());
-                }
+            if (dto.getLastUpdated() != null) {
+                rest.setLastUpdated(dto.getLastUpdated().toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
 
-                if (dto.getLastUpdated() != null) {
-                    rest.setLastUpdated(dto.getLastUpdated().toInstant()
-                            .atZone(ZoneId.systemDefault()).toLocalDateTime());
+                Duration duration = Duration.between(dto.getLastUpdated().toInstant(), Instant.now());
+                rest.setLastAction(utils.getExactDuration(duration));
+            }
 
-                    // Calculating days since last update
-                    // Converting Date to Instant
-                    Instant lastUpdatedInstant = dto.getLastUpdated().toInstant();
-                    Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
+            if (dto.getCreatedBy() != null) {
+                UserDto creator = dto.getCreatedBy();
+                rest.setCreatedBy(creator.getFirstName() + " " + creator.getLastName());
+            }
 
-                    String exactDuration = utils.getExactDuration(duration);
-                    rest.setLastAction(exactDuration);
+            if (dto.getAssignedTo() != null) {
+                UserDto teamLead = dto.getAssignedTo();
+                rest.setAssignedTo(teamLead.getFirstName() + " " + teamLead.getLastName());
+            }
 
-                }
+            return rest;
+        }).toList();
 
-                // Getting creator
-                if (dto.getCreatedBy() != null) {
-                    UserDto creator = dto.getCreatedBy();
-                    rest.setCreatedBy(creator.getFirstName() + " " + creator.getLastName());
-                }
+        PaginatedResponse<ClientRest> response = new PaginatedResponse<>();
+        response.setData(clientRestList);
+        response.setCurrentPage(pagedClients.getNumber());
+        response.setTotalPages(pagedClients.getTotalPages());
+        response.setTotalItems(5);
+        response.setPageSize(pagedClients.getSize());
+        response.setHasNext(pagedClients.hasNext());
+        response.setHasPrevious(pagedClients.hasPrevious());
 
-                if(dto.getAssignedTo() !=null) {
-                    UserDto teamLead = dto.getAssignedTo();
-                    rest.setAssignedTo(teamLead.getFirstName() + " " + teamLead.getLastName());
-                }
-
-                return rest;
-            }).toList();
-        }
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(response);
     }
 
 
