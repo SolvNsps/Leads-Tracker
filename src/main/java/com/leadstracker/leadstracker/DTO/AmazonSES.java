@@ -10,6 +10,7 @@ import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -252,5 +253,19 @@ public class AmazonSES {
                 "Leads Tracker Team";
     }
 
+
+    public void sendTargetAssignmentEmail(String teamLeadEmail, String teamLeadName, String teamName, LocalDate dueDate, double targetValue) {
+        String subject = "New Team Target Assigned";
+
+        String body = "Hello " + teamLeadName + ",\n\n" +
+                "A new target has been assigned to your team: " + teamName + ".\n\n" +
+                "Target Value: " + targetValue + "\n" +
+                "Due Date: " + dueDate + "\n\n" +
+                "Please review it on your dashboard and begin working towards this goal promptly.\n\n" +
+                "Best regards,\n" +
+                "Leads Tracker Team";
+
+        sendSimpleEmail(teamLeadEmail, subject, body);
+    }
 
 }

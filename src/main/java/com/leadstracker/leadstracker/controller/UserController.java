@@ -9,11 +9,15 @@ import com.leadstracker.leadstracker.request.*;
 import com.leadstracker.leadstracker.response.*;
 import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.SecurityConstants;
+import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
+import com.leadstracker.leadstracker.services.TeamTargetService;
+import com.leadstracker.leadstracker.services.UserProfileService;
 import com.leadstracker.leadstracker.services.UserService;
 //import jakarta.validation.Valid;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +28,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.Principal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -54,6 +60,12 @@ public class UserController {
 
     @Autowired
     ClientService clientService;
+
+    @Autowired
+    TeamTargetService teamTargetService;
+
+    @Autowired
+    UserProfileService userProfileService;
 
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -168,7 +180,7 @@ public class UserController {
     @GetMapping
     public List<UserRest> getAllUsers(@RequestParam(value = "page", defaultValue = "0")
                                       int page, @RequestParam(value = "limit", defaultValue = "10") int limit) throws Exception {
-    List<UserRest> userRest = new ArrayList<>();
+        List<UserRest> userRest = new ArrayList<>();
 
         List<UserDto> userDtos = userService.getAllUsers(page, limit);
         for (UserDto userDto : userDtos) {
@@ -180,7 +192,7 @@ public class UserController {
     }
 
 
-//    Email verification endpoint
+    //    Email verification endpoint
     @PostMapping("/email-verification")
     public OperationStatusModel verifyEmailToken(@RequestBody String token) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();
@@ -262,29 +274,29 @@ public class UserController {
             );
         }
 
-            // OTP is valid. Generating JWT
+        // OTP is valid. Generating JWT
 //        String jwt = SecurityConstants.generateToken(request.getEmail(), SecurityConstants.Expiration_Time_In_Seconds);
-            String tokenSecret = (String) SpringApplicationContext.getBean("secretKey");
+        String tokenSecret = (String) SpringApplicationContext.getBean("secretKey");
 
-            byte[] secretKeyBytes = Base64.getEncoder().encode(tokenSecret.getBytes());
-            SecretKey secretKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS512.getJcaName());
-            Instant now = Instant.now();
+        byte[] secretKeyBytes = Base64.getEncoder().encode(tokenSecret.getBytes());
+        SecretKey secretKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS512.getJcaName());
+        Instant now = Instant.now();
 
-            long expirationTime = SecurityConstants.Expiration_Time_In_Seconds;
+        long expirationTime = SecurityConstants.Expiration_Time_In_Seconds;
 
-            String token = Jwts.builder()
-                    .setSubject(request.getEmail())
-                    .claim("roles", userEntity.getRole().getName()) // Add role
-                    .claim("authorities", getAuthorityNames(userEntity.getRole().getAuthorities())) // Add authorities
-                    .setExpiration(Date.from(now.plusMillis(expirationTime)))
-                    .setIssuedAt(Date.from(now))
-                    .signWith(secretKey, SignatureAlgorithm.HS512)
-                    .compact();
+        String token = Jwts.builder()
+                .setSubject(request.getEmail())
+                .claim("roles", userEntity.getRole().getName()) // Add role
+                .claim("authorities", getAuthorityNames(userEntity.getRole().getAuthorities())) // Add authorities
+                .setExpiration(Date.from(now.plusMillis(expirationTime)))
+                .setIssuedAt(Date.from(now))
+                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .compact();
 
-            return ResponseEntity.ok(Map.of(
-                    "token", token,
-                    "status", "LOGIN_SUCCESS"
-            ));
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "status", "LOGIN_SUCCESS"
+        ));
 
     }
 
@@ -313,14 +325,17 @@ public class UserController {
                     ));
         }
     }
+
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable String id) {
+    public ResponseEntity<?> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
-        return ResponseEntity.ok("User deleted successfully.");
+        return ResponseEntity.ok(Map.of(
+                "message", "User deleted successfully."
+        ));
     }
 
-    //Getting a user
 
+    //Getting a user
     @GetMapping("/{userId}")
     public ResponseEntity<UserRest> getUserById(@PathVariable String userId) {
         UserDto userDto = userService.getUserByUserId(userId);
@@ -368,4 +383,88 @@ public class UserController {
 
         return ResponseEntity.ok(rest);
     }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/assign")
+    public ResponseEntity<TeamTargetResponseDto> assignTarget(@RequestBody TeamTargetRequestDto dto) {
+        TeamTargetResponseDto response = teamTargetService.assignTargetToTeam(dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasAuthority('RPLE_ADMIN')")
+    @GetMapping("/api/v1/leads/targets")
+    public ResponseEntity<List<TeamTargetResponseDto>> getAllTargets() {
+        List<TeamTargetResponseDto> targets = teamTargetService.getAllTargets();
+        return ResponseEntity.ok(targets);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    @GetMapping("/api/v1/profile")
+    public ResponseEntity<UserProfileResponseDto> getProfile(Principal principal) {
+        UserProfileResponseDto profile = userProfileService.getProfile(principal.getName());
+        return ResponseEntity.ok(profile);
+
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    @PutMapping("/api/v1/profile")
+    public ResponseEntity<UserProfileResponseDto> updatePhoneNumber(@RequestBody @Valid UpdateUserProfileRequestDto request,
+                                                                    @AuthenticationPrincipal UserPrincipal principal) {
+        UserProfileResponseDto updated = userProfileService.updatePhoneNumber(principal.getUsername(), request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    @PutMapping("/api/v1/profile/change-password")
+    public ResponseEntity<String> changePassword(@RequestBody @Valid ChangePasswordRequestDto request,
+                                                 Principal principal) {
+        userProfileService.changePassword(principal.getName(), request);
+        return ResponseEntity.ok("Password updated successfully.");
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
+    @GetMapping("/api/v1/members/profile")
+    public ResponseEntity<UserProfileResponseDto> getTeamMemberProfile(@AuthenticationPrincipal UserPrincipal principal) {
+        UserProfileResponseDto profile = userProfileService.getProfile(principal.getUsername());
+        return ResponseEntity.ok(profile);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
+    @PutMapping("/api/v1/members/profile")
+    public ResponseEntity<UserProfileResponseDto> updateTeamMemberPhone(@RequestBody @Valid UpdateUserProfileRequestDto request,
+                                                                        @AuthenticationPrincipal UserPrincipal principal) {
+        UserProfileResponseDto updated = userProfileService.updatePhoneNumber(principal.getUsername(), request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
+    @PutMapping("/api/v1/members/profile/change-password")
+    public ResponseEntity<String> changeTeamMemberPassword(@RequestBody @Valid ChangePasswordRequestDto request,
+                                                           Principal principal) {
+        userProfileService.changePassword(principal.getName(), request);
+        return ResponseEntity.ok("Password updated successfully.");
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/api/v1/admin/profile")
+    public ResponseEntity<UserProfileResponseDto> getAdminProfile(Principal principal) {
+        UserProfileResponseDto profile = userProfileService.getProfile(principal.getName());
+        return ResponseEntity.ok(profile);
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PutMapping("/api/v1/changeAdminNumber/profile")
+    public ResponseEntity<UserProfileResponseDto> updateAdminPhone(@RequestBody @Valid UpdateUserProfileRequestDto request,
+                                                                        @AuthenticationPrincipal UserPrincipal principal) {
+        UserProfileResponseDto updated = userProfileService.updatePhoneNumber(principal.getUsername(), request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PutMapping("/api/v1/admin/profile/change-password")
+    public ResponseEntity<String> changeAdminPassword(@RequestBody @Valid ChangePasswordRequestDto request,
+                                                           @AuthenticationPrincipal UserPrincipal principal) {
+        userProfileService.changePassword(principal.getUsername(), request);
+        return ResponseEntity.ok("Password updated successfully.");
+    }
+
 }
