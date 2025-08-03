@@ -227,4 +227,30 @@ public class AmazonSES {
         System.out.println("Email sent to " + recipient.getEmail());
     }
 
+
+    public void sendNewClientForwardedEmail(UserEntity teamLead, ClientEntity client, UserEntity forwardedBy) {
+        String subject = "New Client Forwarded: " + client.getFirstName() + " " + client.getLastName();
+
+        String body = "Hello " + teamLead.getFirstName() + ",\n\n" +
+                "You have received a new client forwarded to you for follow-up. Please review the details below and take the necessary action.\n\n" +
+                "Client Details\n" +
+                "Name: " + client.getFirstName() + " " + client.getLastName() + "\n" +
+                "Phone Number: " + client.getPhoneNumber() + "\n" +
+                "Status: " + client.getClientStatus() + "\n" +
+                "Date Added: " + client.getCreatedDate() + "\n" +
+                "Time Since Last Action: " + (client.getLastUpdated() != null ? client.getLastUpdated() + " days" : "N/A") + "\n" +
+                "Forwarded By: " + (forwardedBy != null ? forwardedBy.getFirstName() + " " + forwardedBy.getLastName() : "N/A") + "\n\n" +
+                "Why You’re Receiving This:\n" +
+                "This client was forwarded to you by " +
+                (forwardedBy != null ? forwardedBy.getFirstName() + " " + forwardedBy.getLastName() : "a team member") +
+                " and is awaiting your review or action.\n\n" +
+                "Next Steps:\n" +
+                "Please log in to your dashboard to view the client’s full profile and take the necessary next steps.\n\n" +
+                "If you’ve already taken action, you may ignore this message.\n\n" +
+                "Kind regards,\n" +
+                "System Administrator\n" +
+                "Leads Tracker Team";
+    }
+
+
 }

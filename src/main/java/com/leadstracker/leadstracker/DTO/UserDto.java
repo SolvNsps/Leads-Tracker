@@ -36,7 +36,7 @@ public class UserDto implements Serializable {
 
     private String role;
 
-    private String team;
+    private String teamName;
 
     @JsonIgnore
     private transient RoleEntity roleEntity;
@@ -248,12 +248,12 @@ public class UserDto implements Serializable {
         }
     }
 
-    public String getTeam() {
-        return team;
+    public String getTeamName() {
+        return teamName;
     }
 
-    public void setTeam(String team) {
-        this.team = team;
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
     }
 
     public LocalDateTime getCreatedDate() {

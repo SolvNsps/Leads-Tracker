@@ -22,7 +22,7 @@ public class NotificationEntity implements Serializable {
 
     private String type; // e.g. FORWARDED_CLIENT, OVERDUE_FOLLOWUP
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "admin_id")
     private UserEntity admin;
 
@@ -33,6 +33,10 @@ public class NotificationEntity implements Serializable {
     @ManyToOne
     @JoinColumn(name = "client_id")
     private ClientEntity client;
+
+    private String actionRequired;
+    private String forwardedBy; // Name of admin/team member who forwarded
+    private long daysOverdue;
 
 
     public Long getId() {
@@ -105,5 +109,29 @@ public class NotificationEntity implements Serializable {
 
     public void setLastUpdated(LocalDateTime lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public String getActionRequired() {
+        return actionRequired;
+    }
+
+    public void setActionRequired(String actionRequired) {
+        this.actionRequired = actionRequired;
+    }
+
+    public String getForwardedBy() {
+        return forwardedBy;
+    }
+
+    public void setForwardedBy(String forwardedBy) {
+        this.forwardedBy = forwardedBy;
+    }
+
+    public long getDaysOverdue() {
+        return daysOverdue;
+    }
+
+    public void setDaysOverdue(long daysOverdue) {
+        this.daysOverdue = daysOverdue;
     }
 }

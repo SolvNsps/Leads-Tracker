@@ -54,6 +54,8 @@ public class AppConfig {
         mapper.typeMap(UserEntity.class, UserDto.class)
                 .addMappings(map -> {
                     map.map(src -> src.getRole().getName(), UserDto::setRole);
+                    map.map(src -> src.getTeam().getId().toString(), UserDto::setTeamName);
+                    map.map(src -> src.getTeamLead().getUserId(), UserDto::setTeamLeadUserId);
                 });
 
         return mapper;

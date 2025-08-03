@@ -143,7 +143,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserDto> getAllUsers(int page, int limit) {
         List<UserDto> returnUsers = new ArrayList<>();
-        //not necessarily starting the page from 0
+
         if (page > 0) {
             page -= 1;
         }
@@ -422,6 +422,16 @@ public class UserServiceImpl implements UserService {
         }
         userEntity.setRole(role);
 
+        //setting team of a user
+        TeamsEntity team = teamsRepository.findByNameIgnoreCase(userDto.getTeamName());
+
+        if (team == null) {
+            throw new RuntimeException("Team not found");
+        }
+
+        userEntity.setTeam(team);
+        userEntity.setCreatedDate(LocalDateTime.now());
+
         // Handling the team member case
         if (userDto.getRole().replace("ROLE_", "").equalsIgnoreCase("TEAM_MEMBER")) {
             if (userDto.getTeamLeadUserId() == null || userDto.getTeamLeadUserId().trim().isEmpty()) {
@@ -435,16 +445,8 @@ public class UserServiceImpl implements UserService {
                         "Assigned Team Lead not found");
             }
             userEntity.setTeamLead(teamLead);
+
         }
-
-//        //setting team of a user
-        TeamsEntity team = teamsRepository.findByName(userDto.getTeam());
-
-        if (team == null) {
-            throw new RuntimeException("Team not found");
-        }
-
-        userEntity.setTeam(team);
 
         // Setting password and other defaults
         String rawPassword = utils.generateDefaultPassword();
@@ -548,7 +550,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public TeamDto createTeam(TeamDto teamDto) {
         // Checking if team name already exists
-        if (teamsRepository.findByName(teamDto.getName()) != null) {
+        if (teamsRepository.findByNameIgnoreCase(teamDto.getName()) != null) {
             throw new RuntimeException("Team with this name already exists");
         }
 
@@ -558,6 +560,22 @@ public class UserServiceImpl implements UserService {
         TeamsEntity savedTeam = teamsRepository.save(teamEntity);
 
         return modelMapper.map(savedTeam, TeamDto.class);
+
+    }
+
+    /**
+     * @param page
+     * @param limit
+     * @return
+     */
+    @Override
+    public Page<UserDto> getTeamMembersData(String userId, int page, int limit) {
+
+//        UserEntity userEntity = userRepository.findByUserId(userId);
+        Pageable pageable = PageRequest.of(page, limit);
+        Page<UserEntity> userEntities = userRepository.findByTeamLead_UserId(userId, pageable);
+
+        return userEntities.map(user -> modelMapper.map(user, UserDto.class));
 
     }
 

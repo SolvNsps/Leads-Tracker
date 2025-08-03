@@ -18,6 +18,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -61,7 +64,8 @@ public class UserController {
 
         UserDto createdUser = userService.createUser(userDto);
         UserRest userRest = modelMapper.map(createdUser, UserRest.class);
-        userRest.setTeam(userDto.getTeam());
+        userRest.setTeam(userDto.getTeamName());
+        userRest.setCreatedDate(LocalDateTime.now());
 
         return ResponseEntity.ok(userRest);
 
@@ -125,6 +129,7 @@ public class UserController {
         List<PerfRest> response = teamMembers.stream()
                 .map(dto -> modelMapper.map(dto, PerfRest.class))
                 .toList();
+
 
         return ResponseEntity.ok(response);
     }
@@ -331,11 +336,36 @@ public class UserController {
 
         TeamDto createdTeam = userService.createTeam(teamDto);
         TeamRest teamRest = modelMapper.map(createdTeam, TeamRest.class);
+        teamRest.setTeamLeadUserId(teamDto.getTeamLeadUserId());
 
         return ResponseEntity.ok(Map.of(
                 "teamName", teamRest,
                 "message", "Team created successfully"
         ));
 
+    }
+
+
+    //Viewing and managing the data of all team members under a team lead
+    @GetMapping("/team-leads/{userId}/members/data")
+    public ResponseEntity<PaginatedResponse<UserRest>> getTeamMembersData(
+            @PathVariable String userId, @RequestParam(value = "page", defaultValue = "1")
+            int page, @RequestParam(value = "limit", defaultValue = "10") int limit) {
+
+        Page<UserDto> allMembers = userService.getTeamMembersData(userId, page, limit);
+        List<UserRest> userRest = allMembers.getContent().stream()
+                .map(dto -> modelMapper.map(dto, UserRest.class)).toList();
+
+
+        PaginatedResponse<UserRest> rest = new PaginatedResponse<>();
+        rest.setData(userRest);
+        rest.setCurrentPage(allMembers.getNumber());
+        rest.setTotalPages(allMembers.getTotalPages());
+        rest.setTotalItems(10);
+        rest.setPageSize(allMembers.getSize());
+        rest.setHasNext(allMembers.hasNext());
+        rest.setHasPrevious(allMembers.hasPrevious());
+
+        return ResponseEntity.ok(rest);
     }
 }

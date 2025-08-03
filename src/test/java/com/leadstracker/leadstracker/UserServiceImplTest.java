@@ -94,7 +94,7 @@ class UserServiceImplTest {
         when(bCryptPasswordEncoder.encode(anyString())).thenReturn("encodedPassword");
         userDto.setPhoneNumber("1234567890");
         userDto.setStaffId("123456");
-        userDto.setTeam("Team Alpha");
+        userDto.setTeamName("Team Alpha");
 
 
         var role = new RoleEntity();
@@ -120,7 +120,7 @@ class UserServiceImplTest {
                 .thenReturn(mappedDto);
         when(roleRepository.findByName(anyString())).thenReturn(role);
         when(userRepository.save(any(UserEntity.class))).thenReturn(mappedEntity);
-        when(teamsRepository.findByName("Team Alpha")).thenReturn(team);
+        when(teamsRepository.findByNameIgnoreCase("Team Alpha")).thenReturn(team);
 
         // Act
         UserDto savedUser = userService.createUser(userDto);

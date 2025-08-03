@@ -326,8 +326,11 @@ public class ClientServiceImpl implements ClientService {
         List<ClientEntity> clients;
 
         if (userEntity.getRole().getName().equals("ROLE_TEAM_LEAD")) {
-            // Getting clients created by this lead or their team members
-            clients = clientRepository.findByTeamLead(userEntity, pageable);
+            // Get self + team members
+            List<UserEntity> teamMembers = userRepository.findByTeamLead(userEntity);
+            teamMembers.add(userEntity); // Include the lead
+
+            clients = clientRepository.findByCreatedByIn(teamMembers, pageable);
         } else {
             // Getting clients created by team member
             clients = clientRepository.findByCreatedBy(userEntity, pageable);
@@ -351,6 +354,59 @@ public class ClientServiceImpl implements ClientService {
 
         return returnList;
     }
+
+
+    @Override
+    public List<ClientDto> getAllClientsUnderUser(String userId) {
+        UserEntity userEntity = userRepository.findByUserId(userId);
+        List<ClientEntity> clients;
+
+        if (userEntity.getRole().getName().equals("ROLE_TEAM_LEAD")) {
+            // Fetch all clients for team lead (including team members)
+            List<UserEntity> teamMembers = userRepository.findByTeamLead(userEntity);
+            teamMembers.add(userEntity);
+
+            clients = clientRepository.findByCreatedByIn(teamMembers);
+        } else {
+            // Fetch only clients created by this team member
+            clients = clientRepository.findByCreatedBy(userEntity);
+        }
+
+        List<ClientDto> returnList = new ArrayList<>();
+        for (ClientEntity entity : clients) {
+            ClientDto dto = modelMapper.map(entity, ClientDto.class);
+
+            if (entity.getCreatedBy() != null) {
+                dto.setCreatedBy(modelMapper.map(entity.getCreatedBy(), UserDto.class));
+            }
+
+            if (entity.getTeamLead() != null) {
+                dto.setAssignedTo(modelMapper.map(entity.getTeamLead(), UserDto.class));
+            }
+
+            dto.setClientStatus(entity.getClientStatus().toString());
+            returnList.add(dto);
+        }
+
+        return returnList;
+    }
+
+
+    @Override
+    public long countClientsUnderUser(String userId) {
+        UserEntity userEntity = userRepository.findByUserId(userId);
+
+        if (userEntity.getRole().getName().equals("ROLE_TEAM_LEAD")) {
+            // Count all clients under this lead
+            List<UserEntity> teamMembers = userRepository.findByTeamLead(userEntity);
+            teamMembers.add(userEntity);
+            return clientRepository.countByCreatedByIn(teamMembers);
+        } else {
+            // Count only clients created by this member
+            return clientRepository.countByCreatedBy(userEntity);
+        }
+    }
+
 
     /**
      * @return

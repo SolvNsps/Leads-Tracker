@@ -1,5 +1,6 @@
 package com.leadstracker.leadstracker.DTO;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 
@@ -7,10 +8,13 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class NotificationDto implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    private Long id;
 
     private String message;
 
@@ -22,11 +26,32 @@ public class NotificationDto implements Serializable {
 
     private String type; // e.g. FORWARDED_CLIENT, OVERDUE_FOLLOWUP
 
-    private UserEntity admin;
+    private SimpleUserDto admin;
+    private SimpleUserDto teamLead;
+    private SimpleClientDto client;
 
-    private UserEntity teamLead;
 
-    private ClientEntity client;
+    private String actionRequired;
+
+    private String forwardedBy; // Name of admin/team member who forwarded
+
+    private long daysOverdue; // For overdue notifications
+
+        // Generating a consistent message
+        public String generateMessage() {
+            switch (this.type) {
+                case "FORWARDED_CLIENT":
+                    return String.format("Client %s %s was forwarded to you by %s",
+                            client.getFirstName(), client.getLastName(), forwardedBy);
+                case "OVERDUE_FOLLOWUP":
+                    return String.format("Client %s %s is still in '%s' status for %d days",
+                            client.getFirstName(), client.getLastName(),
+                            client.getClientStatus(), daysOverdue);
+                default:
+                    return message;
+            }
+        }
+
 
     public String getMessage() {
         return message;
@@ -34,6 +59,14 @@ public class NotificationDto implements Serializable {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getType() {
@@ -68,27 +101,51 @@ public class NotificationDto implements Serializable {
         this.resolved = resolved;
     }
 
-    public UserEntity getAdmin() {
+    public SimpleUserDto getAdmin() {
         return admin;
     }
 
-    public void setAdmin(UserEntity admin) {
+    public void setAdmin(SimpleUserDto admin) {
         this.admin = admin;
     }
 
-    public UserEntity getTeamLead() {
+    public SimpleUserDto getTeamLead() {
         return teamLead;
     }
 
-    public void setTeamLead(UserEntity teamLead) {
+    public void setTeamLead(SimpleUserDto teamLead) {
         this.teamLead = teamLead;
     }
 
-    public ClientEntity getClient() {
+    public SimpleClientDto getClient() {
         return client;
     }
 
-    public void setClient(ClientEntity client) {
+    public void setClient(SimpleClientDto client) {
         this.client = client;
+    }
+
+    public String getActionRequired() {
+        return actionRequired;
+    }
+
+    public void setActionRequired(String actionRequired) {
+        this.actionRequired = actionRequired;
+    }
+
+    public String getForwardedBy() {
+        return forwardedBy;
+    }
+
+    public void setForwardedBy(String forwardedBy) {
+        this.forwardedBy = forwardedBy;
+    }
+
+    public long getDaysOverdue() {
+        return daysOverdue;
+    }
+
+    public void setDaysOverdue(long daysOverdue) {
+        this.daysOverdue = daysOverdue;
     }
 }

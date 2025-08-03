@@ -26,18 +26,36 @@ public class NotificationScheduler {
     @Autowired
     private UserRepository userRepository;
 
-    @Scheduled(cron = "0 0 8 * * MON-FRI") // Every weekday at 8 AM
+    @Scheduled(cron = "0 0 8 * * MON-FRI") // Weekdays at 8 AM
     public void checkForOverdueClients() {
         List<ClientEntity> clients = clientRepository.findAll();
 
         for (ClientEntity client : clients) {
-            long daysPending = ChronoUnit.DAYS.between(client.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(), LocalDate.now());
-            if (daysPending > 5 && (client.getClientStatus().equals(Statuses.PENDING)
-                    || client.getClientStatus().equals(Statuses.INTERESTED)
-                    || client.getClientStatus().equals(Statuses.AWAITING_DOCUMENTATION))) {
+            // Skip if no team lead assigned
+            if (client.getTeamLead() == null) continue;
 
-                UserEntity teamLead = client.getTeamLead();
-                notificationService.createOverdueFollowUpNotification(client, teamLead, daysPending);
+            LocalDate lastUpdated = client.getLastUpdated().toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+
+            long daysPending = ChronoUnit.DAYS.between(lastUpdated, LocalDate.now());
+
+            // Check for overdue status (3 days for PENDING, 5 days for others)
+            boolean isOverdue = false;
+            if (client.getClientStatus() == Statuses.PENDING && daysPending >= 3) {
+                isOverdue = true;
+            } else if ((client.getClientStatus() == Statuses.INTERESTED ||
+                    client.getClientStatus() == Statuses.AWAITING_DOCUMENTATION) &&
+                    daysPending >= 5) {
+                isOverdue = true;
+            }
+
+            if (isOverdue) {
+                notificationService.createOverdueFollowUpNotification(
+                        client,
+                        client.getTeamLead(),
+                        daysPending
+                );
             }
         }
     }

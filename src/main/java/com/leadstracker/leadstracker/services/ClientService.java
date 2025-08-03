@@ -29,4 +29,8 @@ public interface ClientService {
     List<ClientDto> getClientsUnderUser(String userId, int page, int limit);
 
     Page<ClientDto> getOverdueClients(int page, int limit);
+
+    List<ClientDto> getAllClientsUnderUser(String userId);
+
+    long countClientsUnderUser(String userId);
 }

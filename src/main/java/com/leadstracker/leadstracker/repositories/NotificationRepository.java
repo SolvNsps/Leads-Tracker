@@ -19,4 +19,6 @@ public interface NotificationRepository  extends JpaRepository<NotificationEntit
     //    List<NotificationEntity> findByTeamLeadIdAndResolvedFalse(String teamLeadId);
 //    void alertTeamLead(Long notificationId);
 List<NotificationEntity> findByTeamLead(UserEntity teamLead);
+
+    boolean existsByClientAndTypeAndResolvedFalse(ClientEntity client, String overdueFollowup);
 }

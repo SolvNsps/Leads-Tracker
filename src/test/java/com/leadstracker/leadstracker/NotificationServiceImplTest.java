@@ -1,6 +1,8 @@
 package com.leadstracker.leadstracker;
 
 import com.leadstracker.leadstracker.DTO.AmazonSES;
+import com.leadstracker.leadstracker.DTO.NotificationDto;
+import com.leadstracker.leadstracker.DTO.SimpleClientDto;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.modelmapper.ModelMapper;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -35,6 +38,9 @@ public class NotificationServiceImplTest {
 
     @Mock
     private AmazonSES amazonSES;
+
+    @Mock
+    ModelMapper modelMapper;
 
     @Mock
     private UserService userService;
@@ -70,30 +76,54 @@ public class NotificationServiceImplTest {
 
     @Test
     void testCreateForwardedClientNotification() {
-        notificationService.createForwardedClientNotification(mockClient, mockTeamLead);
+        // Prepare mock client entity
+        ClientEntity mockClient = new ClientEntity();
+        mockClient.setFirstName("John");
+
+        UserEntity mockTeamLead = new UserEntity();
+        mockTeamLead.setFirstName("Doe");
+
+        UserEntity mockForwardedBy = new UserEntity();
+        mockForwardedBy.setFirstName("Admin");
+
+        SimpleClientDto clientDto = new SimpleClientDto();
+        clientDto.setFirstName("John");
+
+        NotificationDto notificationDto = new NotificationDto();
+        notificationDto.setClient(clientDto); // this avoids NPE
+
+        // Correct stubbing for modelMapper
+        when(modelMapper.map(any(ClientEntity.class), eq(SimpleClientDto.class)))
+                .thenReturn(clientDto);
+
+        // Calling the method
+        notificationService.createForwardedClientNotification(mockClient, mockTeamLead, mockForwardedBy);
 
         verify(notificationRepository, times(1)).save(any(NotificationEntity.class));
     }
+
+
+
 
     @Test
     void testCreateOverdueFollowUpNotification() {
         long daysPending = 6L;
 
+        // Mock returned SimpleClientDto
+        SimpleClientDto mockClientDto = new SimpleClientDto();
+        mockClientDto.setFirstName("John");
+
+        when(modelMapper.map(any(ClientEntity.class), eq(SimpleClientDto.class)))
+                .thenReturn(mockClientDto);
+
+        // Run the method
         notificationService.createOverdueFollowUpNotification(mockClient, mockTeamLead, daysPending);
 
+        // Verify interactions
         verify(notificationRepository, times(1)).save(any(NotificationEntity.class));
         verify(amazonSES, times(1)).sendOverdueFollowUpEmail(eq(mockTeamLead), eq(mockClient), eq(daysPending), eq(mockClient.getCreatedBy()));
     }
 
-//    @Test
-//    void testGetUnresolvedNotifications() {
-//        when(notificationRepository.findByResolvedFalse()).thenReturn(List.of(new NotificationEntity()));
-//
-//        List<NotificationEntity> notifications = notificationService.getUnresolvedNotifications();
-//
-//        assertNotNull(notifications);
-//        verify(notificationRepository, times(1)).findByResolvedFalse();
-//    }
 
     @Test
     void testResolveNotification_Success() {

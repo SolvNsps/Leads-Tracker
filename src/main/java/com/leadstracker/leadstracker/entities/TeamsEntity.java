@@ -16,6 +16,7 @@ public class TeamsEntity implements Serializable {
     @GeneratedValue
     private Long id;
 
+    @Column(unique = true)
     private String name;
 
     @OneToMany(mappedBy = "team")

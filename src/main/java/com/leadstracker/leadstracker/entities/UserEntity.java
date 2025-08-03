@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 
 import java.io.Serial;
@@ -95,6 +96,7 @@ public class UserEntity implements Serializable {
     @JoinColumn(name = "teams_id")
     private TeamsEntity team;
 
+    @CreationTimestamp
     private LocalDateTime createdDate;
 
     public String getPasswordResetToken() {

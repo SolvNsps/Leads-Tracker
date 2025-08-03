@@ -112,15 +112,7 @@ public class ClientController {
         clientService.deleteClient(id);
         return ResponseEntity.ok("Client deleted successfully.");
     }
-//
-//    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
-//    @GetMapping("/admin/notifications")
-//    public List<NotificationEntity> getAllUnresolvedNotifications() {
-//        return notificationService.getUnresolvedNotifications();
-//
-//        //from the figma table, the above notifications should be seen by the admin where we get all clients in the system
-//
-//    }
+
 
 
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
@@ -202,18 +194,11 @@ public class ClientController {
     }
 
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/notifications/{id}/alert")
-    public ResponseEntity<String> alertTeamLead(@PathVariable Long id) {
+    public ResponseEntity<?> alertTeamLead(@PathVariable Long id) {
         notificationService.alertTeamLead(id);
-        return ResponseEntity.ok("Team Lead alerted successfully.");
-    }
-
-    @PreAuthorize("hasRole('TEAM_LEAD')")
-    @GetMapping("/notifications/team-lead")
-    public List<NotificationEntity> getTeamLeadNotifications(@AuthenticationPrincipal UserPrincipal userPrincipal) {
-        String teamLeadId = userService.getUserByEmail(userPrincipal.getUsername()).getUserId();
-        return notificationService.getNotificationsForTeamLead(teamLeadId);
+        return ResponseEntity.ok(Map.of("message", "Team Lead alerted successfully."));
     }
 
 
@@ -309,19 +294,37 @@ public class ClientController {
 
     //getting all clients under a user
     @GetMapping("/all-clients/{userId}")
-    public ResponseEntity<List<ClientRest>> getMyClients(
+    public ResponseEntity<PaginatedResponse<ClientRest>> getMyClients(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "limit", defaultValue = "10") int limit) {
+            @PathVariable String userId,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "limit", required = false) Integer limit) {
 
         String email = userPrincipal.getUsername();
         UserDto currentUser = userService.getUserByEmail(email);
 
-        List<ClientDto> clientDtos = clientService.getClientsUnderUser(currentUser.getUserId(), page, limit);
+        boolean isPaginated = (page != null && page >= 0) && (limit != null && limit > 0);
+        int pageNumber = isPaginated ? page : 0;
+        int pageSize = isPaginated ? limit : Integer.MAX_VALUE;
+
+        List<ClientDto> clientDtos;
+        long totalItems;
+        int totalPages;
+
+        if (isPaginated) {
+            clientDtos = clientService.getClientsUnderUser(currentUser.getUserId(), pageNumber, pageSize);
+            totalItems = clientService.countClientsUnderUser(currentUser.getUserId());
+            totalPages = (int) Math.ceil((double) totalItems / pageSize);
+        } else {
+            clientDtos = clientService.getAllClientsUnderUser(currentUser.getUserId());
+            totalItems = clientDtos.size();
+            totalPages = 1;
+            pageNumber = 0;
+            pageSize = clientDtos.size();
+        }
 
         List<ClientRest> results = clientDtos.stream().map(dto -> {
             ClientRest rest = modelMapper.map(dto, ClientRest.class);
-
             rest.setClientId(dto.getClientId());
             rest.setFirstName(dto.getFirstName());
             rest.setLastName(dto.getLastName());
@@ -340,27 +343,31 @@ public class ClientController {
 
                 Instant lastUpdatedInstant = dto.getLastUpdated().toInstant();
                 Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
-
-                String humanReadable = utils.getExactDuration(duration);
-                rest.setLastAction(humanReadable);
+                rest.setLastAction(utils.getExactDuration(duration));
             }
 
             if (dto.getCreatedBy() != null) {
-                rest.setCreatedBy(dto.getCreatedBy().getFirstName() + " "
-                        + dto.getCreatedBy().getLastName());
+                rest.setCreatedBy(dto.getCreatedBy().getFirstName() + " " + dto.getCreatedBy().getLastName());
             }
 
             if (dto.getAssignedTo() != null) {
-                rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " "
-                        + dto.getAssignedTo().getLastName());
+                rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
             }
 
             return rest;
         }).toList();
 
-        return ResponseEntity.ok(results);
-    }
+        PaginatedResponse<ClientRest> response = new PaginatedResponse<>();
+        response.setData(results);
+        response.setCurrentPage(pageNumber);
+        response.setPageSize(pageSize);
+        response.setTotalItems(totalItems);
+        response.setTotalPages(totalPages);
+        response.setHasNext(isPaginated && (pageNumber + 1 < totalPages));
+        response.setHasPrevious(isPaginated && (pageNumber > 0));
 
+        return ResponseEntity.ok(response);
+    }
 
 }
 
