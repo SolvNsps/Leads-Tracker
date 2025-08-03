@@ -10,7 +10,10 @@ public class TeamTargetResponseDto {
     private int targetValue;
     private LocalDate dueDate;
 
-    public TeamTargetResponseDto(Long id, String teamName, int targetValue, LocalDate dueDate){
+    public TeamTargetResponseDto(){
+    }
+
+    public TeamTargetResponseDto(Long id, String teamName, int targetValue, LocalDate dueDate) {
         this.id = id;
         this.teamName = teamName;
         this.targetValue = targetValue;

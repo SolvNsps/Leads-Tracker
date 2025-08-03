@@ -4,14 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.request.TeamTargetRequestDto;
 import com.leadstracker.leadstracker.response.GlobalExceptionHandler;
 import com.leadstracker.leadstracker.response.PerfRest;
+import com.leadstracker.leadstracker.response.TeamTargetResponseDto;
 import com.leadstracker.leadstracker.response.UserRest;
 import com.leadstracker.leadstracker.controller.UserController;
 import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
 import com.leadstracker.leadstracker.request.ResetPassword;
 import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.services.ClientService;
+import com.leadstracker.leadstracker.services.TeamTargetService;
+import com.leadstracker.leadstracker.services.UserProfileService;
 import com.leadstracker.leadstracker.services.UserService;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
@@ -23,14 +27,17 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -60,9 +67,14 @@ public class UserControllerTest {
     @MockitoBean
     private GlobalExceptionHandler globalExceptionHandler;
 
+    @MockitoBean
+    private TeamTargetService teamTargetService;
+
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UserProfileService userProfileService;
 
     @Test
     @WithMockUser
@@ -236,6 +248,47 @@ public class UserControllerTest {
 
         mockMvc.perform(delete("/api/v1/leads/delete/{id}", userId))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void assignTarget_ShouldReturnResponseDto() throws Exception {
+        TeamTargetRequestDto requestDto = new TeamTargetRequestDto();
+        requestDto.setTeamId(1L);
+        requestDto.setTargetValue(100);
+        TeamTargetResponseDto responseDto = new TeamTargetResponseDto();
+        responseDto.setTeamName("team123");
+        responseDto.setTargetValue(100);
+        responseDto.setDueDate(LocalDate.of(2025,7, 21));
+
+
+        when(teamTargetService.assignTargetToTeam(any(TeamTargetRequestDto.class))).thenReturn(responseDto);
+
+        mockMvc.perform(post("/api/v1/leads/assign")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teamName").value("team123"))
+                .andExpect(jsonPath("$.targetValue").value(100))
+                .andExpect(jsonPath("$.dueDate").value(LocalDate.of(2025, 7, 21).toString()));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void getAllTargets_ShouldReturnListOfTargets() throws Exception {
+        TeamTargetResponseDto dto = new TeamTargetResponseDto();
+        dto.setTeamName("Team Alpha");
+        dto.setTargetValue(500);
+        dto.setDueDate(LocalDate.of(2025, 12, 31));
+
+        List<TeamTargetResponseDto> mockResponse = List.of(dto);
+        when(teamTargetService.getAllTargets()).thenReturn(mockResponse);
+
+        mockMvc.perform(get("/api/v1/leads/targets")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
     }
 }
 
