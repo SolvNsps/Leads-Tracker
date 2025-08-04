@@ -351,7 +351,7 @@ public class UserController {
 
         TeamDto createdTeam = userService.createTeam(teamDto);
         TeamRest teamRest = modelMapper.map(createdTeam, TeamRest.class);
-        teamRest.setTeamLeadUserId(teamDto.getTeamLeadUserId());
+        teamRest.setTeamLeadName(teamDto.getTeamLeadName());
 
         return ResponseEntity.ok(Map.of(
                 "teamName", teamRest,
@@ -376,7 +376,7 @@ public class UserController {
         rest.setData(userRest);
         rest.setCurrentPage(allMembers.getNumber());
         rest.setTotalPages(allMembers.getTotalPages());
-        rest.setTotalItems(10);
+        rest.setTotalItems(allMembers.getTotalElements());
         rest.setPageSize(allMembers.getSize());
         rest.setHasNext(allMembers.hasNext());
         rest.setHasPrevious(allMembers.hasPrevious());
@@ -384,87 +384,110 @@ public class UserController {
         return ResponseEntity.ok(rest);
     }
 
+    //Admin setting targets for teams
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @PostMapping("/assign")
+    @PostMapping("/assign/team-target")
     public ResponseEntity<TeamTargetResponseDto> assignTarget(@RequestBody TeamTargetRequestDto dto) {
         TeamTargetResponseDto response = teamTargetService.assignTargetToTeam(dto);
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasAuthority('RPLE_ADMIN')")
-    @GetMapping("/api/v1/leads/targets")
+    //Admin viewing the targets set
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/team-targets")
     public ResponseEntity<List<TeamTargetResponseDto>> getAllTargets() {
         List<TeamTargetResponseDto> targets = teamTargetService.getAllTargets();
         return ResponseEntity.ok(targets);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
-    @GetMapping("/api/v1/profile")
-    public ResponseEntity<UserProfileResponseDto> getProfile(Principal principal) {
-        UserProfileResponseDto profile = userProfileService.getProfile(principal.getName());
+    //Team lead viewing profile
+//    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+
+    // Viewing the profile of all users (Admin, Team lead, Team member)
+    @GetMapping("/profile")
+    public ResponseEntity<UserProfileResponseDto> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
+        UserProfileResponseDto profile = userProfileService.getProfile(principal.getUsername());
         return ResponseEntity.ok(profile);
 
     }
 
+    //Team lead editing profile
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
-    @PutMapping("/api/v1/profile")
+    @PutMapping("/edit-profile")
     public ResponseEntity<UserProfileResponseDto> updatePhoneNumber(@RequestBody @Valid UpdateUserProfileRequestDto request,
                                                                     @AuthenticationPrincipal UserPrincipal principal) {
         UserProfileResponseDto updated = userProfileService.updatePhoneNumber(principal.getUsername(), request);
         return ResponseEntity.ok(updated);
     }
 
+    //Team lead changing password
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
-    @PutMapping("/api/v1/profile/change-password")
-    public ResponseEntity<String> changePassword(@RequestBody @Valid ChangePasswordRequestDto request,
-                                                 Principal principal) {
-        userProfileService.changePassword(principal.getName(), request);
-        return ResponseEntity.ok("Password updated successfully.");
+    @PutMapping("team-lead/profile/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody @Valid ChangePasswordRequestDto request,
+                                                 @AuthenticationPrincipal UserPrincipal principal) {
+        userProfileService.changePassword(principal.getUsername(), request);
+        return ResponseEntity.ok(Map.of(
+                "message", "Password changed successfully.",
+                "Status",  "SUCCESS"
+        ));
     }
 
-    @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
-    @GetMapping("/api/v1/members/profile")
-    public ResponseEntity<UserProfileResponseDto> getTeamMemberProfile(@AuthenticationPrincipal UserPrincipal principal) {
-        UserProfileResponseDto profile = userProfileService.getProfile(principal.getUsername());
-        return ResponseEntity.ok(profile);
-    }
+    //Team member viewing profile
+//    @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
+//    @GetMapping("/member/profile")
+//    public ResponseEntity<UserProfileResponseDto> getTeamMemberProfile(@AuthenticationPrincipal UserPrincipal principal) {
+//        UserProfileResponseDto profile = userProfileService.getProfile(principal.getUsername());
+//        return ResponseEntity.ok(profile);
+//    }
 
+    //Team member editing profile
     @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
-    @PutMapping("/api/v1/members/profile")
+    @PutMapping("/members/edit-profile")
     public ResponseEntity<UserProfileResponseDto> updateTeamMemberPhone(@RequestBody @Valid UpdateUserProfileRequestDto request,
                                                                         @AuthenticationPrincipal UserPrincipal principal) {
         UserProfileResponseDto updated = userProfileService.updatePhoneNumber(principal.getUsername(), request);
         return ResponseEntity.ok(updated);
     }
 
+    //Team member changing password
     @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
-    @PutMapping("/api/v1/members/profile/change-password")
-    public ResponseEntity<String> changeTeamMemberPassword(@RequestBody @Valid ChangePasswordRequestDto request,
-                                                           Principal principal) {
-        userProfileService.changePassword(principal.getName(), request);
-        return ResponseEntity.ok("Password updated successfully.");
+    @PutMapping("/members/profile/change-password")
+    public ResponseEntity<?> changeTeamMemberPassword(@RequestBody @Valid ChangePasswordRequestDto request,
+                                                           @AuthenticationPrincipal UserPrincipal principal) {
+        userProfileService.changePassword(principal.getUsername(), request);
+        return ResponseEntity.ok(Map.of(
+                "message", "Password updated successfully.",
+                "status",  "SUCCESS"
+        ));
     }
 
+    //Admin viewing profile
+//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+//    @GetMapping("/admin/profile")
+//    public ResponseEntity<UserProfileResponseDto> getAdminProfile(@AuthenticationPrincipal UserPrincipal principal) {
+//        UserProfileResponseDto profile = userProfileService.getProfile(principal.getUsername());
+//        return ResponseEntity.ok(profile);
+//    }
+
+    //Admin editing profile
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @GetMapping("/api/v1/admin/profile")
-    public ResponseEntity<UserProfileResponseDto> getAdminProfile(Principal principal) {
-        UserProfileResponseDto profile = userProfileService.getProfile(principal.getName());
-        return ResponseEntity.ok(profile);
-    }
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @PutMapping("/api/v1/changeAdminNumber/profile")
+    @PutMapping("/changeAdminNumber/profile")
     public ResponseEntity<UserProfileResponseDto> updateAdminPhone(@RequestBody @Valid UpdateUserProfileRequestDto request,
                                                                         @AuthenticationPrincipal UserPrincipal principal) {
         UserProfileResponseDto updated = userProfileService.updatePhoneNumber(principal.getUsername(), request);
         return ResponseEntity.ok(updated);
     }
 
+    //Admin changing password
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @PutMapping("/api/v1/admin/profile/change-password")
-    public ResponseEntity<String> changeAdminPassword(@RequestBody @Valid ChangePasswordRequestDto request,
+    @PutMapping("/admin/profile/change-password")
+    public ResponseEntity<?> changeAdminPassword(@RequestBody @Valid ChangePasswordRequestDto request,
                                                            @AuthenticationPrincipal UserPrincipal principal) {
         userProfileService.changePassword(principal.getUsername(), request);
-        return ResponseEntity.ok("Password updated successfully.");
+        return ResponseEntity.ok(Map.of(
+                "message", "Password updated successfully.",
+                "status",  "SUCCESS"
+        ));
     }
 
 }

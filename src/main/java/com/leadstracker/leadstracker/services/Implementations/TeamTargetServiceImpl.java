@@ -62,6 +62,11 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An active target already exists for this team.");
         }
 
+        UserEntity teamLead = team.getTeamLead();
+        String teamLeadFullName = teamLead != null
+                ? teamLead.getFirstName() + " " + teamLead.getLastName()
+                : null;
+
         // Create new target entity
         TeamTargetEntity newTarget = new TeamTargetEntity();
         newTarget.setTeam(team);

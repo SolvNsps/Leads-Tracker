@@ -9,7 +9,7 @@ public class TeamDto implements Serializable {
 
     private Long id;
     private String name;
-    private String teamLeadUserId;
+    private String teamLeadName;
 
     public Long getId() {
         return id;
@@ -27,11 +27,11 @@ public class TeamDto implements Serializable {
         this.name = name;
     }
 
-    public String getTeamLeadUserId() {
-        return teamLeadUserId;
+    public String getTeamLeadName() {
+        return teamLeadName;
     }
 
-    public void setTeamLeadUserId(String teamLeadUserId) {
-        this.teamLeadUserId = teamLeadUserId;
+    public void setTeamLeadUserId(String teamLeadName) {
+        this.teamLeadName = teamLeadName;
     }
 }
