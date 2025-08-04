@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -275,7 +276,7 @@ public class ClientServiceImpl implements ClientService {
             page -= 1;
         }
 
-        Pageable pageableRequest = PageRequest.of(page, limit);
+        Pageable pageableRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
         Page<ClientEntity> clientPage = clientRepository.findAll(pageableRequest);
 
         return clientPage.map(clientEntity -> {
@@ -320,7 +321,7 @@ public class ClientServiceImpl implements ClientService {
             page--;
         }
 
-        Pageable pageable = PageRequest.of(page, limit);
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
         UserEntity userEntity = userRepository.findByUserId(userId);
 
         List<ClientEntity> clients;
