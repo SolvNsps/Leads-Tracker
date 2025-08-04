@@ -20,9 +20,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -285,17 +283,18 @@ class UserServiceImplTest {
 
         List<UserEntity> users = List.of(user1, user2);
         Page<UserEntity> userPage = new PageImpl<>(users);
+        Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
+        when(userRepository.findAll(pageable)).thenReturn(userPage);
 
-        when(userRepository.findAll(PageRequest.of(page - 1, limit))).thenReturn(userPage);
-
-        // Act
+// Act
         List<UserDto> result = userService.getAllUsers(page, limit);
 
-        // Assert
+// Assert
         assertEquals(2, result.size());
         assertEquals("Alice", result.get(0).getFirstName());
         assertEquals("Bob", result.get(1).getFirstName());
-        verify(userRepository).findAll(PageRequest.of(page - 1, limit));
+        verify(userRepository).findAll(pageable);
+
     }
 
     @Test
