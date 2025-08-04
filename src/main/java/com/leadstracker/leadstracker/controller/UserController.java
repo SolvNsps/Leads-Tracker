@@ -446,13 +446,13 @@ public class UserController {
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @GetMapping("/api/v1/admin/profile")
+    @GetMapping("/admin/profile")
     public ResponseEntity<UserProfileResponseDto> getAdminProfile(Principal principal) {
         UserProfileResponseDto profile = userProfileService.getProfile(principal.getName());
         return ResponseEntity.ok(profile);
     }
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @PutMapping("/api/v1/changeAdminNumber/profile")
+    @PutMapping("/changeAdminNumber/profile")
     public ResponseEntity<UserProfileResponseDto> updateAdminPhone(@RequestBody @Valid UpdateUserProfileRequestDto request,
                                                                         @AuthenticationPrincipal UserPrincipal principal) {
         UserProfileResponseDto updated = userProfileService.updatePhoneNumber(principal.getUsername(), request);
@@ -460,7 +460,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @PutMapping("/api/v1/admin/profile/change-password")
+    @PutMapping("/admin/profile/change-password")
     public ResponseEntity<String> changeAdminPassword(@RequestBody @Valid ChangePasswordRequestDto request,
                                                            @AuthenticationPrincipal UserPrincipal principal) {
         userProfileService.changePassword(principal.getUsername(), request);

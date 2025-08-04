@@ -3,16 +3,13 @@ package com.leadstracker.leadstracker;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
+import com.leadstracker.leadstracker.entities.RoleEntity;
+import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.UserRepository;
-import com.leadstracker.leadstracker.request.TeamTargetRequestDto;
-import com.leadstracker.leadstracker.response.GlobalExceptionHandler;
-import com.leadstracker.leadstracker.response.PerfRest;
-import com.leadstracker.leadstracker.response.TeamTargetResponseDto;
-import com.leadstracker.leadstracker.response.UserRest;
+import com.leadstracker.leadstracker.request.*;
+import com.leadstracker.leadstracker.response.*;
 import com.leadstracker.leadstracker.controller.UserController;
-import com.leadstracker.leadstracker.request.ForgotPasswordRequest;
-import com.leadstracker.leadstracker.request.ResetPassword;
-import com.leadstracker.leadstracker.request.UserDetails;
+import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.TeamTargetService;
 import com.leadstracker.leadstracker.services.UserProfileService;
@@ -23,6 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,8 +37,11 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
+
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -290,5 +293,58 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
     }
+
+//    @Test
+//    void testUpdateAdminPhoneNumber_ShouldReturnUpdatedProfile() throws Exception {
+//        // Arrange: DTO to send
+//        UpdateUserProfileRequestDto updateDto = new UpdateUserProfileRequestDto();
+//        updateDto.setPhoneNumber("987654321");
+//
+//        // Arrange: Expected response
+//        UserProfileResponseDto updatedResponse = new UserProfileResponseDto();
+//        updatedResponse.setPhoneNumber("987654321");
+//
+//        // Arrange: Mock the service
+//        when(userProfileService.updatePhoneNumber(eq("admin@example.com"), any(UpdateUserProfileRequestDto.class)))
+//                .thenReturn(updatedResponse);
+//
+//        // Arrange: Create a mock UserPrincipal
+//        UserEntity user = new UserEntity();
+//        user.setEmail("admin@example.com");
+//        RoleEntity role = new RoleEntity();
+//        user.setRole(role);
+//
+//        UserPrincipal principal = new UserPrincipal(user);
+//
+//        // Act & Assert
+//        mockMvc.perform(put("/api/v1/leads/changeAdminNumber/profile")
+//                        .with(authentication(new UsernamePasswordAuthenticationToken(
+//                                principal,
+//                                null,
+//                                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")))))
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(objectMapper.writeValueAsString(updateDto)))
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.phoneNumber").value("987654321"));
+//    }
+//
+//
+//    @WithMockUser(authorities = "ROLE_ADMIN")
+//    @Test
+//    void testChangeAdminPassword_ShouldReturnSuccessMessage() throws Exception {
+//        ChangePasswordRequestDto requestDto = new ChangePasswordRequestDto();
+//        requestDto.setCurrentPassword("oldPass123");
+//        requestDto.setNewPassword("newPass456");
+//
+//        doNothing().when(userProfileService).changePassword(eq("admin@example.com"), any(ChangePasswordRequestDto.class));
+//
+//        mockMvc.perform(put("/api/v1/leads/admin/profile/change-password")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(objectMapper.writeValueAsString(requestDto))
+//                        .with(user("admin@example.com").authorities(() -> "ROLE_ADMIN")))
+//                        .with(csrf())
+//                .andExpect(status().isOk())
+//                .andExpect(content().string("Password updated successfully."));
+//    }
 }
 
