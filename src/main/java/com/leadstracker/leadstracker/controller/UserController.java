@@ -136,15 +136,21 @@ public class UserController {
                                                          @RequestParam(required = false) String duration) {
         List<UserDto> teamMembers = userService.getMembersUnderLead(id);
 
-        TeamMemberPerformanceDto performance = clientService.getMemberPerformance(id, duration);
-
         List<PerfRest> response = teamMembers.stream()
-                .map(dto -> modelMapper.map(dto, PerfRest.class))
-                .toList();
+                .map(dto -> {
+                    PerfRest perfRest = modelMapper.map(dto, PerfRest.class);
 
+                    TeamMemberPerformanceDto memberPerf = clientService.getMemberPerformance(dto.getUserId(), duration);
+
+                    perfRest.setMemberPerformance(memberPerf);
+
+                    return perfRest;
+                })
+                .toList();
 
         return ResponseEntity.ok(response);
     }
+
 
 
     //Viewing and managing the data of a particular team member under a team lead
@@ -413,7 +419,7 @@ public class UserController {
 
     //Team lead editing profile
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
-    @PutMapping("/edit-profile")
+    @PutMapping("/team-lead/edit-profile")
     public ResponseEntity<UserProfileResponseDto> updatePhoneNumber(@RequestBody @Valid UpdateUserProfileRequestDto request,
                                                                     @AuthenticationPrincipal UserPrincipal principal) {
         UserProfileResponseDto updated = userProfileService.updatePhoneNumber(principal.getUsername(), request);

@@ -129,7 +129,7 @@ public class ClientServiceImpl implements ClientService {
         response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
         response.setTotalClientsAdded(clients.size());
         response.setTeamTarget(response.getNumberOfClients());
-        response.setProgressPercentage(((double) clients.size() / (response.getNumberOfClients())) * 100);
+        response.setProgressPercentage(( (double) clients.size() / (response.getNumberOfClients())));
         response.setNumberOfTeamMembers(teamMembers.size());
 
         //Building the status distribution using the enum
@@ -167,6 +167,7 @@ public class ClientServiceImpl implements ClientService {
     public TeamMemberPerformanceDto getMemberPerformance(String memberId, String duration) {
         UserEntity member = userRepository.findByUserId(memberId);
         Date[] dateRange = calculateDateRange(duration);
+
         return teamMemberStats(member, dateRange[0], dateRange[1]);
 
     }
@@ -180,6 +181,8 @@ public class ClientServiceImpl implements ClientService {
         dto.setMemberId(member.getUserId());
         dto.setMemberName(member.getFirstName() + " " + member.getLastName());
         dto.setTotalClientsSubmitted(memberClients.size());
+        dto.setTarget(dto.getTarget());
+        dto.setProgressPercentage(( (double) memberClients.size() / (dto.getTarget())));
 
         // Grouping by status enum
         dto.setClientStatus(
