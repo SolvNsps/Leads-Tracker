@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -147,7 +148,7 @@ public class UserServiceImpl implements UserService {
         if (page > 0) {
             page -= 1;
         }
-        Pageable pageableRequest = PageRequest.of(page, limit);
+        Pageable pageableRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
         Page<UserEntity> usersPage = userRepository.findAll(pageableRequest);
         List<UserEntity> users = usersPage.getContent();
 
@@ -572,7 +573,7 @@ public class UserServiceImpl implements UserService {
     public Page<UserDto> getTeamMembersData(String userId, int page, int limit) {
 
 //        UserEntity userEntity = userRepository.findByUserId(userId);
-        Pageable pageable = PageRequest.of(page, limit);
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
         Page<UserEntity> userEntities = userRepository.findByTeamLead_UserId(userId, pageable);
 
         return userEntities.map(user -> modelMapper.map(user, UserDto.class));

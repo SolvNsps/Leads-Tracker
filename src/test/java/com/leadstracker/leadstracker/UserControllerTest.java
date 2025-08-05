@@ -267,7 +267,7 @@ public class UserControllerTest {
 
         when(teamTargetService.assignTargetToTeam(any(TeamTargetRequestDto.class))).thenReturn(responseDto);
 
-        mockMvc.perform(post("/api/v1/leads/assign")
+        mockMvc.perform(post("/api/v1/leads/assign/team-target")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))

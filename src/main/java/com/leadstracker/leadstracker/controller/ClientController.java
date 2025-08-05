@@ -162,7 +162,7 @@ public class ClientController {
         res.setData(result);
         res.setCurrentPage(overdueClients.getNumber());
         res.setTotalPages(overdueClients.getTotalPages());
-        res.setTotalItems(2);
+        res.setTotalItems(overdueClients.getTotalElements());
         res.setPageSize(overdueClients.getSize());
         res.setHasNext(overdueClients.hasNext());
         res.setHasPrevious(overdueClients.hasPrevious());
@@ -283,7 +283,7 @@ public class ClientController {
         response.setData(clientRestList);
         response.setCurrentPage(pagedClients.getNumber());
         response.setTotalPages(pagedClients.getTotalPages());
-        response.setTotalItems(5);
+        response.setTotalItems(pagedClients.getTotalElements());
         response.setPageSize(pagedClients.getSize());
         response.setHasNext(pagedClients.hasNext());
         response.setHasPrevious(pagedClients.hasPrevious());

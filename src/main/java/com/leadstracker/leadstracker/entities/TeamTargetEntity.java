@@ -25,6 +25,9 @@ public class TeamTargetEntity {
     @Column(nullable = false)
     private LocalDate dueDate;
 
+    @Column(nullable = false)
+    private LocalDate assignedDate;
+
 
     public TeamTargetEntity() {}
 
@@ -59,5 +62,13 @@ public class TeamTargetEntity {
 
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public LocalDate getAssignedDate() {
+        return assignedDate;
+    }
+
+    public void setAssignedDate(LocalDate assignedDate) {
+        this.assignedDate = assignedDate;
     }
 }

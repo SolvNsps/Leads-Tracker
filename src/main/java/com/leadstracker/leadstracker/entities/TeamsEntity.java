@@ -22,6 +22,10 @@ public class TeamsEntity implements Serializable {
     @OneToMany(mappedBy = "team")
     private Collection<UserEntity> users;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "team_lead_id")
+    private UserEntity teamLead;
+
     public Long getId() {
         return id;
     }
@@ -44,5 +48,13 @@ public class TeamsEntity implements Serializable {
 
     public void setUsers(Collection<UserEntity> users) {
         this.users = users;
+    }
+
+    public UserEntity getTeamLead() {
+        return teamLead;
+    }
+
+    public void setTeamLead(UserEntity teamLead) {
+        this.teamLead = teamLead;
     }
 }
