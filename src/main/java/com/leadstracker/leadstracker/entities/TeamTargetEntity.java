@@ -3,11 +3,12 @@ package com.leadstracker.leadstracker.entities;
 
 import jakarta.persistence.*;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "team_targets")
-public class TeamTargetEntity {
+public class TeamTargetEntity implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
