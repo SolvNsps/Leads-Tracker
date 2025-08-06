@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface TeamTargetRepository extends JpaRepository<TeamTargetEntity, Long> {
 
@@ -12,5 +13,5 @@ public interface TeamTargetRepository extends JpaRepository<TeamTargetEntity, Lo
     List<TeamTargetEntity> findByTeamIdAndDueDateGreaterThanEqual(Long teamId, LocalDate date);
 
     // Get all targets for a team
-    List<TeamTargetEntity> findByTeamId(Long teamId);
+    Optional<TeamTargetEntity> findByTeamId(Long teamId);
 }

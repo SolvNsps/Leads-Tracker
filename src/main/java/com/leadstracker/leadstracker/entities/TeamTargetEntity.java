@@ -26,8 +26,12 @@ public class TeamTargetEntity implements Serializable {
     @Column(nullable = false)
     private LocalDate dueDate;
 
+    @Column(nullable = false)
+    private LocalDate assignedDate;
 
-    public TeamTargetEntity() {}
+
+    public TeamTargetEntity() {
+    }
 
 
     public Long getId() {
@@ -60,5 +64,20 @@ public class TeamTargetEntity implements Serializable {
 
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public LocalDate getAssignedDate() {
+        return assignedDate;
+    }
+
+    public void setAssignedDate(LocalDate assignedDate) {
+        this.assignedDate = LocalDate.now();
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (assignedDate == null) {
+            assignedDate = LocalDate.now();
+        }
     }
 }

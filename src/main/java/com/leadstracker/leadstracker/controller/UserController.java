@@ -4,6 +4,7 @@ import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.config.SpringApplicationContext;
 import com.leadstracker.leadstracker.entities.AuthorityEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
+import com.leadstracker.leadstracker.entities.UserTargetEntity;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.request.*;
 import com.leadstracker.leadstracker.response.*;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -477,6 +479,12 @@ public class UserController {
 
     //Admin editing profile
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/admin/profile")
+    public ResponseEntity<UserProfileResponseDto> getAdminProfile(Principal principal) {
+        UserProfileResponseDto profile = userProfileService.getProfile(principal.getName());
+        return ResponseEntity.ok(profile);
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/changeAdminNumber/profile")
     public ResponseEntity<UserProfileResponseDto> updateAdminPhone(@RequestBody @Valid UpdateUserProfileRequestDto request,
                                                                         @AuthenticationPrincipal UserPrincipal principal) {
@@ -488,7 +496,7 @@ public class UserController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/admin/profile/change-password")
     public ResponseEntity<?> changeAdminPassword(@RequestBody @Valid ChangePasswordRequestDto request,
-                                                           @AuthenticationPrincipal UserPrincipal principal) {
+                                                 @AuthenticationPrincipal UserPrincipal principal) {
         userProfileService.changePassword(principal.getUsername(), request);
         return ResponseEntity.ok(Map.of(
                 "message", "Password updated successfully.",
@@ -496,4 +504,47 @@ public class UserController {
         ));
     }
 
+    @GetMapping("/team-lead/view-target")
+    @PreAuthorize("hasRole('TEAM_LEAD')")
+    public ResponseEntity<TeamTargetOverviewDto> viewTeamTargetOverview(Authentication authentication) {
+        String teamLeadEmail = authentication.getName(); // Extracted from JWT
+        TeamTargetOverviewDto overview = teamTargetService.getTeamTargetOverview(teamLeadEmail);
+        return ResponseEntity.ok(overview);
+    }
+
+    @PreAuthorize("hasRole('TEAM_LEAD')")
+    @PostMapping("/targets/assign")
+    public ResponseEntity<String> assignTargetToTeamMembers(@RequestBody TargetDistributionRequest requestDto,
+                                                            @AuthenticationPrincipal UserDetails userDetails) {
+        String teamLeadEmail =  userDetails.getEmail();
+
+        // Convert List<MemberTargetDto> to Map<Long, Integer>
+        Map<Long, Integer> memberTargetMap = requestDto.getMemberTargets().stream()
+                .collect(Collectors.toMap(
+                        MemberTargetDto::getMemberId,
+                        MemberTargetDto::getAssignedTarget
+                ));
+
+        // Call the service
+        teamTargetService.assignTargetToTeamMembers(requestDto.getTeamTargetId(), memberTargetMap, teamLeadEmail);
+
+        return ResponseEntity.ok("Target successfully assigned to team members.");
+    }
+
+    @GetMapping("/team-lead/team-targets/{teamTargetId}/members")
+    public ResponseEntity<List<UserTargetResponseDto>> getTeamMemberTargets(
+            @PathVariable Long teamTargetId,
+            @RequestHeader("X-User-Email") String teamLeadEmail) {
+
+        List<UserTargetResponseDto> targets = teamTargetService.getTeamMemberTargets(teamTargetId, teamLeadEmail);
+        return ResponseEntity.ok(targets);
+    }
+
+    @GetMapping("/my-target")
+    @PreAuthorize("hasRole('TEAM_MEMBER')")
+    public ResponseEntity<MyTargetResponse> getMyTarget(Authentication authentication) {
+        String email = authentication.getName();
+        MyTargetResponse response = teamTargetService.getMyTarget(email);
+        return ResponseEntity.ok(response);
+    }
 }
