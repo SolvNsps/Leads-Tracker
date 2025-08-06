@@ -75,7 +75,11 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void createOverdueFollowUpNotification(ClientEntity client, UserEntity teamLead, long daysPending) {
         // Check if notification already exists
-        if (notificationRepository.existsByClientAndTypeAndResolvedFalse(client, "OVERDUE_FOLLOWUP")) {
+        boolean alreadyExists = notificationRepository.existsByClientAndTypeAndResolvedFalse(client, "OVERDUE_FOLLOWUP");
+
+        System.out.println("Client " + client.getClientId() + " already has overdue notification: " + alreadyExists);
+
+        if (alreadyExists) {
             return;
         }
 
@@ -96,6 +100,8 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setMessage(dto.generateMessage());
 
         notificationRepository.save(notification);
+
+        System.out.println("Created overdue notification for client: " + client.getClientId());
 
         // Only send email if it's a new overdue notification
         amazonSES.sendOverdueFollowUpEmail(teamLead, client, daysPending, client.getCreatedBy());

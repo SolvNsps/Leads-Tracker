@@ -27,6 +27,7 @@ public class NotificationScheduler {
     private UserRepository userRepository;
 
     @Scheduled(cron = "0 0 8 * * MON-FRI") // Weekdays at 8 AM
+//@Scheduled(cron = "*/30 * * * * *")
     public void checkForOverdueClients() {
         List<ClientEntity> clients = clientRepository.findAll();
 
@@ -39,6 +40,10 @@ public class NotificationScheduler {
                     .toLocalDate();
 
             long daysPending = ChronoUnit.DAYS.between(lastUpdated, LocalDate.now());
+
+            System.out.println("Checking client: " + client.getClientId() +
+                    ", Status: " + client.getClientStatus() +
+                    ", Days pending: " + daysPending);
 
             // Check for overdue status (3 days for PENDING, 5 days for others)
             boolean isOverdue = false;

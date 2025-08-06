@@ -411,6 +411,64 @@ public class ClientServiceImpl implements ClientService {
         }
     }
 
+    /**
+     * @param userId
+     * @param page
+     * @param limit
+     * @return
+     */
+    @Override
+    public List<ClientDto> getClientsByTeamMember(String userId, int page, int limit) {
+        if (page > 0) page--;
+        Pageable pageable = PageRequest.of(page, limit);
+
+        UserEntity member = userRepository.findByUserId(userId);
+        List<ClientEntity> clients = clientRepository.findByCreatedBy(member, pageable);
+
+        return clients.stream().map(client -> {
+            ClientDto dto = modelMapper.map(client, ClientDto.class);
+            if (client.getCreatedBy() != null) {
+                dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
+            }
+            if (client.getTeamLead() != null) {
+                dto.setAssignedTo(modelMapper.map(client.getTeamLead(), UserDto.class));
+            }
+            dto.setClientStatus(client.getClientStatus().toString());
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * @param userId
+     * @return
+     */
+    @Override
+    public long countClientsByTeamMember(String userId) {
+        UserEntity member = userRepository.findByUserId(userId);
+        return clientRepository.countByCreatedBy(member);
+    }
+
+    /**
+     * @param userId
+     * @return
+     */
+    @Override
+    public List<ClientDto> getAllClientsByTeamMember(String userId) {
+            UserEntity member = userRepository.findByUserId(userId);
+            List<ClientEntity> clients = clientRepository.findByCreatedBy(member);
+            return clients.stream().map(client -> {
+                ClientDto dto = modelMapper.map(client, ClientDto.class);
+                if (client.getCreatedBy() != null) {
+                    dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
+                }
+                if (client.getTeamLead() != null) {
+                    dto.setAssignedTo(modelMapper.map(client.getTeamLead(), UserDto.class));
+                }
+                dto.setClientStatus(client.getClientStatus().toString());
+                return dto;
+            }).collect(Collectors.toList());
+    }
+
 
     /**
      * @return

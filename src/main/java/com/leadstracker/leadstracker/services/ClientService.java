@@ -33,4 +33,10 @@ public interface ClientService {
     List<ClientDto> getAllClientsUnderUser(String userId);
 
     long countClientsUnderUser(String userId);
+
+    List<ClientDto> getClientsByTeamMember(String userId, int page, int limit);
+
+    long countClientsByTeamMember(String userId);
+
+    List<ClientDto> getAllClientsByTeamMember(String userId);
 }
