@@ -1,6 +1,10 @@
 on:
   workflow_dispatch:  # Manual trigger
 
+   push:
+    branches:
+      - main  
+      
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
