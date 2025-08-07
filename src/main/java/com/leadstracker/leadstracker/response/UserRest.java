@@ -16,6 +16,11 @@ public class UserRest {
     private String staffId;
     private String team;
     private LocalDateTime createdDate;
+
+    private int targetValue;
+    private int progress;
+    private double progressPercentage;
+    private String progressFraction;
 //    private String teamName; // Optional -  if user is a Team Member
 //    private TeamPerformanceDto teamPerformance;
 //    private TeamMemberPerformanceDto memberPerformance;
@@ -91,5 +96,37 @@ public class UserRest {
 
     public void setCreatedDate(LocalDateTime createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public int getTargetValue() {
+        return targetValue;
+    }
+
+    public void setTargetValue(int targetValue) {
+        this.targetValue = targetValue;
+    }
+
+    public int getProgress() {
+        return progress;
+    }
+
+    public void setProgress(int progress) {
+        this.progress = progress;
+    }
+
+    public double getProgressPercentage() {
+        return progressPercentage;
+    }
+
+    public void setProgressPercentage(double progressPercentage) {
+        this.progressPercentage = progressPercentage;
+    }
+
+    public String getProgressFraction() {
+        return progressFraction;
+    }
+
+    public void setProgressFraction(String progressFraction) {
+        this.progressFraction = progressFraction;
     }
 }

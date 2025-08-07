@@ -1,12 +1,9 @@
 package com.leadstracker.leadstracker.services.Implementations;
 
 import com.leadstracker.leadstracker.DTO.*;
-import com.leadstracker.leadstracker.entities.ClientEntity;
-import com.leadstracker.leadstracker.entities.UserEntity;
-import com.leadstracker.leadstracker.repositories.ClientRepository;
-import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.entities.*;
+import com.leadstracker.leadstracker.repositories.*;
 import com.leadstracker.leadstracker.response.Statuses;
-import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
@@ -16,13 +13,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
@@ -51,8 +43,18 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     Utils utils;
+
     @Autowired
     private AmazonSES amazonSES;
+
+    @Autowired
+    TeamTargetRepository teamTargetRepository;
+
+    @Autowired
+    UserTargetRepository userTargetRepository;
+
+    @Autowired
+    TeamsRepository teamsRepository;
 
 
     /**
@@ -114,6 +116,7 @@ public class ClientServiceImpl implements ClientService {
     public TeamPerformanceDto getTeamPerformance(String userId, String duration) {
         //Getting team lead and members
         UserEntity teamLead = userRepository.findByUserId(userId);
+        TeamsEntity team = teamLead.getTeam();
         List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
 
         //Calculating date range
@@ -126,11 +129,32 @@ public class ClientServiceImpl implements ClientService {
 
         //response
         TeamPerformanceDto response = new TeamPerformanceDto();
+        response.setTeamId(team.getId());
+        response.setTeamName(team.getName());
         response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
         response.setTotalClientsAdded(clients.size());
-        response.setTeamTarget(response.getNumberOfClients());
-        response.setProgressPercentage(( (double) clients.size() / (response.getNumberOfClients())));
+//        response.setTeamTarget(response.getNumberOfClients());
+//        response.setProgressPercentage(( (double) clients.size() / (response.getNumberOfClients())));
         response.setNumberOfTeamMembers(teamMembers.size());
+
+        //Fetching active target
+        Optional<TeamTargetEntity> activeTargetOpt = teamTargetRepository
+                .findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(team.getId(), LocalDate.now());
+
+        int teamTarget = activeTargetOpt.map(TeamTargetEntity::getTargetValue).orElse(0);
+        response.setTeamTarget(teamTarget);
+
+        // Setting Progress
+        int numberOfClientsAdded = clients.size();
+        double progress = 0;
+
+        if (teamTarget > 0) {
+            progress = ((double) numberOfClientsAdded / teamTarget) * 100;
+        }
+//      Setting both percentage and fraction
+        response.setProgressPercentage(progress);
+        response.setProgressFraction(numberOfClientsAdded + "/" + teamTarget);
+
 
         //Building the status distribution using the enum
         response.setClientStatus(
@@ -177,12 +201,27 @@ public class ClientServiceImpl implements ClientService {
                 member, start, end
         );
 
+        // Fetching the most recently assigned target
+        UserTargetEntity latestTarget = userTargetRepository.findTopByUserOrderByAssignedDateDesc(member);
+        int target = 0;
+        if (latestTarget != null) {
+            target = latestTarget.getTargetValue();
+        }
+
         TeamMemberPerformanceDto dto = new TeamMemberPerformanceDto();
         dto.setMemberId(member.getUserId());
         dto.setMemberName(member.getFirstName() + " " + member.getLastName());
         dto.setTotalClientsSubmitted(memberClients.size());
-        dto.setTarget(dto.getTarget());
-        dto.setProgressPercentage(( (double) memberClients.size() / (dto.getTarget())));
+        dto.setTarget(target);
+        // Calculating progress
+        double progressPercentage = 0;
+
+        if (target > 0) {
+            progressPercentage = ((memberClients.size() * 100.0 ) / target);
+        }
+
+        dto.setProgressPercentage(progressPercentage);
+        dto.setProgressFraction(memberClients.size() + "/" + target);
 
         // Grouping by status enum
         dto.setClientStatus(
@@ -468,6 +507,47 @@ public class ClientServiceImpl implements ClientService {
                 return dto;
             }).collect(Collectors.toList());
     }
+
+    /**
+     * @return
+     */
+    @Override
+    public OverallSystemDto getClientStats(String duration) {
+        // Getting total statistics in the system
+        long totalClients = clientRepository.count();
+        List<ClientStatusCountDto> overallStats = clientRepository.countClientsByStatus();
+
+        Map<String, Long> overallStatusCounts = new HashMap<>();
+        for (ClientStatusCountDto stat : overallStats) {
+            overallStatusCounts.put(stat.getStatus().toString(), stat.getCount());
+        }
+
+        // Calculating date range based on duration
+        Date[] dateRange = calculateDateRange(duration);
+        Date startDate = dateRange[0];
+        Date endDate = dateRange[1];
+
+        // Get all teams
+        List<TeamsEntity> teams = teamsRepository.findAll();
+        List<ClientStatsDto> teamStatsList = new ArrayList<>();
+
+        for (TeamsEntity team : teams) {
+            List<UserEntity> members = userRepository.findByTeam(team);
+
+            // Fetching clients created by team members within date range
+            List<ClientEntity> teamClients = clientRepository.findByCreatedByInAndCreatedDateBetween(members, startDate, endDate);
+
+            Map<String, Long> teamStatusCounts = teamClients.stream()
+                    .collect(Collectors.groupingBy(
+                            c -> c.getClientStatus().toString(),
+                            Collectors.counting()));
+
+            teamStatsList.add(new ClientStatsDto(team.getName(), teamClients.size(), teamStatusCounts));
+        }
+
+        return new OverallSystemDto(totalClients, overallStatusCounts, teamStatsList);
+    }
+
 
 
     /**

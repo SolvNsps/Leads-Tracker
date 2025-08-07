@@ -1,9 +1,6 @@
 package com.leadstracker.leadstracker.services;
 
-import com.leadstracker.leadstracker.DTO.ClientDto;
-import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
-import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
-import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.DTO.*;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -39,4 +36,6 @@ public interface ClientService {
     long countClientsByTeamMember(String userId);
 
     List<ClientDto> getAllClientsByTeamMember(String userId);
+
+    OverallSystemDto getClientStats(String duration);
 }

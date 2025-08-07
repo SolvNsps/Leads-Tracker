@@ -26,6 +26,9 @@ public class TeamsEntity implements Serializable {
     @JoinColumn(name = "team_lead_id")
     private UserEntity teamLead;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     public Long getId() {
         return id;
     }
@@ -56,5 +59,13 @@ public class TeamsEntity implements Serializable {
 
     public void setTeamLead(UserEntity teamLead) {
         this.teamLead = teamLead;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }

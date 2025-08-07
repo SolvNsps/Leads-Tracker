@@ -9,6 +9,7 @@ public class TeamDto implements Serializable {
 
     private Long id;
     private String name;
+    private Long teamLeadId;
     private String teamLeadName;
 
     public Long getId() {
@@ -31,7 +32,16 @@ public class TeamDto implements Serializable {
         return teamLeadName;
     }
 
-    public void setTeamLeadUserId(String teamLeadName) {
+    public void setTeamLeadName(String teamLeadName) {
         this.teamLeadName = teamLeadName;
     }
+
+    public Long getTeamLeadId() {
+        return teamLeadId;
+    }
+
+    public void setTeamLeadId(Long teamLeadId) {
+        this.teamLeadId = teamLeadId;
+    }
+
 }

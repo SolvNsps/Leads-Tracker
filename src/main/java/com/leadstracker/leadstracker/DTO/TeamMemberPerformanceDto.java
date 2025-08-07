@@ -12,6 +12,7 @@ public class TeamMemberPerformanceDto {
     private int target;
     private double progressPercentage;
     private Map<Statuses, Integer> clientStatus;
+    private String progressFraction;
 
     public String getMemberId() {
         return memberId;
@@ -53,19 +54,19 @@ public class TeamMemberPerformanceDto {
         this.progressPercentage = progressPercentage;
     }
 
-//    public int getNumberOfClients() {
-//        return numberOfClients;
-//    }
-//
-//    public void setNumberOfClients(int numberOfClients) {
-//        this.numberOfClients = numberOfClients;
-//    }
-
     public Map<Statuses, Integer> getClientStatus() {
         return clientStatus;
     }
 
     public void setClientStatus(Map<Statuses, Integer> clientStatus) {
         this.clientStatus = clientStatus;
+    }
+
+    public String getProgressFraction() {
+        return progressFraction;
+    }
+
+    public void setProgressFraction(String progressFraction) {
+        this.progressFraction = progressFraction;
     }
 }

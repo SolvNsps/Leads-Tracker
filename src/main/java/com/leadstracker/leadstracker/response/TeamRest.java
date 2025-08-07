@@ -2,6 +2,7 @@ package com.leadstracker.leadstracker.response;
 
 public class TeamRest {
     private String name;
+    private String teamLeadUserId;
     private String teamLeadName;
 
     public String getName() {
@@ -10,6 +11,14 @@ public class TeamRest {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getTeamLeadUserId() {
+        return teamLeadUserId;
+    }
+
+    public void setTeamLeadUserId(String teamLeadUserId) {
+        this.teamLeadUserId = teamLeadUserId;
     }
 
     public String getTeamLeadName() {

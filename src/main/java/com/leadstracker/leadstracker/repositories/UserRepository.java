@@ -1,10 +1,13 @@
 package com.leadstracker.leadstracker.repositories;
 
 import com.leadstracker.leadstracker.entities.RoleEntity;
+import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -45,6 +48,9 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Page<UserEntity> findByTeamLead_UserId(String userId, Pageable pageable);
 
 
+    List<UserEntity> findByTeam(TeamsEntity team);
 
+    @Query("SELECT u FROM users u WHERE u.role.name = :roleName")
+    List<UserEntity> findByRoleName(@Param("roleName") String roleName);
 
 }

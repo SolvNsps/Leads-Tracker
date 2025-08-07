@@ -444,5 +444,12 @@ public class ClientController {
     }
 
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/statistics")
+    public ResponseEntity<OverallSystemDto> getClientStats(@RequestParam(defaultValue = "week") String duration) {
+        OverallSystemDto stats = clientService.getClientStats(duration);
+        return ResponseEntity.ok(stats);
+    }
+
 }
 

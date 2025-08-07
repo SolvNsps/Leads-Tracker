@@ -38,6 +38,8 @@ public class UserDto implements Serializable {
 
     private String teamName;
 
+    private String teamLeadName;
+
     @JsonIgnore
     private transient RoleEntity roleEntity;
 
@@ -67,6 +69,11 @@ public class UserDto implements Serializable {
     private List<String> teamMemberIds = new ArrayList<>();
 
     private LocalDateTime createdDate;
+
+    private int targetValue;
+    private int progress;
+    private double progressPercentage;
+    private String progressFraction;
 
     public long getId() {
         return id;
@@ -262,6 +269,46 @@ public class UserDto implements Serializable {
 
     public void setCreatedDate(LocalDateTime createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public int getTargetValue() {
+        return targetValue;
+    }
+
+    public void setTargetValue(int targetValue) {
+        this.targetValue = targetValue;
+    }
+
+    public int getProgress() {
+        return progress;
+    }
+
+    public void setProgress(int progress) {
+        this.progress = progress;
+    }
+
+    public double getProgressPercentage() {
+        return progressPercentage;
+    }
+
+    public void setProgressPercentage(double progressPercentage) {
+        this.progressPercentage = progressPercentage;
+    }
+
+    public String getProgressFraction() {
+        return progressFraction;
+    }
+
+    public void setProgressFraction(String progressFraction) {
+        this.progressFraction = progressFraction;
+    }
+
+    public String getTeamLeadName() {
+        return teamLeadName;
+    }
+
+    public void setTeamLeadName(String teamLeadName) {
+        this.teamLeadName = teamLeadName;
     }
 
     @Override

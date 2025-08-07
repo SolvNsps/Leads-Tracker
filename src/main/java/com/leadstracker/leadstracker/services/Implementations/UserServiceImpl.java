@@ -8,9 +8,11 @@ import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.RoleEntity;
 import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
+import com.leadstracker.leadstracker.entities.UserTargetEntity;
 import com.leadstracker.leadstracker.repositories.RoleRepository;
 import com.leadstracker.leadstracker.repositories.TeamsRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.repositories.UserTargetRepository;
 import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.UserService;
@@ -65,6 +67,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     TeamsRepository teamsRepository;
+
+    @Autowired
+    UserTargetRepository userTargetRepository;
 
 
     @Value("${OTP_Default_Value:}")
@@ -519,12 +524,27 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public List<UserDto> getAllTeamMembers() {
-        List<UserEntity> teamMemberEntities = userRepository.findByTeamLeadIsNotNull();
+        List<UserEntity> teamMembers = userRepository.findByRoleName("ROLE_TEAM_MEMBER");
 
-        return teamMemberEntities.stream()
-                .map(user -> modelMapper.map(user, UserDto.class))
-                .toList();
+        return teamMembers.stream().map(user -> {
+            UserDto dto = modelMapper.map(user, UserDto.class);
+
+            // Fetching latest user target
+            UserTargetEntity latestTarget = userTargetRepository.findTopByUserOrderByAssignedDateDesc(user);
+
+            int target = (latestTarget != null) ? latestTarget.getTargetValue() : 0;
+            int progress = (latestTarget != null) ? latestTarget.getProgress() : 0;
+            double percentage = (target > 0) ? ((double) progress / target) * 100 : 0;
+
+            dto.setTargetValue(target);
+            dto.setProgress(progress);
+            dto.setProgressPercentage(percentage);
+            dto.setProgressFraction(progress + "/" + target);
+
+            return dto;
+        }).toList();
     }
+
 
 
     /**
@@ -555,12 +575,33 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Team with this name already exists");
         }
 
+        // Check that teamLeadId is provided
+        if (teamDto.getTeamLeadId() == null) {
+            throw new RuntimeException("Team Lead is required");
+        }
+
+        UserEntity teamLead = userRepository.findById(teamDto.getTeamLeadId())
+                .orElseThrow(() -> new RuntimeException("Team Lead not found"));
+
+        // Check if already assigned to a team
+        if (teamLead.getTeam() != null) {
+            throw new RuntimeException("This Team Lead is already assigned to a team");
+        }
+
         TeamsEntity teamEntity = modelMapper.map(teamDto, TeamsEntity.class);
+        teamEntity.setTeamLead(teamLead);
 
         // Saving the team entity
         TeamsEntity savedTeam = teamsRepository.save(teamEntity);
 
-        return modelMapper.map(savedTeam, TeamDto.class);
+        // Setting the team of the team lead
+        teamLead.setTeam(savedTeam);
+        userRepository.save(teamLead); // Save update to team lead
+
+        TeamDto responseDto = modelMapper.map(savedTeam, TeamDto.class);
+        responseDto.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
+
+        return responseDto;
 
     }
 

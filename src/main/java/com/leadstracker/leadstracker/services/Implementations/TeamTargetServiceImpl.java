@@ -70,7 +70,7 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Due date must be a future date.");
         }
 
-        // Checkin for active target
+        // Checking for active target
         boolean hasUnexpiredTarget = !teamTargetRepository
                 .findByTeamIdAndDueDateGreaterThanEqual(team.getId(), LocalDate.now())
                 .isEmpty();
@@ -91,18 +91,6 @@ public class TeamTargetServiceImpl implements TeamTargetService {
         newTarget.setDueDate(dto.getDueDate());
 
         TeamTargetEntity savedTarget = teamTargetRepository.save(newTarget);
-
-//        UserEntity teamLead = team.getTeamLead();
-//        notificationService.createTeamTargetAssignedNotification(teamLead, savedTarget);
-
-//        UserEntity teamLead = team.getTeamLead();
-//        amazonSES.sendTargetAssignmentEmail(
-//                teamLead.getEmail(),
-//                teamLead.getFirstName(),
-//                team.getName(),
-//                savedTarget.getDueDate(),
-//                savedTarget.getTargetValue()
-//        );
 
         return new TeamTargetResponseDto(
                 savedTarget.getId(),

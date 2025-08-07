@@ -14,4 +14,7 @@ public interface TeamTargetRepository extends JpaRepository<TeamTargetEntity, Lo
 
     // Get all targets for a team
     Optional<TeamTargetEntity> findByTeamId(Long teamId);
+
+    Optional<TeamTargetEntity> findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(Long teamId, LocalDate currentDate);
+
 }

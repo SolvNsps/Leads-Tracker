@@ -2,7 +2,7 @@ package com.leadstracker.leadstracker.request;
 
 public class TeamDetails {
     private String name;
-    private String teamLeadName;
+    private String teamLeadUserId;
 
     public String getName() {
         return name;
@@ -12,11 +12,11 @@ public class TeamDetails {
         this.name = name;
     }
 
-    public String getTeamLeadName() {
-        return teamLeadName;
+    public String getTeamLeadUserId() {
+        return teamLeadUserId;
     }
 
-    public void setTeamLeadName(String teamLeadName) {
-        this.teamLeadName = teamLeadName;
+    public void setTeamLeadUserId(String teamLeadUserId) {
+        this.teamLeadUserId = teamLeadUserId;
     }
 }

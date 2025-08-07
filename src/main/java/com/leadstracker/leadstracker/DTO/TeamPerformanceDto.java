@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 public class TeamPerformanceDto {
+    private Long teamId;
+    private String teamName;
     private String teamLeadName;
     private int totalClientsAdded;
     private int teamTarget;
@@ -14,6 +16,23 @@ public class TeamPerformanceDto {
     private List<TeamMemberPerformanceDto> teamMembers;
     private Map<Statuses, Integer> clientStatus;
     private int numberOfTeamMembers;
+    private String progressFraction;
+
+    public Long getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(Long teamId) {
+        this.teamId = teamId;
+    }
+
+    public String getTeamName() {
+        return teamName;
+    }
+
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
+    }
 
     public String getTeamLeadName() {
         return teamLeadName;
@@ -77,5 +96,13 @@ public class TeamPerformanceDto {
 
     public void setNumberOfTeamMembers(int numberOfTeamMembers) {
         this.numberOfTeamMembers = numberOfTeamMembers;
+    }
+
+    public String getProgressFraction() {
+        return progressFraction;
+    }
+
+    public void setProgressFraction(String progressFraction) {
+        this.progressFraction = progressFraction;
     }
 }
