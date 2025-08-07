@@ -8,10 +8,7 @@ import com.leadstracker.leadstracker.services.ClientService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -391,7 +388,7 @@ public class ClientServiceImpl implements ClientService {
                 dto.setAssignedTo(modelMapper.map(entity.getTeamLead(), UserDto.class));
             }
 
-            dto.setClientStatus(entity.getClientStatus().toString());
+            dto.setClientStatus(entity.getClientStatus().getDisplayName());
             returnList.add(dto);
         }
 
@@ -405,13 +402,13 @@ public class ClientServiceImpl implements ClientService {
         List<ClientEntity> clients;
 
         if (userEntity.getRole().getName().equals("ROLE_TEAM_LEAD")) {
-            // Fetch all clients for team lead (including team members)
+            // Fetching all clients for team lead (including team members)
             List<UserEntity> teamMembers = userRepository.findByTeamLead(userEntity);
             teamMembers.add(userEntity);
 
             clients = clientRepository.findByCreatedByIn(teamMembers);
         } else {
-            // Fetch only clients created by this team member
+            // Fetching only clients created by this team member
             clients = clientRepository.findByCreatedBy(userEntity);
         }
 
@@ -427,7 +424,7 @@ public class ClientServiceImpl implements ClientService {
                 dto.setAssignedTo(modelMapper.map(entity.getTeamLead(), UserDto.class));
             }
 
-            dto.setClientStatus(entity.getClientStatus().toString());
+            dto.setClientStatus(entity.getClientStatus().getDisplayName());
             returnList.add(dto);
         }
 
@@ -472,7 +469,7 @@ public class ClientServiceImpl implements ClientService {
             if (client.getTeamLead() != null) {
                 dto.setAssignedTo(modelMapper.map(client.getTeamLead(), UserDto.class));
             }
-            dto.setClientStatus(client.getClientStatus().toString());
+            dto.setClientStatus(client.getClientStatus().getDisplayName());
             return dto;
         }).collect(Collectors.toList());
     }
@@ -495,6 +492,7 @@ public class ClientServiceImpl implements ClientService {
     public List<ClientDto> getAllClientsByTeamMember(String userId) {
             UserEntity member = userRepository.findByUserId(userId);
             List<ClientEntity> clients = clientRepository.findByCreatedBy(member);
+
             return clients.stream().map(client -> {
                 ClientDto dto = modelMapper.map(client, ClientDto.class);
                 if (client.getCreatedBy() != null) {
@@ -503,7 +501,7 @@ public class ClientServiceImpl implements ClientService {
                 if (client.getTeamLead() != null) {
                     dto.setAssignedTo(modelMapper.map(client.getTeamLead(), UserDto.class));
                 }
-                dto.setClientStatus(client.getClientStatus().toString());
+                dto.setClientStatus(client.getClientStatus().getDisplayName());
                 return dto;
             }).collect(Collectors.toList());
     }
@@ -539,7 +537,7 @@ public class ClientServiceImpl implements ClientService {
 
             Map<String, Long> teamStatusCounts = teamClients.stream()
                     .collect(Collectors.groupingBy(
-                            c -> c.getClientStatus().toString(),
+                            c -> c.getClientStatus().getDisplayName(),
                             Collectors.counting()));
 
             teamStatsList.add(new ClientStatsDto(team.getName(), teamClients.size(), teamStatusCounts));
@@ -573,26 +571,27 @@ public class ClientServiceImpl implements ClientService {
 
             if (daysPending > 5 &&
                     EnumSet.of(Statuses.PENDING, Statuses.INTERESTED, Statuses.AWAITING_DOCUMENTATION)
-                            .contains(client.getClientStatus())) {
+                            .contains(client.getClientStatus().getDisplayName())) {
 
                 ClientDto dto = modelMapper.map(client, ClientDto.class);
 
                 if (client.getCreatedBy() != null) {
                     dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
-                }
 
-                if (client.getTeamLead() != null) {
-                    dto.setAssignedTo(modelMapper.map(client.getTeamLead(), UserDto.class));
+                    // Assign the team lead of the creator
+                    if (client.getCreatedBy().getTeamLead() != null) {
+                        dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
+                    }
                 }
-
-                dto.setClientStatus(client.getClientStatus().toString());
+                dto.setClientStatus(client.getClientStatus().getDisplayName());
                 overdueClients.add(dto);
             }
         }
 
-        return allClients.map(clientEntity -> {
-            ClientDto dto = modelMapper.map(clientEntity, ClientDto.class);
-            return dto;
-        });
+        return new PageImpl<>(overdueClients, pageableRequest, overdueClients.size());
+//        return allClients.map(clientEntity -> {
+//            ClientDto dto = modelMapper.map(clientEntity, ClientDto.class);
+//            return dto;
+//        });
     }
 }

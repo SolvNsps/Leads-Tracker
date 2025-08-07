@@ -503,8 +503,8 @@ public class UserController {
         ));
     }
 
-    @GetMapping("/team-lead/view-target")
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    @GetMapping("/team-lead/view-target")
     public ResponseEntity<TeamTargetOverviewDto> viewTeamTargetOverview(Authentication authentication) {
         String teamLeadEmail = authentication.getName(); // Extracted from JWT
         TeamTargetOverviewDto overview = teamTargetService.getTeamTargetOverview(teamLeadEmail);

@@ -4,11 +4,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 public enum Statuses {
-    PENDING,
-    INTERESTED,
-    NOT_INTERESTED,
-    ONBOARDED,
-    AWAITING_DOCUMENTATION;
+    PENDING("Pending"),
+    INTERESTED("Interested"),
+    NOT_INTERESTED("Not Interested"),
+    ONBOARDED("Onboarded"),
+    AWAITING_DOCUMENTATION("Awaiting Documentation");
+
+    private final String displayName;
+
+    Statuses(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
 
     public static Statuses fromString(String status) {
 
@@ -17,7 +27,7 @@ public enum Statuses {
         }
 
         for (Statuses s : values()) {
-            if (s.name().equalsIgnoreCase(status)) {
+            if (s.name().equalsIgnoreCase(status) || s.getDisplayName().equalsIgnoreCase(status)) {
                 return s;
             }
         }

@@ -9,7 +9,7 @@ public class UserDetails {
     private String staffId;
     private String teamLeadUserId;
     private String role;
-    private String teamName;
+//    private String teamName;
 
     public UserDetails() {}
 
@@ -77,11 +77,11 @@ public class UserDetails {
         this.role = role;
     }
 
-    public String getTeamName() {
-        return teamName;
-    }
-
-    public void setTeamName(String teamName) {
-        this.teamName = teamName;
-    }
+//    public String getTeamName() {
+//        return teamName;
+//    }
+//
+//    public void setTeamName(String teamName) {
+//        this.teamName = teamName;
+//    }
 }
