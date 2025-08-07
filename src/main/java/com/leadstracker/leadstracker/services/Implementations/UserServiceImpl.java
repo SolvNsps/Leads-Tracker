@@ -580,8 +580,7 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Team Lead is required");
         }
 
-        UserEntity teamLead = userRepository.findById(teamDto.getTeamLeadId())
-                .orElseThrow(() -> new RuntimeException("Team Lead not found"));
+        UserEntity teamLead = userRepository.findByUserId(teamDto.getTeamLeadId());
 
         // Check if already assigned to a team
         if (teamLead.getTeam() != null) {

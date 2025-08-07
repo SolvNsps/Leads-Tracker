@@ -358,7 +358,7 @@ public class UserController {
 
         TeamDto createdTeam = userService.createTeam(teamDto);
         TeamRest teamRest = modelMapper.map(createdTeam, TeamRest.class);
-        teamRest.setTeamLeadUserId(teamDetails.getTeamLeadUserId());
+        teamRest.setTeamLeadUserId(teamDto.getTeamLeadId());
         teamRest.setTeamLeadName(teamDto.getTeamLeadName());
 
         return ResponseEntity.ok(Map.of(

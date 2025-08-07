@@ -5,8 +5,10 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
+import com.leadstracker.leadstracker.DTO.TeamDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.entities.UserEntity;
+import com.leadstracker.leadstracker.request.TeamDetails;
 import com.leadstracker.leadstracker.request.UserDetails;
 import jakarta.annotation.PostConstruct;
 import org.modelmapper.ModelMapper;
@@ -57,6 +59,12 @@ public class AppConfig {
                     map.map(src -> src.getTeam().getId().toString(), UserDto::setTeamName);
                     map.map(src -> src.getTeamLead().getUserId(), UserDto::setTeamLeadUserId);
                 });
+
+        mapper.typeMap(TeamDetails.class, TeamDto.class).addMappings(m -> {
+            m.map(TeamDetails::getTeamLeadUserId, TeamDto::setTeamLeadId);
+        });
+
+
 
         return mapper;
     }
