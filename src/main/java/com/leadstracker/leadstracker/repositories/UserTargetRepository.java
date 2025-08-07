@@ -4,9 +4,11 @@ import com.leadstracker.leadstracker.entities.TeamTargetEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.entities.UserTargetEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface UserTargetRepository extends JpaRepository<UserTargetEntity, Long> {
 
     // Find all user targets under a specific team target

@@ -6,8 +6,7 @@ import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.RoleEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
-import com.leadstracker.leadstracker.repositories.ClientRepository;
-import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.repositories.*;
 import com.leadstracker.leadstracker.response.Statuses;
 import com.leadstracker.leadstracker.services.Implementations.ClientServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +18,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,6 +36,15 @@ public class ClientServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserTargetRepository userTargetRepository;
+
+    @Mock
+    private TeamTargetRepository teamTargetRepository;
+
+    @Mock
+    private TeamsRepository teamsRepository;
 
     @Mock
     private ModelMapper modelMapper;
