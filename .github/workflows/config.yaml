@@ -1,5 +1,7 @@
+name: Deploy backend
+
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
   build-test-deploy:
