@@ -477,11 +477,23 @@ public class UserServiceImpl implements UserService {
     public List<UserDto> getMembersUnderLead(String id) {
 
         List<UserEntity> teamMembers = userRepository.findByTeamLead_UserId(id);
-        ModelMapper modelMapper = new ModelMapper();
 
         return teamMembers.stream()
-                .map(user -> modelMapper.map(user, UserDto.class))
+                .map(user -> {
+                    UserDto dto = modelMapper.map(user, UserDto.class);
+
+                    UserEntity lead = user.getTeamLead() != null
+                            ? user.getTeamLead()
+                            : (user.getTeam() != null ? user.getTeam().getTeamLead() : null);
+
+                    if (lead != null) {
+                        dto.setTeamLeadName(lead.getFirstName() + " " + lead.getLastName());
+                    }
+
+                    return dto;
+                })
                 .toList();
+
     }
 
 
