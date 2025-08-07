@@ -78,7 +78,6 @@ public class UserController {
 
         UserDto createdUser = userService.createUser(userDto);
         UserRest userRest = modelMapper.map(createdUser, UserRest.class);
-        userRest.setTeam(userDto.getTeamName());
         userRest.setCreatedDate(LocalDateTime.now());
 
         return ResponseEntity.ok(userRest);

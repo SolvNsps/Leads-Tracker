@@ -429,13 +429,13 @@ public class UserServiceImpl implements UserService {
         userEntity.setRole(role);
 
         //setting team of a user
-        TeamsEntity team = teamsRepository.findByNameIgnoreCase(userDto.getTeamName());
-
-        if (team == null) {
-            throw new RuntimeException("Team not found");
-        }
-
-        userEntity.setTeam(team);
+//        TeamsEntity team = teamsRepository.findByNameIgnoreCase(userDto.getTeamName());
+//
+//        if (team == null) {
+//            throw new RuntimeException("Team not found");
+//        }
+//
+//        userEntity.setTeam(team);
         userEntity.setCreatedDate(LocalDateTime.now());
 
         // Handling the team member case

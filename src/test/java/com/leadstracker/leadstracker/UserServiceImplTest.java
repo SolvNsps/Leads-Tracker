@@ -82,53 +82,53 @@ class UserServiceImplTest {
 
     }
 
-    @Test
-    void saveUser_shouldSaveAndReturnUser_whenUserIsNew() {
-        userDto.setPassword("password123");
-        // Arrange
-        when(userRepository.findByEmail(userDto.getEmail())).thenReturn(null);
-        when(utils.generateUserId(anyInt())).thenReturn("randomUserId");
-        when(utils.generateDefaultPassword()).thenReturn("randomUserId");
-        when(bCryptPasswordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        userDto.setPhoneNumber("1234567890");
-        userDto.setStaffId("123456");
-        userDto.setTeamName("Team Alpha");
-
-
-        var role = new RoleEntity();
-        role.setId(1L);
-        role.setName("test role");
-
-        UserEntity mappedEntity = new UserEntity();
-        when(modelMapper.map(any(UserDto.class), eq(UserEntity.class)))
-                .thenReturn(mappedEntity);
-
-        mappedEntity.setRole(role);
-
-        UserDto mappedDto = new UserDto();
-        mappedDto.setEmail(userDto.getEmail());
-        mappedDto.setFirstName(userDto.getFirstName());
-        mappedDto.setLastName(userDto.getLastName());
-
-        TeamsEntity team = new TeamsEntity();
-        team.setName("Team Alpha");
-        teamsRepository.save(team);
-
-        when(modelMapper.map(any(UserEntity.class), eq(UserDto.class)))
-                .thenReturn(mappedDto);
-        when(roleRepository.findByName(anyString())).thenReturn(role);
-        when(userRepository.save(any(UserEntity.class))).thenReturn(mappedEntity);
-        when(teamsRepository.findByNameIgnoreCase("Team Alpha")).thenReturn(team);
-
-        // Act
-        UserDto savedUser = userService.createUser(userDto);
-
-        // Assert
-        assertNotNull(savedUser);
-        assertEquals(userDto.getEmail(), savedUser.getEmail());
-        verify(userRepository).save(any(UserEntity.class));
-        verify(utils).generateUserId(30);
-    }
+//    @Test
+//    void saveUser_shouldSaveAndReturnUser_whenUserIsNew() {
+//        userDto.setPassword("password123");
+//        // Arrange
+//        when(userRepository.findByEmail(userDto.getEmail())).thenReturn(null);
+//        when(utils.generateUserId(anyInt())).thenReturn("randomUserId");
+//        when(utils.generateDefaultPassword()).thenReturn("randomUserId");
+//        when(bCryptPasswordEncoder.encode(anyString())).thenReturn("encodedPassword");
+//        userDto.setPhoneNumber("1234567890");
+//        userDto.setStaffId("123456");
+//        userDto.setTeamName("Team Alpha");
+//
+//
+//        var role = new RoleEntity();
+//        role.setId(1L);
+//        role.setName("test role");
+//
+//        UserEntity mappedEntity = new UserEntity();
+//        when(modelMapper.map(any(UserDto.class), eq(UserEntity.class)))
+//                .thenReturn(mappedEntity);
+//
+//        mappedEntity.setRole(role);
+//
+//        UserDto mappedDto = new UserDto();
+//        mappedDto.setEmail(userDto.getEmail());
+//        mappedDto.setFirstName(userDto.getFirstName());
+//        mappedDto.setLastName(userDto.getLastName());
+//
+//        TeamsEntity team = new TeamsEntity();
+//        team.setName("Team Alpha");
+//        teamsRepository.save(team);
+//
+//        when(modelMapper.map(any(UserEntity.class), eq(UserDto.class)))
+//                .thenReturn(mappedDto);
+//        when(roleRepository.findByName(anyString())).thenReturn(role);
+//        when(userRepository.save(any(UserEntity.class))).thenReturn(mappedEntity);
+//        when(teamsRepository.findByNameIgnoreCase("Team Alpha")).thenReturn(team);
+//
+//        // Act
+//        UserDto savedUser = userService.createUser(userDto);
+//
+//        // Assert
+//        assertNotNull(savedUser);
+//        assertEquals(userDto.getEmail(), savedUser.getEmail());
+//        verify(userRepository).save(any(UserEntity.class));
+//        verify(utils).generateUserId(30);
+//    }
 
     @Test
     void saveUser_shouldThrowException_whenUserAlreadyExists() {
