@@ -131,6 +131,24 @@ public class ClientServiceImpl implements ClientService {
         //Getting team lead and members
         UserEntity teamLead = userRepository.findByUserId(userId);
         TeamsEntity team = teamLead.getTeam();
+
+        if (team == null) {
+            // Handle missing team case gracefully:
+            // Return an empty or default TeamPerformanceDto or throw a custom exception
+            TeamPerformanceDto emptyResponse = new TeamPerformanceDto();
+            emptyResponse.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
+            emptyResponse.setTeamId(null);
+            emptyResponse.setTeamName("No Team Assigned");
+            emptyResponse.setTotalClientsAdded(0);
+            emptyResponse.setNumberOfTeamMembers(0);
+            emptyResponse.setTeamTarget(0);
+            emptyResponse.setProgressPercentage(0);
+            emptyResponse.setProgressFraction("0/0");
+            emptyResponse.setClientStatus(Collections.emptyMap());
+            emptyResponse.setTeamMembers(Collections.emptyList());
+            return emptyResponse;
+        }
+
         List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
 
         //Calculating date range

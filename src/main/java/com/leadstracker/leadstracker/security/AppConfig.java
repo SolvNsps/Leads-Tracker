@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -83,6 +84,34 @@ public class AppConfig {
                     m.map(ClientDetails::getGpsLocation, ClientDto::setGpsLocation);
                 });
 
+//        mapper.typeMap(ClientDto.class, ClientRest.class).addMappings(m -> {
+//            m.map(ClientDto::getClientId, ClientRest::setClientId);
+//            m.map(ClientDto::getFirstName, ClientRest::setFirstName);
+//            m.map(ClientDto::getLastName, ClientRest::setLastName);
+//            m.map(ClientDto::getPhoneNumber, ClientRest::setPhoneNumber);
+//            m.<String>map(src -> {
+//                if (src.getClientStatus() == null) return null;
+//                try {
+//                    Statuses statusEnum = Statuses.fromString(src.getClientStatus());
+//                    return statusEnum.getDisplayName();
+//                } catch (Exception e) {
+//                    return src.getClientStatus(); // fallback
+//                }
+//            }, ClientRest::setClientStatus);
+//
+//            // Handle createdDate and lastUpdated if they are already LocalDateTime
+//            m.<LocalDateTime>map(ClientDto::getCreatedDate, ClientRest::setCreatedAt);
+//            m.<LocalDateTime>map(ClientDto::getLastUpdated, ClientRest::setLastUpdated);
+//
+//            m.map(ClientDto::getGpsLocation, ClientRest::setGpsLocation);
+//        });
+
+        Converter<Date, LocalDateTime> dateToLocalDateTimeConverter = ctx -> {
+            Date source = ctx.getSource();
+            if (source == null) return null;
+            return LocalDateTime.ofInstant(source.toInstant(), ZoneId.systemDefault());
+        };
+
         mapper.typeMap(ClientDto.class, ClientRest.class).addMappings(m -> {
             m.map(ClientDto::getClientId, ClientRest::setClientId);
             m.map(ClientDto::getFirstName, ClientRest::setFirstName);
@@ -94,37 +123,43 @@ public class AppConfig {
                     Statuses statusEnum = Statuses.fromString(src.getClientStatus());
                     return statusEnum.getDisplayName();
                 } catch (Exception e) {
-                    return src.getClientStatus(); // fallback, just in case
+                    return src.getClientStatus(); // fallback
                 }
             }, ClientRest::setClientStatus);
-            m.<LocalDateTime>map(src -> {
-                if (src.getCreatedDate() != null) {
-                    return src.getCreatedDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-                }
-                return null;
-            }, ClientRest::setCreatedAt);
-            m.<LocalDateTime>map(src -> {
-                if (src.getLastUpdated() != null) {
-                    return src.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-                }
-                return null;
-            }, ClientRest::setLastUpdated);
+
+            // Use explicit converter here:
+            m.using(dateToLocalDateTimeConverter).map(ClientDto::getCreatedDate, ClientRest::setCreatedAt);
+            m.using(dateToLocalDateTimeConverter).map(ClientDto::getLastUpdated, ClientRest::setLastUpdated);
+
             m.map(ClientDto::getGpsLocation, ClientRest::setGpsLocation);
-            // map other fields similarly
         });
 
-        // Custom converter Date -> LocalDateTime
-        Converter<Date, LocalDateTime> dateToLocalDateTimeConverter = new Converter<Date, LocalDateTime>() {
-            @Override
-            public LocalDateTime convert(MappingContext<Date, LocalDateTime> context) {
-                Date source = context.getSource();
-                if (source == null) {
-                    return null;
-                }
+
+
+        mapper.addConverter(new Converter<Date, LocalDateTime>() {
+            public LocalDateTime convert(MappingContext<Date, LocalDateTime> ctx) {
+                Date source = ctx.getSource();
+                if (source == null) return null;
                 return LocalDateTime.ofInstant(source.toInstant(), ZoneId.systemDefault());
             }
-        };
-        mapper.addConverter(dateToLocalDateTimeConverter);
+        });
+
+        mapper.addConverter(new Converter<Date, LocalDate>() {
+            public LocalDate convert(MappingContext<Date, LocalDate> ctx) {
+                Date source = ctx.getSource();
+                if (source == null) return null;
+                return source.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            }
+        });
+
+        mapper.addConverter(new Converter<LocalDateTime, Date>() {
+            public Date convert(MappingContext<LocalDateTime, Date> ctx) {
+                LocalDateTime source = ctx.getSource();
+                if (source == null) return null;
+                return Date.from(source.atZone(ZoneId.systemDefault()).toInstant());
+            }
+        });
+
 
 
 //        mapper.getConfiguration()
