@@ -1,10 +1,16 @@
 package com.leadstracker.leadstracker.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
+
 public class ClientDetails {
     private String firstName;
     private String lastName;
     private String phoneNumber;
-    private String GPSLocation;
+    private String gpsLocation;
+
+    @NotBlank(message = "Client status is required.")
+    @JsonProperty("clientStatus")
     private String clientStatus;
 
     public ClientDetails() {
@@ -34,12 +40,12 @@ public class ClientDetails {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getGPSLocation() {
-        return GPSLocation;
+    public String getGpsLocation() {
+        return gpsLocation;
     }
 
-    public void setGPSLocation(String GPSLocation) {
-        this.GPSLocation = GPSLocation;
+    public void setGpsLocation(String gpsLocation) {
+        this.gpsLocation = gpsLocation;
     }
 
     public String getClientStatus() {

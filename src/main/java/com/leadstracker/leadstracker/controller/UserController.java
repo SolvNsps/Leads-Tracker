@@ -358,8 +358,8 @@ public class UserController {
 
         TeamDto createdTeam = userService.createTeam(teamDto);
         TeamRest teamRest = modelMapper.map(createdTeam, TeamRest.class);
-        teamRest.setTeamLeadUserId(teamDto.getTeamLeadId());
-        teamRest.setTeamLeadName(teamDto.getTeamLeadName());
+        teamRest.setTeamLeadUserId(createdTeam.getTeamLeadId());
+        teamRest.setTeamLeadName(createdTeam.getTeamLeadName());
 
         return ResponseEntity.ok(Map.of(
                 "teamName", teamRest,
@@ -504,8 +504,8 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
     @GetMapping("/team-lead/view-target")
-    public ResponseEntity<TeamTargetOverviewDto> viewTeamTargetOverview(Authentication authentication) {
-        String teamLeadEmail = authentication.getName(); // Extracted from JWT
+    public ResponseEntity<TeamTargetOverviewDto> viewTeamTargetOverview(@AuthenticationPrincipal UserPrincipal authentication) {
+        String teamLeadEmail = authentication.getUsername();
         TeamTargetOverviewDto overview = teamTargetService.getTeamTargetOverview(teamLeadEmail);
         return ResponseEntity.ok(overview);
     }
@@ -542,8 +542,8 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
     @GetMapping("/my-target")
-    public ResponseEntity<MyTargetResponse> getMyTarget(Authentication authentication) {
-        String email = authentication.getName();
+    public ResponseEntity<MyTargetResponse> getMyTarget(@AuthenticationPrincipal UserPrincipal authentication) {
+        String email = authentication.getUsername();
         MyTargetResponse response = teamTargetService.getMyTarget(email);
         return ResponseEntity.ok(response);
     }

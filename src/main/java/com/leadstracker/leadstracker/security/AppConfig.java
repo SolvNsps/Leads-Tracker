@@ -5,18 +5,30 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
+import com.leadstracker.leadstracker.DTO.ClientDto;
 import com.leadstracker.leadstracker.DTO.TeamDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
+import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
+import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.request.TeamDetails;
 import com.leadstracker.leadstracker.request.UserDetails;
+import com.leadstracker.leadstracker.response.ClientRest;
+import com.leadstracker.leadstracker.response.Statuses;
 import jakarta.annotation.PostConstruct;
+import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
+import org.modelmapper.convention.NameTokenizers;
+import org.modelmapper.spi.MappingContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 @Configuration
 public class AppConfig {
@@ -65,6 +77,67 @@ public class AppConfig {
         });
 
 
+        mapper.typeMap(ClientDetails.class, ClientDto.class)
+                .addMappings(m -> {
+                    m.map(ClientDetails::getClientStatus, ClientDto::setClientStatus);
+                    m.map(ClientDetails::getGpsLocation, ClientDto::setGpsLocation);
+                });
+
+        mapper.typeMap(ClientDto.class, ClientRest.class).addMappings(m -> {
+            m.map(ClientDto::getClientId, ClientRest::setClientId);
+            m.map(ClientDto::getFirstName, ClientRest::setFirstName);
+            m.map(ClientDto::getLastName, ClientRest::setLastName);
+            m.map(ClientDto::getPhoneNumber, ClientRest::setPhoneNumber);
+            m.<String>map(src -> {
+                if (src.getClientStatus() == null) return null;
+                try {
+                    Statuses statusEnum = Statuses.fromString(src.getClientStatus());
+                    return statusEnum.getDisplayName();
+                } catch (Exception e) {
+                    return src.getClientStatus(); // fallback, just in case
+                }
+            }, ClientRest::setClientStatus);
+            m.<LocalDateTime>map(src -> {
+                if (src.getCreatedDate() != null) {
+                    return src.getCreatedDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                }
+                return null;
+            }, ClientRest::setCreatedAt);
+            m.<LocalDateTime>map(src -> {
+                if (src.getLastUpdated() != null) {
+                    return src.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                }
+                return null;
+            }, ClientRest::setLastUpdated);
+            m.map(ClientDto::getGpsLocation, ClientRest::setGpsLocation);
+            // map other fields similarly
+        });
+
+        // Custom converter Date -> LocalDateTime
+        Converter<Date, LocalDateTime> dateToLocalDateTimeConverter = new Converter<Date, LocalDateTime>() {
+            @Override
+            public LocalDateTime convert(MappingContext<Date, LocalDateTime> context) {
+                Date source = context.getSource();
+                if (source == null) {
+                    return null;
+                }
+                return LocalDateTime.ofInstant(source.toInstant(), ZoneId.systemDefault());
+            }
+        };
+        mapper.addConverter(dateToLocalDateTimeConverter);
+
+
+//        mapper.getConfiguration()
+//                .setSourceNameTokenizer(NameTokenizers.UNDERSCORE)
+//                .setDestinationNameTokenizer(NameTokenizers.CAMEL_CASE)
+//                .setFieldMatchingEnabled(true)
+//                .setMatchingStrategy(MatchingStrategies.STRICT);
+
+        mapper.getConfiguration()
+                .setSourceNameTokenizer(NameTokenizers.CAMEL_CASE)
+                .setDestinationNameTokenizer(NameTokenizers.CAMEL_CASE)
+                .setFieldMatchingEnabled(true)
+                .setMatchingStrategy(MatchingStrategies.STRICT);
 
         return mapper;
     }

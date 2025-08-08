@@ -78,7 +78,22 @@ public class ClientServiceImpl implements ClientService {
         ClientEntity clientEntity = modelMapper.map(clientDto, ClientEntity.class);
         clientEntity.setCreatedBy(creatorEntity);
         clientEntity.setClientId(utils.generateUserId(30));
-        clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
+        clientEntity.setFirstName(clientDto.getFirstName());
+        clientEntity.setLastName(clientDto.getLastName());
+//        clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
+        clientEntity.setGpsLocation(clientDto.getGpsLocation());
+
+        // Insert the debug + enum mapping here:
+        System.out.println("Received clientStatus: " + clientDto.getClientStatus());
+        Statuses statusEnum = null;
+        try {
+            statusEnum = Statuses.fromString(clientDto.getClientStatus());
+            System.out.println("Mapped clientStatus to enum: " + statusEnum);
+        } catch (Exception e) {
+            System.err.println("Error mapping clientStatus: " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid client status: " + clientDto.getClientStatus());
+        }
+        clientEntity.setClientStatus(statusEnum);
 
         // Setting the team lead
         if (creatorRole.equals("ROLE_TEAM_LEAD")) {
@@ -90,6 +105,8 @@ public class ClientServiceImpl implements ClientService {
 
             clientEntity.setTeamLead(creatorEntity.getTeamLead()); // Team member created the client
         }
+        System.out.println("gpsLocation being saved: '" + clientEntity.getGpsLocation() + "'");
+
 
         ClientEntity saved = clientRepository.save(clientEntity);
 
@@ -212,7 +229,6 @@ public class ClientServiceImpl implements ClientService {
         dto.setTarget(target);
         // Calculating progress
         double progressPercentage = 0;
-
         if (target > 0) {
             progressPercentage = ((memberClients.size() * 100.0 ) / target);
         }
@@ -262,7 +278,7 @@ public class ClientServiceImpl implements ClientService {
         oldClient.setLastName(clientEntity.getLastName());
         oldClient.setPhoneNumber(clientEntity.getPhoneNumber());
         oldClient.setClientStatus(clientEntity.getClientStatus());
-        oldClient.setGPSLocation(clientEntity.getGPSLocation());
+        oldClient.setGpsLocation(clientEntity.getGpsLocation());
 
         if (!isInternetAvailable()) {
             throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to update client.");
@@ -271,9 +287,9 @@ public class ClientServiceImpl implements ClientService {
         clientEntity.setFirstName(clientDto.getFirstName());
         clientEntity.setLastName(clientDto.getLastName());
 //        clientEntity.setPhoneNumber(clientDto.getPhoneNumber());
-        clientEntity.setGPSLocation(clientDto.getGPSLocation());
+        clientEntity.setGpsLocation(clientDto.getGpsLocation());
         clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
-        clientEntity.setGPSLocation(clientDto.getGPSLocation());
+        clientEntity.setGpsLocation(clientDto.getGpsLocation());
         clientEntity.setLastUpdated(Date.from(Instant.now()));
 
         ClientEntity updatedClient = clientRepository.save(clientEntity);

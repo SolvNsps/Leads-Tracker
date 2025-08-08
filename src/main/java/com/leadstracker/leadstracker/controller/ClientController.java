@@ -12,6 +12,7 @@ import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.NotificationService;
 import com.leadstracker.leadstracker.services.UserService;
+import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,12 +53,14 @@ public class ClientController {
 
     @PreAuthorize("hasAnyAuthority('ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ClientRest> createClient(
+    public ResponseEntity<ClientRest> createClient(@Valid
             @RequestBody ClientDetails clientDetails, @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         // Getting current logged in user
         String loggedInEmail = userPrincipal.getUsername();
         UserDto creatorUser = userService.getUserByEmail(loggedInEmail);
+
+        System.out.println("Received clientStatus: " + clientDetails.getClientStatus());
 
         // Setting creator in the DTO
         ClientDto clientDto = modelMapper.map(clientDetails, ClientDto.class);
@@ -330,7 +333,7 @@ public class ClientController {
             rest.setLastName(dto.getLastName());
             rest.setPhoneNumber(dto.getPhoneNumber());
             rest.setClientStatus(dto.getClientStatus());
-            rest.setGpslocation(dto.getGPSLocation());
+            rest.setGpsLocation(dto.getGpsLocation());
 
             if (dto.getCreatedDate() != null) {
                 rest.setCreatedAt(dto.getCreatedDate().toInstant()
@@ -404,7 +407,7 @@ public class ClientController {
             rest.setLastName(dto.getLastName());
             rest.setPhoneNumber(dto.getPhoneNumber());
             rest.setClientStatus(dto.getClientStatus());
-            rest.setGpslocation(dto.getGPSLocation());
+            rest.setGpsLocation(dto.getGpsLocation());
 
             if (dto.getCreatedDate() != null) {
                 rest.setCreatedAt(dto.getCreatedDate().toInstant()

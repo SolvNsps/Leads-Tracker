@@ -1,5 +1,6 @@
 package com.leadstracker.leadstracker.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.leadstracker.leadstracker.response.Statuses;
 import jakarta.persistence.*;
 
@@ -30,8 +31,9 @@ public class ClientEntity implements Serializable {
     @Column(unique = true)
     private String phoneNumber;
 
-    @Column(nullable=false)
-    private String GPSLocation;
+    @JsonProperty("gpsLocation")
+    @Column(name = "gpslocation")
+    private String gpsLocation;
 
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
@@ -91,12 +93,14 @@ public class ClientEntity implements Serializable {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getGPSLocation() {
-        return GPSLocation;
+//    @JsonProperty("gpslocation")
+    public String getGpsLocation() {
+        return gpsLocation;
     }
 
-    public void setGPSLocation(String GPSLocation) {
-        this.GPSLocation = GPSLocation;
+//    @JsonProperty("gpslocation")
+    public void setGpsLocation(String GPSLocation) {
+        this.gpsLocation = GPSLocation;
     }
 
     public UserEntity getCreatedBy() {
@@ -157,7 +161,7 @@ public class ClientEntity implements Serializable {
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
-                ", GPSLocation='" + GPSLocation + '\'' +
+                ", GPSLocation='" + gpsLocation + '\'' +
                 ", createdBy=" + createdBy +
                 ", createdDate=" + createdDate +
                 ", lastUpdated=" + lastUpdated +

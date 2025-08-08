@@ -13,7 +13,7 @@ public class ClientRest {
     private String lastAction;
     private String createdBy;
     private String assignedTo;
-    private String gpslocation;
+    private String gpsLocation;
 
     public String getClientId() {
         return clientId;
@@ -95,11 +95,11 @@ public class ClientRest {
         this.assignedTo = assignedTo;
     }
 
-    public String getGpslocation() {
-        return gpslocation;
+    public void setGpsLocation(String gpsLocation) {
+        this.gpsLocation = gpsLocation;
     }
 
-    public void setGpslocation(String gpslocation) {
-        this.gpslocation = gpslocation;
+    public String getGpsLocation() {
+        return gpsLocation;
     }
 }

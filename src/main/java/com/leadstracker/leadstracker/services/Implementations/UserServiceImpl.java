@@ -178,7 +178,7 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-        amazonSES.sendPasswordResetRequest(user.getFirstName(), user.getEmail(), token);
+//        amazonSES.sendPasswordResetRequest(user.getFirstName(), user.getEmail(), token);
 
         // http://localhost:8080/reset-password?token=xyz123
         System.out.println("Password reset link: http://localhost:8080/reset-password?token=" + token);
@@ -376,7 +376,7 @@ public class UserServiceImpl implements UserService {
         user.setLastOtpResendTime(LocalDateTime.now());
         userRepository.save(user);
 
-        amazonSES.sendLoginOtpEmail(user.getFirstName(), email, newOtp);
+//        amazonSES.sendLoginOtpEmail(user.getFirstName(), email, newOtp);
 
         return Map.of(
                 "status", "SUCCESS",
@@ -465,7 +465,7 @@ public class UserServiceImpl implements UserService {
         UserDto responseDto = modelMapper.map(savedUser, UserDto.class);
         responseDto.setRole(savedUser.getRole().getName().replace("ROLE_", ""));
 
-       amazonSES.sendOnboardingEmail(responseDto.getEmail(), responseDto.getFirstName(), rawPassword);
+//       amazonSES.sendOnboardingEmail(responseDto.getEmail(), responseDto.getFirstName(), rawPassword);
         return responseDto;
     }
 
@@ -610,6 +610,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(teamLead); // Save update to team lead
 
         TeamDto responseDto = modelMapper.map(savedTeam, TeamDto.class);
+        responseDto.setTeamLeadId(teamLead.getUserId());
         responseDto.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
 
         return responseDto;

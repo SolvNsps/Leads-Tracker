@@ -76,14 +76,16 @@ public class ClientControllerTest {
         clientDetails.setFirstName("John");
         clientDetails.setLastName("Doe");
         clientDetails.setPhoneNumber("+233123456789");
-        clientDetails.setGPSLocation("Accra");
+        clientDetails.setGpsLocation("Accra");
+        clientDetails.setClientStatus("INTERESTED");
+
 
         mockClientDto = new ClientDto();
         mockClientDto.setId(1L);
         mockClientDto.setFirstName("John");
         mockClientDto.setLastName("Doe");
         mockClientDto.setPhoneNumber("+233123456789");
-        mockClientDto.setGPSLocation("Accra");
+        mockClientDto.setGpsLocation("Accra");
     }
 
 @Test

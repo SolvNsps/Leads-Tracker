@@ -3,12 +3,8 @@ package com.leadstracker.leadstracker.services.Implementations;
 import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
 import com.leadstracker.leadstracker.DTO.TeamPerformanceDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
-import com.leadstracker.leadstracker.entities.ClientEntity;
-import com.leadstracker.leadstracker.entities.TeamsEntity;
-import com.leadstracker.leadstracker.entities.UserEntity;
-import com.leadstracker.leadstracker.repositories.ClientRepository;
-import com.leadstracker.leadstracker.repositories.TeamsRepository;
-import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.entities.*;
+import com.leadstracker.leadstracker.repositories.*;
 import com.leadstracker.leadstracker.services.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +13,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +27,12 @@ public class TeamServiceImpl implements TeamService {
 
     @Autowired
     ClientRepository clientRepository;
+
+    @Autowired
+    TeamTargetRepository teamTargetRepository;
+
+    @Autowired
+    UserTargetRepository userTargetRepository;
     /**
      * @param search
      * @param duration
@@ -37,9 +40,11 @@ public class TeamServiceImpl implements TeamService {
      */
     @Override
     public List<TeamPerformanceDto> getTeamsOverview(String search, String duration) {
-        List<TeamsEntity> teams = (search == null || search.isBlank())
-                ? teamRepository.findAllByActiveTrue()
-                : teamRepository.findByNameContainingIgnoreCaseAndActiveTrue(search);
+        List<TeamsEntity> teams = teamRepository.findAllByActiveTrue();
+
+        if (search != null && !search.isBlank()) {
+            teams = teamRepository.findByNameContainingIgnoreCaseAndActiveTrue(search);
+        }
 
         //Calculating date range
         Date[] dateRange = calculateDateRange(duration);
@@ -48,21 +53,42 @@ public class TeamServiceImpl implements TeamService {
                 .map(team -> {
                     UserEntity teamLead = team.getTeamLead();
 
-                    List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
+                    List<UserEntity> teamMembers = userRepository.findByTeam(team);
+                    //including team lead
+                    if (teamLead != null && !teamMembers.contains(teamLead)) {
+                        teamMembers.add(teamLead);
+                    }
 
                     List<ClientEntity> teamClients = clientRepository.findByCreatedByInAndCreatedDateBetween(
                             teamMembers, dateRange[0], dateRange[1]);
 
                     TeamPerformanceDto dto = new TeamPerformanceDto();
+                    dto.setTeamId(team.getId());
                     dto.setTeamName(team.getName());
-                    dto.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
+                    dto.setTeamLeadName(
+                            teamLead != null
+                                    ? teamLead.getFirstName() + " " + teamLead.getLastName()
+                                    : null
+                    );
                     dto.setNumberOfTeamMembers(teamMembers.size());
                     dto.setTotalClientsAdded(teamClients.size());
 
-                    // Team target logic placeholder
-                    int target = 100; // Example target
-                    dto.setTeamTarget(target);
-                    dto.setProgressPercentage((double) teamClients.size() / target * 100);
+                    // Fetch active team target from DB
+                    Optional<TeamTargetEntity> activeTargetOpt = teamTargetRepository
+                            .findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(team.getId(), LocalDate.now());
+
+                    int teamTarget = 0;
+                    if (activeTargetOpt.isPresent()) {
+                        teamTarget = activeTargetOpt.get().getTargetValue();
+                    }
+
+                    dto.setTeamTarget(teamTarget);
+
+                    // Calculate progress
+                    int numberOfClientsAdded = teamClients.size();
+                    double progress = (teamTarget > 0) ? ((double) numberOfClientsAdded / teamTarget) * 100 : 0;
+                    dto.setProgressPercentage(progress);
+                    dto.setProgressFraction(numberOfClientsAdded + "/" + teamTarget);
 
                     // Client status breakdown
                     dto.setClientStatus(
@@ -88,15 +114,27 @@ public class TeamServiceImpl implements TeamService {
         List<ClientEntity> memberClients = clientRepository.findByCreatedByAndCreatedDateBetween(
                 member, start, end);
 
+        // Fetching the latest target assigned by team lead
+        UserTargetEntity latestTarget = userTargetRepository.findTopByUserOrderByAssignedDateDesc(member);
+        int target = 0;
+        if (latestTarget != null) {
+            target = latestTarget.getTargetValue();
+        }
+
+
         TeamMemberPerformanceDto dto = new TeamMemberPerformanceDto();
         dto.setMemberId(member.getUserId());
         dto.setMemberName(member.getFirstName() + " " + member.getLastName());
         dto.setTotalClientsSubmitted(memberClients.size());
-
-        // Member target logic placeholder (set your own logic)
-        int target = 25;
         dto.setTarget(target);
-        dto.setProgressPercentage((double) memberClients.size() / target * 100);
+        //  Calculating progress
+        double progressPercentage = 0;
+        if (target > 0) {
+            progressPercentage = (memberClients.size() * 100.0) / target;
+        }
+
+        dto.setProgressPercentage(progressPercentage);
+        dto.setProgressFraction(memberClients.size() + "/" + target);
 
         dto.setClientStatus(
                 memberClients.stream()
@@ -119,7 +157,6 @@ public class TeamServiceImpl implements TeamService {
                 Date.from(endDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
         };
     }
-
 
 
     /**

@@ -1,5 +1,7 @@
 package com.leadstracker.leadstracker.DTO;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -15,7 +17,10 @@ public class ClientDto implements Serializable {
     private String firstName;
     private String lastName;
     private String phoneNumber;
-    private String GPSLocation;
+
+    @JsonProperty("gpsLocation")
+    private String gpsLocation;
+
     private UserDto createdBy;
     private String teamLeadId;
     private Date createdDate;
@@ -63,12 +68,14 @@ public class ClientDto implements Serializable {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getGPSLocation() {
-        return GPSLocation;
+//    @JsonProperty("gpslocation")
+    public String getGpsLocation() {
+        return gpsLocation;
     }
 
-    public void setGPSLocation(String GPSLocation) {
-        this.GPSLocation = GPSLocation;
+//    @JsonProperty("gpslocation")
+    public void setGpsLocation(String gpsLocation) {
+        this.gpsLocation = gpsLocation;
     }
 
     public UserDto getCreatedBy() {
@@ -126,7 +133,7 @@ public class ClientDto implements Serializable {
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
-                ", GPSLocation='" + GPSLocation + '\'' +
+                ", GPSLocation='" + gpsLocation + '\'' +
                 ", createdBy=" + createdBy +
                 ", createdDate=" + createdDate +
                 ", lastUpdated=" + lastUpdated +
