@@ -252,9 +252,11 @@ public class ClientServiceImpl implements ClientService {
             target = latestTarget.getTargetValue();
         }
 
+
         TeamMemberPerformanceDto dto = new TeamMemberPerformanceDto();
         dto.setMemberId(member.getUserId());
         dto.setMemberName(member.getFirstName() + " " + member.getLastName());
+        dto.setEmail(member.getEmail());
         dto.setTotalClientsSubmitted(memberClients.size());
         dto.setTarget(target);
         // Calculating progress
@@ -265,6 +267,19 @@ public class ClientServiceImpl implements ClientService {
 
         dto.setProgressPercentage(progressPercentage);
         dto.setProgressFraction(memberClients.size() + "/" + target);
+        //Adding Team Name
+        if (member.getTeam() != null) {
+            dto.setTeamName(member.getTeam().getName());
+        } else {
+            dto.setTeamName(null);
+        }
+
+        // Adding Team Lead Name
+        if (member.getTeamLead() != null) {
+            dto.setTeamLeadName(member.getTeamLead().getFirstName() + " " + member.getTeamLead().getLastName());
+        } else {
+            dto.setTeamLeadName(null);
+        }
 
         // Grouping by status enum
         dto.setClientStatus(

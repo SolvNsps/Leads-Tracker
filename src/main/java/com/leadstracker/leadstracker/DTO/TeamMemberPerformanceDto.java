@@ -13,6 +13,9 @@ public class TeamMemberPerformanceDto {
     private double progressPercentage;
     private Map<Statuses, Integer> clientStatus;
     private String progressFraction;
+    private String email;
+    private String teamName;
+    private String teamLeadName;
 
     public String getMemberId() {
         return memberId;
@@ -68,5 +71,29 @@ public class TeamMemberPerformanceDto {
 
     public void setProgressFraction(String progressFraction) {
         this.progressFraction = progressFraction;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getTeamName() {
+        return teamName;
+    }
+
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
+    }
+
+    public String getTeamLeadName() {
+        return teamLeadName;
+    }
+
+    public void setTeamLeadName(String teamLeadName) {
+        this.teamLeadName = teamLeadName;
     }
 }
