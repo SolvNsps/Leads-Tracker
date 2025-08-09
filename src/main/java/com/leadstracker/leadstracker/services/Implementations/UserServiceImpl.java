@@ -140,6 +140,14 @@ public class UserServiceImpl implements UserService {
         userEntity.setPhoneNumber(user.getPhoneNumber());
         userEntity.setStaffId(user.getStaffId());
         userEntity.setRole(userEntity.getRole());
+        // Updating team lead
+        if (user.getTeamLeadUserId() != null && !user.getTeamLeadUserId().isEmpty()) {
+            UserEntity teamLeadEntity = userRepository.findByUserId(user.getTeamLeadUserId());
+            if (teamLeadEntity == null) {
+                throw new UsernameNotFoundException("Team Lead with User ID: " + user.getTeamLeadUserId() + " not found");
+            }
+            userEntity.setTeamLead(teamLeadEntity);
+        }
 
         //email
         //staffId

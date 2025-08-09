@@ -46,4 +46,6 @@ public interface ClientService {
     List<ClientDto> getMyClients(String email);
 
     Page<ClientDto> getClients(String email, Integer page, Integer size);
+
+    Page<ClientDto> getOverdueClientsByUser(String userId, int page, int limit, String role);
 }

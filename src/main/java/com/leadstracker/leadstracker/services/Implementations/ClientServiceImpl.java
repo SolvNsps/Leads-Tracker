@@ -760,4 +760,58 @@ public class ClientServiceImpl implements ClientService {
 
         return clientsPage.map(client -> modelMapper.map(client, ClientDto.class));
     }
+
+    /**
+     * @param userId
+     * @param page
+     * @param limit
+     * @return
+     */
+    @Override
+    public Page<ClientDto> getOverdueClientsByUser(String userId, int page, int limit, String role) {
+        Pageable pageableRequest = PageRequest.of(page, limit);
+        Page<ClientEntity> clientsPage;
+
+        if ("ROLE_ADMIN".equals(role)) {
+            // Admin can get all clients
+            clientsPage = clientRepository.findAll(pageableRequest);
+        } else if ("ROLE_TEAM_LEAD".equals(role)) {
+            clientsPage = clientRepository.findByTeamLead_Id(userId, pageableRequest);
+        } else if ("ROLE_TEAM_MEMBER".equals(role)) {
+            clientsPage = clientRepository.findByCreatedBy_Id(userId, pageableRequest);
+        } else {
+            throw new IllegalArgumentException("Unsupported role for this query");
+        }
+
+        List<ClientDto> overdueClients = new ArrayList<>();
+
+        for (ClientEntity client : clientsPage) {
+            if (client.getLastUpdated() == null) {
+                continue;
+            }
+            long daysPending = ChronoUnit.DAYS.between(
+                    client.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                    LocalDate.now()
+            );
+
+            if (daysPending > 5 &&
+                    EnumSet.of(Statuses.PENDING, Statuses.INTERESTED, Statuses.AWAITING_DOCUMENTATION)
+                            .contains(client.getClientStatus())) {
+
+                ClientDto dto = modelMapper.map(client, ClientDto.class);
+
+                if (client.getCreatedBy() != null) {
+                    dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
+                    if (client.getCreatedBy().getTeamLead() != null) {
+                        dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
+                    }
+                }
+
+                dto.setClientStatus(client.getClientStatus().name());
+                overdueClients.add(dto);
+            }
+        }
+
+        return new PageImpl<>(overdueClients, pageableRequest, overdueClients.size());
+    }
 }

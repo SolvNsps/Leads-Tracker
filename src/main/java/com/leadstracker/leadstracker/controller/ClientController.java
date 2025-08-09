@@ -22,7 +22,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -406,6 +408,71 @@ public class ClientController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         return ResponseEntity.ok(clientService.searchClients(name, status, date));
+    }
+
+    //getting overdue clients under a user
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
+    @GetMapping("/user/{userId}/overdueClients")
+    public ResponseEntity<PaginatedResponse<ClientRest>> getUserOverdueClients(
+            @PathVariable String userId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "limit", defaultValue = "10") int limit,
+            @AuthenticationPrincipal UserPrincipal authentication) {
+
+        // Extract role of the logged-in user
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(r -> r.equals("ROLE_TEAM_LEAD") || r.equals("ROLE_TEAM_MEMBER") || r.equals("ROLE_ADMIN"))
+                .findFirst()
+                .orElseThrow(() -> new AccessDeniedException("Unauthorized"));
+
+        Page<ClientDto> overdueClients = clientService.getOverdueClientsByUser(userId, page, limit, role);
+
+        List<ClientRest> result = overdueClients.stream().map(dto -> {
+            ClientRest rest = modelMapper.map(dto, ClientRest.class);
+
+            rest.setClientId(dto.getClientId());
+            rest.setFirstName(dto.getFirstName());
+            rest.setLastName(dto.getLastName());
+            rest.setPhoneNumber(dto.getPhoneNumber());
+            rest.setClientStatus(dto.getClientStatus());
+
+            if (dto.getCreatedDate() != null) {
+                rest.setCreatedAt(dto.getCreatedDate().toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
+            }
+
+            if (dto.getLastUpdated() != null) {
+                rest.setLastUpdated(dto.getLastUpdated().toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
+
+                Instant lastUpdatedInstant = dto.getLastUpdated().toInstant();
+                Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
+
+                rest.setLastAction(utils.getExactDuration(duration));
+            }
+
+            if (dto.getCreatedBy() != null) {
+                rest.setCreatedBy(dto.getCreatedBy().getFirstName() + " " + dto.getCreatedBy().getLastName());
+            }
+
+            if (dto.getAssignedTo() != null) {
+                rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
+            }
+
+            return rest;
+        }).toList();
+
+        PaginatedResponse<ClientRest> res = new PaginatedResponse<>();
+        res.setData(result);
+        res.setCurrentPage(overdueClients.getNumber());
+        res.setTotalPages(overdueClients.getTotalPages());
+        res.setTotalItems(overdueClients.getTotalElements());
+        res.setPageSize(overdueClients.getSize());
+        res.setHasNext(overdueClients.hasNext());
+        res.setHasPrevious(overdueClients.hasPrevious());
+
+        return ResponseEntity.ok(res);
     }
 
 }
