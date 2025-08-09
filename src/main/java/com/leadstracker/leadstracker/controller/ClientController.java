@@ -470,7 +470,7 @@ public class ClientController {
 
     //search for clients
     @GetMapping("/search-client")
-    public ResponseEntity<List<ClientEntity>> searchClients(
+    public ResponseEntity<List<ClientSearchDto>> searchClients(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date

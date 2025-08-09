@@ -262,7 +262,7 @@ public class ClientServiceImpl implements ClientService {
         // Calculating progress
         double progressPercentage = 0;
         if (target > 0) {
-            progressPercentage = ((memberClients.size() * 100.0 ) / target);
+            progressPercentage = ((memberClients.size() * 100.0) / target);
         }
 
         dto.setProgressPercentage(progressPercentage);
@@ -560,20 +560,20 @@ public class ClientServiceImpl implements ClientService {
      */
     @Override
     public List<ClientDto> getAllClientsByTeamMember(String userId) {
-            UserEntity member = userRepository.findByUserId(userId);
-            List<ClientEntity> clients = clientRepository.findByCreatedBy(member);
+        UserEntity member = userRepository.findByUserId(userId);
+        List<ClientEntity> clients = clientRepository.findByCreatedBy(member);
 
-            return clients.stream().map(client -> {
-                ClientDto dto = modelMapper.map(client, ClientDto.class);
-                if (client.getCreatedBy() != null) {
-                    dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
-                }
-                if (client.getTeamLead() != null) {
-                    dto.setAssignedTo(modelMapper.map(client.getTeamLead(), UserDto.class));
-                }
-                dto.setClientStatus(client.getClientStatus().getDisplayName());
-                return dto;
-            }).collect(Collectors.toList());
+        return clients.stream().map(client -> {
+            ClientDto dto = modelMapper.map(client, ClientDto.class);
+            if (client.getCreatedBy() != null) {
+                dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
+            }
+            if (client.getTeamLead() != null) {
+                dto.setAssignedTo(modelMapper.map(client.getTeamLead(), UserDto.class));
+            }
+            dto.setClientStatus(client.getClientStatus().getDisplayName());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -664,7 +664,6 @@ public class ClientServiceImpl implements ClientService {
     }
 
 
-
     /**
      * @param name
      * @param status
@@ -672,19 +671,28 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public List<ClientEntity> searchClients(String name, String status, LocalDate date) {
-        if (name != null && !name.isEmpty()) {
-            return clientRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(name, name);
-        }
-        if (status != null && !status.isEmpty()) {
-            Statuses enumStatus = Statuses.valueOf(status.toUpperCase());
-            return clientRepository.findByClientStatus(enumStatus);
-        }
-        if (date != null) {
-            LocalDateTime start = date.atStartOfDay();
-            LocalDateTime end = date.plusDays(1).atStartOfDay();
-            return clientRepository.findByCreatedDateBetween(start, end);
-        }
-        return clientRepository.findAll();
+    public List<ClientSearchDto> searchClients(String name, String status, LocalDate date) {
+        Date startDateTime = (date != null) ? Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant()) : null;
+        Date endDateTime = (date != null) ? Date.from(date.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant()) : null;
+
+        List<ClientEntity> clients = clientRepository.searchClients(
+                (name != null && !name.trim().isEmpty()) ? name.trim() : null,
+                (status != null && !status.trim().isEmpty()) ? status.trim() : null,
+                startDateTime,
+                endDateTime
+        );
+
+        return clients.stream().map(c -> {
+            ClientSearchDto dto = new ClientSearchDto();
+            dto.setClientId(c.getClientId());
+            dto.setFirstName(c.getFirstName());
+            dto.setLastName(c.getLastName());
+            dto.setPhoneNumber(c.getPhoneNumber());
+            dto.setCreatedByName(c.getCreatedBy().getFirstName() + " " + c.getCreatedBy().getLastName());
+            dto.setCreatedByEmail(c.getCreatedBy().getEmail());
+            dto.setCreatedDate(c.getCreatedDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+            dto.setStatus(c.getClientStatus() != null ? c.getClientStatus().name() : null);
+            return dto;
+        }).collect(Collectors.toList());
     }
 }

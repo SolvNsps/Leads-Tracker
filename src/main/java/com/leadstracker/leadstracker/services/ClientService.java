@@ -41,5 +41,5 @@ public interface ClientService {
 
     OverallSystemDto getClientStats(String duration);
 
-    List<ClientEntity> searchClients(String name, String status, LocalDate date);
+    List<ClientSearchDto> searchClients(String name, String status, LocalDate date);
 }

@@ -7,6 +7,7 @@ import com.leadstracker.leadstracker.response.Statuses;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -43,11 +44,22 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
             + "FROM clients c group by c.clientStatus")
     List<ClientStatusCountDto> countClientsByStatus();
 
-    List<ClientEntity> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String name, String name1);
+    @Query("SELECT c FROM clients c " +
+            "WHERE (:name IS NULL OR LOWER(c.firstName || c.lastName) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+            "AND (:status IS NULL OR c.clientStatus = :status) " +
+            "AND (:startDate IS NULL OR c.createdDate >= :startDate) " +
+            "AND (:endDate IS NULL OR c.createdDate <= :endDate)")
+    List<ClientEntity> searchClients(@Param("name") String name, @Param("status") String status, @Param("startDate") Date startDate,
+                                     @Param("endDate") Date endDate);
 
-    List<ClientEntity> findByClientStatus(Statuses status);
 
-    List<ClientEntity> findByCreatedDateBetween(LocalDateTime start, LocalDateTime end);
+//    List<ClientEntity> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String name, String name1);
+//
+//    List<ClientEntity> findByClientStatus(Statuses status);
+//
+//    List<ClientEntity> findByCreatedDateBetween(LocalDateTime start, LocalDateTime end);
+//
+//    List<ClientEntity> searchClients(String s, String status, Object o, Object o1);
 
 //    List<ClientEntity> findByLastUpdated();
 //
