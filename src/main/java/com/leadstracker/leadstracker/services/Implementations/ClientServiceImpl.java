@@ -133,19 +133,19 @@ public class ClientServiceImpl implements ClientService {
         TeamsEntity team = teamLead.getTeam();
 
         if (team == null) {
-            // Handle missing team case gracefully:
-            // Return an empty or default TeamPerformanceDto or throw a custom exception
             TeamPerformanceDto emptyResponse = new TeamPerformanceDto();
             emptyResponse.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
             emptyResponse.setTeamId(null);
+            emptyResponse.setEmail(teamLead.getEmail());
+            emptyResponse.setTeamLeadUserId(teamLead.getUserId());
             emptyResponse.setTeamName("No Team Assigned");
             emptyResponse.setTotalClientsAdded(0);
             emptyResponse.setNumberOfTeamMembers(0);
             emptyResponse.setTeamTarget(0);
             emptyResponse.setProgressPercentage(0);
             emptyResponse.setProgressFraction("0/0");
-            emptyResponse.setClientStatus(Collections.emptyMap());
-            emptyResponse.setTeamMembers(Collections.emptyList());
+//            emptyResponse.setClientStatus(Collections.emptyMap());
+//            emptyResponse.setTeamMembers(Collections.emptyList());
             return emptyResponse;
         }
 
@@ -163,6 +163,8 @@ public class ClientServiceImpl implements ClientService {
         TeamPerformanceDto response = new TeamPerformanceDto();
         response.setTeamId(team.getId());
         response.setTeamName(team.getName());
+        response.setTeamLeadUserId(teamLead.getUserId());
+        response.setEmail(teamLead.getEmail());
         response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
         response.setTotalClientsAdded(clients.size());
 //        response.setTeamTarget(response.getNumberOfClients());

@@ -120,14 +120,18 @@ public class UserController {
 
     //Viewing and managing the data of all team members
     @GetMapping(path = "/team-members", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<UserRest>> getAllTeamMembers() {
+    public ResponseEntity<List<TeamMemberPerformanceDto>> getAllTeamMembers(@RequestParam(defaultValue = "week") String duration) {
         List<UserDto> teamMembers = userService.getAllTeamMembers();
 
-        List<UserRest> response = teamMembers.stream()
-                .map(dto -> modelMapper.map(dto, UserRest.class))
-                .toList();
+//        List<UserRest> response = teamMembers.stream()
+//                .map(dto -> modelMapper.map(dto, UserRest.class))
+//                .toList();
+//
+//        return ResponseEntity.ok(response);
+        List<TeamMemberPerformanceDto> result = teamMembers.stream()
+                .map(userDto -> clientService.getMemberPerformance(userDto.getUserId(), duration)).toList();
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(result);
     }
 
 

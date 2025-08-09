@@ -8,6 +8,7 @@ import java.util.Map;
 public class TeamPerformanceDto {
     private Long teamId;
     private String teamName;
+    private String teamLeadUserId;
     private String teamLeadName;
     private int totalClientsAdded;
     private int teamTarget;
@@ -17,6 +18,7 @@ public class TeamPerformanceDto {
     private Map<Statuses, Integer> clientStatus;
     private int numberOfTeamMembers;
     private String progressFraction;
+    private String email;
 
     public Long getTeamId() {
         return teamId;
@@ -104,5 +106,21 @@ public class TeamPerformanceDto {
 
     public void setProgressFraction(String progressFraction) {
         this.progressFraction = progressFraction;
+    }
+
+    public String getTeamLeadUserId() {
+        return teamLeadUserId;
+    }
+
+    public void setTeamLeadUserId(String teamLeadUserId) {
+        this.teamLeadUserId = teamLeadUserId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }
