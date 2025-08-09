@@ -19,6 +19,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -307,6 +308,17 @@ public class ClientController {
 
         String email = userPrincipal.getUsername();
         UserDto currentUser = userService.getUserByEmail(email);
+
+        boolean isAdmin = currentUser.getRole().equals("ROLE_ADMIN");
+        boolean isSameUser = currentUser.getUserId().equals(userId);
+
+        // Checking permission
+        if (!isAdmin && !isSameUser) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        // Determining which user's clients to fetch
+        String targetUserId = isAdmin ? userId : currentUser.getUserId();
 
         boolean isPaginated = (page != null && page >= 0) && (limit != null && limit > 0);
         int pageNumber = isPaginated ? page : 0;
