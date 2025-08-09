@@ -1,5 +1,6 @@
 package com.leadstracker.leadstracker.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -35,16 +36,21 @@ public class UserEntity implements Serializable {
     @Column(nullable = false, length = 50, unique = true)
     private String email;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
+    @JsonIgnore
     private String emailVerificationToken;
 
+    @JsonIgnore
     private String passwordResetToken;
 
+    @JsonIgnore
     @Column(name = "password_reset_expiration")
     private Date passwordResetExpiration;
 
+    @JsonIgnore
     @Column(nullable = false)
     private boolean emailVerificationStatus;
 
@@ -62,25 +68,33 @@ public class UserEntity implements Serializable {
     private List<UserEntity> teamMembers = new ArrayList<>(); // Only used if the user is a TEAM_LEAD
 
     //    default to true for new users
+    @JsonIgnore
     @Column(name = "default_password", nullable = false)
     private boolean defaultPassword = true;
 
+    @JsonIgnore
     private String otp;
 
+    @JsonIgnore
     private Date otpExpiryDate;
 
+    @JsonIgnore
     @Column(name = "otp_failed_attempts")
     private Integer otpFailedAttempts = 0;
 
+    @JsonIgnore
     @Column(name = "temp_block_time")
     private Date tempBlockTime;
 
+    @JsonIgnore
     @Column(name = "account_locked")
     private Boolean accountLocked = false;
 
+    @JsonIgnore
     @Column(name = "resend_otp_attempts")
     private Integer resendOtpAttempts = 0;
 
+    @JsonIgnore
     @Column(name = "last_otp_resend")
     private LocalDateTime lastOtpResendTime;
 
@@ -99,6 +113,7 @@ public class UserEntity implements Serializable {
     @CreationTimestamp
     private LocalDateTime createdDate;
 
+    @JsonIgnore
     public String getPasswordResetToken() {
         return passwordResetToken;
     }
@@ -107,6 +122,7 @@ public class UserEntity implements Serializable {
         this.passwordResetToken = passwordResetToken;
     }
 
+    @JsonIgnore
     public Date getPasswordResetExpiration() {
         return passwordResetExpiration;
     }
@@ -139,6 +155,7 @@ public class UserEntity implements Serializable {
         this.emailVerificationStatus = emailVerificationStatus;
     }
 
+    @JsonIgnore
     public String getEmailVerificationToken() {
         return emailVerificationToken;
     }
@@ -147,6 +164,7 @@ public class UserEntity implements Serializable {
         this.emailVerificationToken = emailVerificationToken;
     }
 
+    @JsonIgnore
     public String getPassword() {
         return password;
     }
@@ -203,6 +221,7 @@ public class UserEntity implements Serializable {
         this.otp = otp;
     }
 
+    @JsonIgnore
     public Date getOtpExpiryDate() {
         return otpExpiryDate;
     }

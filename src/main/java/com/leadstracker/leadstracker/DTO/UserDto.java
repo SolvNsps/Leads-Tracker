@@ -28,10 +28,13 @@ public class UserDto implements Serializable {
 
     private String email;
 
+    @JsonIgnore
     private String password;
 
+    @JsonIgnore
     private String emailVerificationToken;
 
+    @JsonIgnore
     private boolean emailVerificationStatus;
 
     private String role;
@@ -44,20 +47,28 @@ public class UserDto implements Serializable {
     private transient RoleEntity roleEntity;
 
 //    default to true for new users
+@JsonIgnore
     private boolean defaultPassword;
 
+    @JsonIgnore
     private String otp;
 
+    @JsonIgnore
     private Date otpExpiryDate;
 
+    @JsonIgnore
     private Integer otpFailedAttempts;
 
+    @JsonIgnore
     private Date tempBlockTime;
 
+    @JsonIgnore
     private Boolean accountLocked;
 
+    @JsonIgnore
     private Integer resendOtpAttempts;
 
+    @JsonIgnore
     private LocalDateTime lastOtpResendTime;
 
     private String phoneNumber;

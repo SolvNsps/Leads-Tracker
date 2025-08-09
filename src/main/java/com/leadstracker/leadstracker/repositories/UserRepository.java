@@ -60,4 +60,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     List<UserEntity> findByCreatedDateBetween(LocalDateTime localDateTime, LocalDateTime localDateTime1);
 
     List<UserEntity> findByEmailContainingIgnoreCase(String keyword);
+
+//    UserEntity findByUsername(String username);
 }

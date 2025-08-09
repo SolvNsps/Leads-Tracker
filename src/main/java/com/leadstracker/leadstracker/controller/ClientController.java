@@ -300,90 +300,20 @@ public class ClientController {
 
     //getting all clients under a user
     @GetMapping("/all-clients/{userId}")
-    public ResponseEntity<PaginatedResponse<ClientRest>> getMyClients(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @PathVariable String userId,
-            @RequestParam(value = "page", required = false) Integer page,
-            @RequestParam(value = "limit", required = false) Integer limit) {
+    public ResponseEntity<?> getClients(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+           @AuthenticationPrincipal UserPrincipal authentication) {
 
-        String email = userPrincipal.getUsername();
-        UserDto currentUser = userService.getUserByEmail(email);
+        String email = authentication.getUsername();
 
-        boolean isAdmin = currentUser.getRole().equals("ROLE_ADMIN");
-        boolean isSameUser = currentUser.getUserId().equals(userId);
-
-        // Checking permission
-        if (!isAdmin && !isSameUser) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        // Determining which user's clients to fetch
-        String targetUserId = isAdmin ? userId : currentUser.getUserId();
-
-        boolean isPaginated = (page != null && page >= 0) && (limit != null && limit > 0);
-        int pageNumber = isPaginated ? page : 0;
-        int pageSize = isPaginated ? limit : Integer.MAX_VALUE;
-
-        List<ClientDto> clientDtos;
-        long totalItems;
-        int totalPages;
-
-        if (isPaginated) {
-            clientDtos = clientService.getClientsUnderUser(currentUser.getUserId(), pageNumber, pageSize);
-            totalItems = clientService.countClientsUnderUser(currentUser.getUserId());
-            totalPages = (int) Math.ceil((double) totalItems / pageSize);
+        if (page != null && size != null) {
+            Page<ClientDto> clients = clientService.getClients(email, page, size);
+            return ResponseEntity.ok(clients);
         } else {
-            clientDtos = clientService.getAllClientsUnderUser(currentUser.getUserId());
-            totalItems = clientDtos.size();
-            totalPages = 1;
-            pageNumber = 0;
-            pageSize = clientDtos.size();
+            List<ClientDto> clients = clientService.getMyClients(email);
+            return ResponseEntity.ok(clients);
         }
-
-        List<ClientRest> results = clientDtos.stream().map(dto -> {
-            ClientRest rest = modelMapper.map(dto, ClientRest.class);
-            rest.setClientId(dto.getClientId());
-            rest.setFirstName(dto.getFirstName());
-            rest.setLastName(dto.getLastName());
-            rest.setPhoneNumber(dto.getPhoneNumber());
-            rest.setClientStatus(dto.getClientStatus());
-            rest.setGpsLocation(dto.getGpsLocation());
-
-            if (dto.getCreatedDate() != null) {
-                rest.setCreatedAt(dto.getCreatedDate().toInstant()
-                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
-            }
-
-            if (dto.getLastUpdated() != null) {
-                rest.setLastUpdated(dto.getLastUpdated().toInstant()
-                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
-
-                Instant lastUpdatedInstant = dto.getLastUpdated().toInstant();
-                Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
-                rest.setLastAction(utils.getExactDuration(duration));
-            }
-
-            if (dto.getCreatedBy() != null) {
-                rest.setCreatedBy(dto.getCreatedBy().getFirstName() + " " + dto.getCreatedBy().getLastName());
-            }
-
-            if (dto.getAssignedTo() != null) {
-                rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
-            }
-
-            return rest;
-        }).toList();
-
-        PaginatedResponse<ClientRest> response = new PaginatedResponse<>();
-        response.setData(results);
-        response.setCurrentPage(pageNumber);
-        response.setPageSize(pageSize);
-        response.setTotalItems(totalItems);
-        response.setTotalPages(totalPages);
-        response.setHasNext(isPaginated && (pageNumber + 1 < totalPages));
-        response.setHasPrevious(isPaginated && (pageNumber > 0));
-
-        return ResponseEntity.ok(response);
     }
 
 

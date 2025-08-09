@@ -4,6 +4,7 @@ import com.leadstracker.leadstracker.DTO.ClientStatusCountDto;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.response.Statuses;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -51,6 +52,13 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
             "AND (:endDate IS NULL OR c.createdDate <= :endDate)")
     List<ClientEntity> searchClients(@Param("name") String name, @Param("status") String status, @Param("startDate") Date startDate,
                                      @Param("endDate") Date endDate);
+
+    List<ClientEntity> findByCreatedByIdIn(List<String> userIds);
+
+    List<ClientEntity> findByCreatedBy_UserId(String userId);
+
+    Page<ClientEntity> findByCreatedBy_UserId(String userId, Pageable pageable);
+    Page<ClientEntity> findByCreatedByIdIn(List<String> userIds, Pageable pageable);
 
 
 //    List<ClientEntity> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String name, String name1);

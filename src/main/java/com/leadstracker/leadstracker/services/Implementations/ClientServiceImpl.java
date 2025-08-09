@@ -695,4 +695,69 @@ public class ClientServiceImpl implements ClientService {
             return dto;
         }).collect(Collectors.toList());
     }
+
+    /**
+     * @param email
+     * @return
+     */
+    @Override
+    public List<ClientDto> getMyClients(String email) {
+        UserEntity user = userRepository.findByEmail(email);
+
+        List<ClientEntity> clients;
+
+        if (user.getRole().getName().equals("ROLE_ADMIN")) {
+            clients = clientRepository.findAll();
+        }
+        else if (user.getRole().getName().equals("ROLE_TEAM_LEAD")) {
+            // Own clients + team members' clients
+            List<String> userIds = new ArrayList<>();
+            userIds.add(user.getUserId());
+
+            List<UserEntity> members = userRepository.findByTeamLead_UserId(user.getUserId());
+            members.forEach(m -> userIds.add(m.getUserId()));
+
+            clients = clientRepository.findByCreatedByIdIn(userIds);
+        }
+        else {
+            // TEAM_MEMBER → only own clients
+            clients = clientRepository.findByCreatedBy_UserId(user.getUserId());
+        }
+
+        return clients.stream()
+                .map(client -> modelMapper.map(client, ClientDto.class))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * @param email
+     * @param page
+     * @param size
+     * @return
+     */
+    @Override
+    public Page<ClientDto> getClients(String email, Integer page, Integer size) {
+        UserEntity user = userRepository.findByEmail(email);
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ClientEntity> clientsPage;
+
+        if (user.getRole().getName().equals("ROLE_ADMIN")) {
+            clientsPage = clientRepository.findAll(pageable);
+        }
+        else if (user.getRole().getName().equals("ROLE_TEAM_LEAD")) {
+            List<String> userIds = new ArrayList<>();
+            userIds.add(user.getUserId());
+
+            List<UserEntity> members = userRepository.findByTeamLead_UserId(user.getUserId());
+            members.forEach(m -> userIds.add(m.getUserId()));
+
+            clientsPage = clientRepository.findByCreatedByIdIn(userIds, pageable);
+        }
+        else {
+            clientsPage = clientRepository.findByCreatedBy_UserId(user.getUserId(), pageable);
+        }
+
+        return clientsPage.map(client -> modelMapper.map(client, ClientDto.class));
+    }
 }
