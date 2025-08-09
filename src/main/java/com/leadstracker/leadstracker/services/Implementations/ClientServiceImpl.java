@@ -149,7 +149,12 @@ public class ClientServiceImpl implements ClientService {
             return emptyResponse;
         }
 
+        //getting team members under a team lead
         List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
+        // Adding team lead
+        if (!teamMembers.contains(teamLead)) {
+            teamMembers.add(teamLead);
+        }
 
         //Calculating date range
         Date[] dateRange = calculateDateRange(duration);
@@ -169,7 +174,11 @@ public class ClientServiceImpl implements ClientService {
         response.setTotalClientsAdded(clients.size());
 //        response.setTeamTarget(response.getNumberOfClients());
 //        response.setProgressPercentage(( (double) clients.size() / (response.getNumberOfClients())));
-        response.setNumberOfTeamMembers(teamMembers.size());
+//        response.setNumberOfTeamMembers(teamMembers.size());
+        // members only (excluding lead) for display
+        response.setNumberOfTeamMembers((int) teamMembers.stream()
+                .filter(ent -> !ent.getUserId().equals(teamLead.getUserId()))
+                .count());
 
         //Fetching active target
         Optional<TeamTargetEntity> activeTargetOpt = teamTargetRepository
@@ -189,7 +198,6 @@ public class ClientServiceImpl implements ClientService {
         response.setProgressPercentage(progress);
         response.setProgressFraction(numberOfClientsAdded + "/" + teamTarget);
 
-
         //Building the status distribution using the enum
         response.setClientStatus(
                 clients.stream()
@@ -200,11 +208,20 @@ public class ClientServiceImpl implements ClientService {
                         ));
 
         // Building team member stats
+//        response.setTeamMembers(
+//                teamMembers.stream()
+//                        .map(member -> teamMemberStats(member, dateRange[0], dateRange[1]))
+//                        .collect(Collectors.toList())
+//        );
+
+        // Member stats (excluding lead)
         response.setTeamMembers(
                 teamMembers.stream()
+                        .filter(m -> !m.getUserId().equals(teamLead.getUserId()))
                         .map(member -> teamMemberStats(member, dateRange[0], dateRange[1]))
                         .collect(Collectors.toList())
         );
+
 
         return response;
     }
@@ -221,14 +238,6 @@ public class ClientServiceImpl implements ClientService {
         };
     }
 
-    @Override
-    public TeamMemberPerformanceDto getMemberPerformance(String memberId, String duration) {
-        UserEntity member = userRepository.findByUserId(memberId);
-        Date[] dateRange = calculateDateRange(duration);
-
-        return teamMemberStats(member, dateRange[0], dateRange[1]);
-
-    }
 
     private TeamMemberPerformanceDto teamMemberStats(UserEntity member, Date start, Date end) {
         List<ClientEntity> memberClients = clientRepository.findByCreatedByAndCreatedDateBetween(
@@ -268,6 +277,15 @@ public class ClientServiceImpl implements ClientService {
         return dto;
     }
 
+
+    @Override
+    public TeamMemberPerformanceDto getMemberPerformance(String memberId, String duration) {
+        UserEntity member = userRepository.findByUserId(memberId);
+        Date[] dateRange = calculateDateRange(duration);
+
+        return teamMemberStats(member, dateRange[0], dateRange[1]);
+
+    }
 
     /**
      * @param clientId
