@@ -128,10 +128,10 @@ public class UserController {
 //                .toList();
 //
 //        return ResponseEntity.ok(response);
-        List<TeamMemberPerformanceDto> result = teamMembers.stream()
+        List<TeamMemberPerformanceDto> response = teamMembers.stream()
                 .map(userDto -> clientService.getMemberPerformance(userDto.getUserId(), duration)).toList();
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(response);
     }
 
 
