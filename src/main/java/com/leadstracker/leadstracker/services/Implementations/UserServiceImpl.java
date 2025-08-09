@@ -38,8 +38,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.leadstracker.leadstracker.security.SecurityConstants.*;
 
@@ -631,6 +633,44 @@ public class UserServiceImpl implements UserService {
 
         return userEntities.map(user -> modelMapper.map(user, UserDto.class));
 
+    }
+
+    /**
+     * @param keyword
+     * @return
+     */
+    @Override
+    public List<UserDto> searchUsers(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        keyword = keyword.trim().toLowerCase();
+
+        List<UserEntity> users;
+
+        // If keyword contains '@', search full email
+        if (keyword.contains("@")) {
+            users = userRepository.findByEmailContainingIgnoreCase(keyword);
+        }
+        // If keyword looks like a date (yyyy-MM-dd)
+        else if (keyword.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            LocalDate date = LocalDate.parse(keyword);
+            users = userRepository.findByCreatedDateBetween(
+                    date.atStartOfDay(),
+                    date.plusDays(1).atStartOfDay()
+            );
+        }
+        // Otherwise search name or username part of email
+        else {
+            users = userRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailStartingWithIgnoreCase(
+                    keyword, keyword, keyword
+            );
+        }
+
+        return users.stream()
+                .map(user -> modelMapper.map(user, UserDto.class))
+                .collect(Collectors.toList());
     }
 
 }

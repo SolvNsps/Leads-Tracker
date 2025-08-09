@@ -552,4 +552,15 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    //searching for a user
+//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/search-users")
+    public ResponseEntity<List<UserDto>> searchUsers(
+            @RequestParam(required = false) String keyword) {
+
+        List<UserDto> users = userService.searchUsers(keyword);
+        return ResponseEntity.ok(users);
+    }
+
+
 }

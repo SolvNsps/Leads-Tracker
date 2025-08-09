@@ -3,11 +3,13 @@ package com.leadstracker.leadstracker.repositories;
 import com.leadstracker.leadstracker.DTO.ClientStatusCountDto;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
+import com.leadstracker.leadstracker.response.Statuses;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -40,6 +42,12 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
     @Query("SELECT new com.leadstracker.leadstracker.DTO.ClientStatusCountDto(c.clientStatus, COUNT(c))"
             + "FROM clients c group by c.clientStatus")
     List<ClientStatusCountDto> countClientsByStatus();
+
+    List<ClientEntity> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String name, String name1);
+
+    List<ClientEntity> findByClientStatus(Statuses status);
+
+    List<ClientEntity> findByCreatedDateBetween(LocalDateTime start, LocalDateTime end);
 
 //    List<ClientEntity> findByLastUpdated();
 //

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,4 +54,10 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     @Query("SELECT u FROM users u WHERE u.role.name = :roleName")
     List<UserEntity> findByRoleName(@Param("roleName") String roleName);
 
+    List<UserEntity> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailStartingWithIgnoreCase(
+            String keyword, String keyword1, String keyword2);
+
+    List<UserEntity> findByCreatedDateBetween(LocalDateTime localDateTime, LocalDateTime localDateTime1);
+
+    List<UserEntity> findByEmailContainingIgnoreCase(String keyword);
 }

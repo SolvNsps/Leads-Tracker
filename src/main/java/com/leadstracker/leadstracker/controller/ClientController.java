@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.controller;
 
 import com.leadstracker.leadstracker.DTO.*;
+import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.request.UserDetails;
@@ -17,6 +18,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -452,6 +454,16 @@ public class ClientController {
     public ResponseEntity<OverallSystemDto> getClientStats(@RequestParam(defaultValue = "week") String duration) {
         OverallSystemDto stats = clientService.getClientStats(duration);
         return ResponseEntity.ok(stats);
+    }
+
+    //search for clients
+    @GetMapping("/search-client")
+    public ResponseEntity<List<ClientEntity>> searchClients(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        return ResponseEntity.ok(clientService.searchClients(name, status, date));
     }
 
 }

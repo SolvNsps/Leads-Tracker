@@ -21,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -600,8 +601,6 @@ public class ClientServiceImpl implements ClientService {
         return new OverallSystemDto(totalClients, overallStatusCounts, teamStatsList);
     }
 
-
-
     /**
      * @return
      */
@@ -647,5 +646,30 @@ public class ClientServiceImpl implements ClientService {
 //            ClientDto dto = modelMapper.map(clientEntity, ClientDto.class);
 //            return dto;
 //        });
+    }
+
+
+
+    /**
+     * @param name
+     * @param status
+     * @param date
+     * @return
+     */
+    @Override
+    public List<ClientEntity> searchClients(String name, String status, LocalDate date) {
+        if (name != null && !name.isEmpty()) {
+            return clientRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(name, name);
+        }
+        if (status != null && !status.isEmpty()) {
+            Statuses enumStatus = Statuses.valueOf(status.toUpperCase());
+            return clientRepository.findByClientStatus(enumStatus);
+        }
+        if (date != null) {
+            LocalDateTime start = date.atStartOfDay();
+            LocalDateTime end = date.plusDays(1).atStartOfDay();
+            return clientRepository.findByCreatedDateBetween(start, end);
+        }
+        return clientRepository.findAll();
     }
 }

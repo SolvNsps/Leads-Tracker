@@ -49,4 +49,6 @@ public interface UserService extends UserDetailsService {
     TeamDto createTeam(TeamDto teamDto);
 
     Page<UserDto> getTeamMembersData(String userId, int page, int limit);
+
+    List<UserDto> searchUsers(String keyword);
 }

@@ -1,10 +1,12 @@
 package com.leadstracker.leadstracker.services;
 
 import com.leadstracker.leadstracker.DTO.*;
+import com.leadstracker.leadstracker.entities.ClientEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -38,4 +40,6 @@ public interface ClientService {
     List<ClientDto> getAllClientsByTeamMember(String userId);
 
     OverallSystemDto getClientStats(String duration);
+
+    List<ClientEntity> searchClients(String name, String status, LocalDate date);
 }
