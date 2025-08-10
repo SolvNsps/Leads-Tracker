@@ -51,4 +51,10 @@ public interface UserService extends UserDetailsService {
     Page<UserDto> getTeamMembersData(String userId, int page, int limit);
 
     List<UserDto> searchUsers(String keyword);
+
+    TeamDto getTeamById(String teamId);
+
+    TeamDto updateTeam(String teamId, TeamDto teamDto);
+
+    void deactivateTeam(String teamId);
 }

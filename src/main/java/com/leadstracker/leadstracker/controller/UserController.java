@@ -370,6 +370,22 @@ public class UserController {
                 "message", "Team created successfully"));
     }
 
+    //getting a team
+    @GetMapping(value = "/team/{teamId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getTeam(@PathVariable String teamId) throws Exception {
+
+        TeamDto teamDto = userService.getTeamById(teamId);
+
+        TeamRest teamRest = modelMapper.map(teamDto, TeamRest.class);
+        teamRest.setTeamLeadUserId(teamDto.getTeamLeadId());
+        teamRest.setTeamLeadName(teamDto.getTeamLeadName());
+
+        return ResponseEntity.ok(Map.of(
+                "team", teamRest,
+                "message", "Team retrieved successfully"));
+    }
+
+
 
     //Viewing and managing the data of all team members under a team lead
     @GetMapping("/team-leads/{userId}/members/data")
@@ -520,7 +536,6 @@ public class UserController {
                                                             @AuthenticationPrincipal UserDetails userDetails) {
         String teamLeadEmail =  userDetails.getEmail();
 
-        // Convert List<MemberTargetDto> to Map<Long, Integer>
         Map<Long, Integer> memberTargetMap = requestDto.getMemberTargets().stream()
                 .collect(Collectors.toMap(
                         MemberTargetDto::getMemberId,
@@ -560,6 +575,34 @@ public class UserController {
 
         List<UserDto> users = userService.searchUsers(keyword);
         return ResponseEntity.ok(users);
+    }
+
+
+    // Editing a Team
+    @PutMapping(value = "/Edit-team/{teamId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> editTeam(@PathVariable String teamId,
+                                      @RequestBody TeamDetails teamDetails) throws Exception {
+
+        TeamDto teamDto = modelMapper.map(teamDetails, TeamDto.class);
+        TeamDto updatedTeam = userService.updateTeam(teamId, teamDto);
+
+        TeamRest teamRest = modelMapper.map(updatedTeam, TeamRest.class);
+        teamRest.setTeamLeadUserId(updatedTeam.getTeamLeadId());
+        teamRest.setTeamLeadName(updatedTeam.getTeamLeadName());
+
+        return ResponseEntity.ok(Map.of(
+                "team", teamRest,
+                "message", "Team updated successfully"));
+    }
+
+    // Deactivating a Team
+    @PatchMapping(value = "/team/{teamId}/deactivate")
+    public ResponseEntity<?> deactivateTeam(@PathVariable String teamId) throws Exception {
+
+        userService.deactivateTeam(teamId);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Team successfully deactivated"));
     }
 
 

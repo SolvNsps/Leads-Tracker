@@ -681,5 +681,70 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * @param teamId
+     * @return
+     */
+    @Override
+    public TeamDto getTeamById(String teamId) {
+        TeamsEntity teamEntity = teamsRepository.findById(Long.valueOf(teamId))
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+
+        TeamDto teamDto = modelMapper.map(teamEntity, TeamDto.class);
+
+        if (teamEntity.getTeamLead() != null) {
+            teamDto.setTeamLeadId(teamEntity.getTeamLead().getUserId());
+            teamDto.setTeamLeadName(teamEntity.getTeamLead().getFirstName() + " " +
+                    teamEntity.getTeamLead().getLastName());
+        }
+
+        return teamDto;
+    }
+
+    /**
+     * @param teamId
+     * @param teamDto
+     * @return
+     */
+    @Override
+    public TeamDto updateTeam(String teamId, TeamDto teamDto) {
+        TeamsEntity teamEntity = teamsRepository.findById(Long.valueOf(teamId))
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+
+        // Updating fields
+        if (teamDto.getName() != null && !teamDto.getName().isBlank()) {
+            teamEntity.setName(teamDto.getName());
+        }
+
+        if (teamDto.getTeamLeadId() != null && !teamDto.getTeamLeadId().isBlank()) {
+            UserEntity teamLead = userRepository.findByUserId(teamDto.getTeamLeadId());
+            teamEntity.setTeamLead(teamLead);
+        }
+
+        TeamsEntity savedEntity = teamsRepository.save(teamEntity);
+
+        TeamDto updatedDto = modelMapper.map(savedEntity, TeamDto.class);
+        if (savedEntity.getTeamLead() != null) {
+            updatedDto.setTeamLeadId(savedEntity.getTeamLead().getUserId());
+            updatedDto.setTeamLeadName(savedEntity.getTeamLead().getFirstName() + " " +
+                    savedEntity.getTeamLead().getLastName());
+        }
+
+        return updatedDto;
+
+    }
+
+    /**
+     * @param teamId
+     */
+    @Override
+    public void deactivateTeam(String teamId) {
+        TeamsEntity teamEntity = teamsRepository.findById(Long.valueOf(teamId))
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+
+        teamEntity.setActive(false);
+        teamsRepository.save(teamEntity);
+    }
+
 }
 
