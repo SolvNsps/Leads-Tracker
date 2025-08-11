@@ -86,7 +86,7 @@ public class TeamServiceImpl implements TeamService {
 
                     // Calculate progress
                     int numberOfClientsAdded = teamClients.size();
-                    double progress = (teamTarget > 0) ? ((double) numberOfClientsAdded / teamTarget) * 100 : 0;
+                    double progress = Math.ceil((teamTarget > 0) ? ((double) numberOfClientsAdded / teamTarget) * 100 : 0);
                     dto.setProgressPercentage(progress);
                     dto.setProgressFraction(numberOfClientsAdded + "/" + teamTarget);
 
@@ -130,7 +130,7 @@ public class TeamServiceImpl implements TeamService {
         //  Calculating progress
         double progressPercentage = 0;
         if (target > 0) {
-            progressPercentage = (memberClients.size() * 100.0) / target;
+            progressPercentage = Math.ceil((memberClients.size() * 100.0) / target);
         }
 
         dto.setProgressPercentage(progressPercentage);

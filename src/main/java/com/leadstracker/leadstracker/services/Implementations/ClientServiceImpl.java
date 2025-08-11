@@ -194,7 +194,7 @@ public class ClientServiceImpl implements ClientService {
         double progress = 0;
 
         if (teamTarget > 0) {
-            progress = ((double) numberOfClientsAdded / teamTarget) * 100;
+            progress = Math.ceil(((double) numberOfClientsAdded / teamTarget) * 100);
         }
 //      Setting both percentage and fraction
         response.setProgressPercentage(progress);
@@ -263,7 +263,7 @@ public class ClientServiceImpl implements ClientService {
         // Calculating progress
         double progressPercentage = 0;
         if (target > 0) {
-            progressPercentage = ((memberClients.size() * 100.0) / target);
+            progressPercentage = Math.ceil((memberClients.size() * 100.0) / target);
         }
 
         dto.setProgressPercentage(progressPercentage);
@@ -794,7 +794,7 @@ public class ClientServiceImpl implements ClientService {
             default -> throw new AccessDeniedException("Invalid role");
         }
 
-        // Filter overdue clients
+        // Filtering overdue clients
         List<ClientDto> overdueClients = clientsPage.stream()
                 .filter(client -> client.getLastUpdated() != null)
                 .filter(client -> {
@@ -821,7 +821,6 @@ public class ClientServiceImpl implements ClientService {
                 })
                 .toList();
 
-        // Map to ClientRest
         List<ClientRest> result = overdueClients.stream().map(dto -> {
             ClientRest rest = modelMapper.map(dto, ClientRest.class);
             rest.setClientId(dto.getClientId());
@@ -855,7 +854,7 @@ public class ClientServiceImpl implements ClientService {
             return rest;
         }).toList();
 
-        // Build PaginatedResponse
+        // Building PaginatedResponse
         PaginatedResponse<ClientRest> response = new PaginatedResponse<>();
         response.setData(result);
         response.setCurrentPage(clientsPage.getNumber());
