@@ -929,13 +929,21 @@ public class ClientServiceImpl implements ClientService {
                         }
                     }
 
-                    if (dto.getLastAction() == null) {
-                        if (client.getLastUpdated() != null) {
-                            LocalDateTime ldt = client.getLastUpdated().toInstant()
-                                    .atZone(ZoneId.systemDefault())
-                                    .toLocalDateTime();
-                            dto.setLastAction(String.valueOf(ldt));
-                        }
+//                    if (dto.getLastAction() == null) {
+//                        if (client.getLastUpdated() != null) {
+//                            LocalDateTime ldt = client.getLastUpdated().toInstant()
+//                                    .atZone(ZoneId.systemDefault())
+//                                    .toLocalDateTime();
+//                            dto.setLastAction(String.valueOf(ldt));
+//                        }
+//                    }
+                    if (client.getLastUpdated() != null) {
+                        dto.setLastUpdated(client.getLastUpdated().toInstant()
+                                .atZone(ZoneId.systemDefault()).toLocalDateTime());
+
+                        Instant lastUpdatedInstant = client.getLastUpdated().toInstant();
+                        Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
+                        dto.setLastAction(utils.getExactDuration(duration));
                     }
 
 
