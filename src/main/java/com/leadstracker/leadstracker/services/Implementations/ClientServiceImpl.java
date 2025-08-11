@@ -3,13 +3,17 @@ package com.leadstracker.leadstracker.services.Implementations;
 import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.entities.*;
 import com.leadstracker.leadstracker.repositories.*;
+import com.leadstracker.leadstracker.response.ClientRest;
+import com.leadstracker.leadstracker.response.PaginatedResponse;
 import com.leadstracker.leadstracker.response.Statuses;
+import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -19,10 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -761,57 +762,110 @@ public class ClientServiceImpl implements ClientService {
         return clientsPage.map(client -> modelMapper.map(client, ClientDto.class));
     }
 
-    /**
-     * @param userId
-     * @param page
-     * @param limit
-     * @return
-     */
+
+
     @Override
-    public Page<ClientDto> getOverdueClientsByUser(String userId, int page, int limit, String role) {
-        Pageable pageableRequest = PageRequest.of(page, limit);
+    public PaginatedResponse<ClientRest> getOverdueClientsForUserRole(
+            String loggedInUserId, String role, String targetUserId, Pageable pageable) {
+
         Page<ClientEntity> clientsPage;
 
-        if ("ROLE_ADMIN".equals(role)) {
-            // Admin can get all clients
-            clientsPage = clientRepository.findAll(pageableRequest);
-        } else if ("ROLE_TEAM_LEAD".equals(role)) {
-            clientsPage = clientRepository.findByTeamLead_Id(userId, pageableRequest);
-        } else if ("ROLE_TEAM_MEMBER".equals(role)) {
-            clientsPage = clientRepository.findByCreatedBy_Id(userId, pageableRequest);
-        } else {
-            throw new IllegalArgumentException("Unsupported role for this query");
-        }
-
-        List<ClientDto> overdueClients = new ArrayList<>();
-
-        for (ClientEntity client : clientsPage) {
-            if (client.getLastUpdated() == null) {
-                continue;
+        switch (role) {
+            case "ROLE_ADMIN" -> {
+                clientsPage = clientRepository.findByCreatedBy_UserId(targetUserId, pageable);
             }
-            long daysPending = ChronoUnit.DAYS.between(
-                    client.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-                    LocalDate.now()
-            );
-
-            if (daysPending > 5 &&
-                    EnumSet.of(Statuses.PENDING, Statuses.INTERESTED, Statuses.AWAITING_DOCUMENTATION)
-                            .contains(client.getClientStatus())) {
-
-                ClientDto dto = modelMapper.map(client, ClientDto.class);
-
-                if (client.getCreatedBy() != null) {
-                    dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
-                    if (client.getCreatedBy().getTeamLead() != null) {
-                        dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
+            case "ROLE_TEAM_LEAD" -> {
+                if (loggedInUserId.equals(targetUserId)) {
+                    clientsPage = clientRepository.findByCreatedBy_UserId(loggedInUserId, pageable);
+                } else {
+                    boolean isMember = userRepository.existsByUserIdAndTeamLead_UserId(targetUserId, loggedInUserId);
+                    if (!isMember) {
+                        throw new AccessDeniedException("You can only view your own or your team members' clients");
                     }
+                    clientsPage = clientRepository.findByCreatedBy_UserId(targetUserId, pageable);
                 }
-
-                dto.setClientStatus(client.getClientStatus().name());
-                overdueClients.add(dto);
             }
+            case "ROLE_TEAM_MEMBER" -> {
+                if (!loggedInUserId.equals(targetUserId)) {
+                    throw new AccessDeniedException("You can only view your own clients");
+                }
+                clientsPage = clientRepository.findByCreatedBy_UserId(loggedInUserId, pageable);
+            }
+            default -> throw new AccessDeniedException("Invalid role");
         }
 
-        return new PageImpl<>(overdueClients, pageableRequest, overdueClients.size());
+        // Filter overdue clients
+        List<ClientDto> overdueClients = clientsPage.stream()
+                .filter(client -> client.getLastUpdated() != null)
+                .filter(client -> {
+                    long daysPending = ChronoUnit.DAYS.between(
+                            client.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                            LocalDate.now()
+                    );
+                    return daysPending > 5 &&
+                            EnumSet.of(Statuses.PENDING, Statuses.INTERESTED, Statuses.AWAITING_DOCUMENTATION)
+                                    .contains(client.getClientStatus());
+                })
+                .map(client -> {
+                    ClientDto dto = modelMapper.map(client, ClientDto.class);
+
+                    if (client.getCreatedBy() != null) {
+                        dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
+                        if (client.getCreatedBy().getTeamLead() != null) {
+                            dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
+                        }
+                    }
+
+                    dto.setClientStatus(client.getClientStatus().name());
+                    return dto;
+                })
+                .toList();
+
+        // Map to ClientRest
+        List<ClientRest> result = overdueClients.stream().map(dto -> {
+            ClientRest rest = modelMapper.map(dto, ClientRest.class);
+            rest.setClientId(dto.getClientId());
+            rest.setFirstName(dto.getFirstName());
+            rest.setLastName(dto.getLastName());
+            rest.setPhoneNumber(dto.getPhoneNumber());
+            rest.setClientStatus(dto.getClientStatus());
+
+            if (dto.getCreatedDate() != null) {
+                rest.setCreatedAt(dto.getCreatedDate().toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
+            }
+
+            if (dto.getLastUpdated() != null) {
+                rest.setLastUpdated(dto.getLastUpdated().toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
+
+                Instant lastUpdatedInstant = dto.getLastUpdated().toInstant();
+                Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
+                rest.setLastAction(utils.getExactDuration(duration));
+            }
+
+            if (dto.getCreatedBy() != null) {
+                rest.setCreatedBy(dto.getCreatedBy().getFirstName() + " " + dto.getCreatedBy().getLastName());
+            }
+
+            if (dto.getAssignedTo() != null) {
+                rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
+            }
+
+            return rest;
+        }).toList();
+
+        // Build PaginatedResponse
+        PaginatedResponse<ClientRest> response = new PaginatedResponse<>();
+        response.setData(result);
+        response.setCurrentPage(clientsPage.getNumber());
+        response.setTotalPages(clientsPage.getTotalPages());
+        response.setTotalItems(clientsPage.getTotalElements());
+        response.setPageSize(clientsPage.getSize());
+        response.setHasNext(clientsPage.hasNext());
+        response.setHasPrevious(clientsPage.hasPrevious());
+
+        return response;
     }
+
 }

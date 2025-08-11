@@ -2,7 +2,11 @@ package com.leadstracker.leadstracker.services;
 
 import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.entities.ClientEntity;
+import com.leadstracker.leadstracker.response.ClientRest;
+import com.leadstracker.leadstracker.response.PaginatedResponse;
+import com.leadstracker.leadstracker.security.UserPrincipal;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
@@ -47,5 +51,11 @@ public interface ClientService {
 
     Page<ClientDto> getClients(String email, Integer page, Integer size);
 
-    Page<ClientDto> getOverdueClientsByUser(String userId, int page, int limit, String role);
+//    Page<ClientDto> getOverdueClientsByUser(String userId, int page, int limit);
+
+    PaginatedResponse<ClientRest> getOverdueClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable);
+//
+//    Page<ClientDto> getOverdueClientsUnderUser(String userId, String loggedInUserId, int page, int size);
+
+//    Page<ClientDto> getOverdueClientsUnderUser(UserPrincipal authentication, int page, int size);
 }

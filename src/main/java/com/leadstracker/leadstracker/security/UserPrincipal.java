@@ -97,4 +97,8 @@ public class UserPrincipal implements UserDetails {
 //        return UserDetails.super.isEnabled();
         return this.userEntity.isEmailVerificationStatus();
     }
+
+    public String getId() {
+        return this.userEntity.getUserId();
+    }
 }

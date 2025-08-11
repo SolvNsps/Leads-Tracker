@@ -606,4 +606,22 @@ public class UserController {
     }
 
 
+    //searching a team
+    @GetMapping(value = "/team/search", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> searchTeamByName(@RequestParam String name) throws Exception {
+
+        List<TeamDto> teams = userService.searchTeamByName(name);
+
+        List<TeamRest> teamRestList = teams.stream().map(team -> {
+            TeamRest teamRest = modelMapper.map(team, TeamRest.class);
+            teamRest.setTeamLeadUserId(team.getTeamLeadId());
+            teamRest.setTeamLeadName(team.getTeamLeadName());
+            return teamRest;
+        }).toList();
+
+        return ResponseEntity.ok(Map.of(
+                "teams", teamRestList,
+                "message", "Search completed successfully"));
+    }
+
 }

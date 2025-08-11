@@ -12,12 +12,15 @@ import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.NotificationService;
+import com.leadstracker.leadstracker.services.TeamService;
 import com.leadstracker.leadstracker.services.UserService;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -411,69 +414,115 @@ public class ClientController {
     }
 
     //getting overdue clients under a user
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
-    @GetMapping("/user/{userId}/overdueClients")
-    public ResponseEntity<PaginatedResponse<ClientRest>> getUserOverdueClients(
-            @PathVariable String userId,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "limit", defaultValue = "10") int limit,
-            @AuthenticationPrincipal UserPrincipal authentication) {
+//    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
+//    @GetMapping("/user/{userId}/overdueClients")
+//    public ResponseEntity<PaginatedResponse<ClientRest>> getUserOverdueClients(
+//            @PathVariable String userId,
+//            @RequestParam(value = "page", defaultValue = "0") int page,
+//            @RequestParam(value = "limit", defaultValue = "10") int limit,
+//            @AuthenticationPrincipal UserPrincipal authentication) {
+//
+//        // Extracting the role of the logged-in user
+////        String role = authentication.getAuthorities().stream()
+////                .map(GrantedAuthority::getAuthority)
+////                .filter(r -> r.equals("ROLE_TEAM_LEAD") || r.equals("ROLE_TEAM_MEMBER") || r.equals("ROLE_ADMIN"))
+////                .findFirst()
+////                .orElseThrow(() -> new AccessDeniedException("Unauthorized"));
+//        // Get logged-in user's information
+//        String currentUserId = authentication.getId();
+//        String role = authentication.getAuthorities().stream()
+//                .map(GrantedAuthority::getAuthority)
+//                .filter(r -> r.equals("ROLE_TEAM_LEAD") || r.equals("ROLE_TEAM_MEMBER") || r.equals("ROLE_ADMIN"))
+//                .findFirst()
+//                .orElseThrow(() -> new AccessDeniedException("Unauthorized"));
+//
+//        // Authorization check based on the role
+//        switch (role) {
+//            case "ROLE_TEAM_MEMBER":
+//                // Team members can only see their own overdue clients
+//                if (!currentUserId.equals(userId)) {
+//                    throw new AccessDeniedException("You can only view your own overdue clients");
+//                }
+//                break;
+//            case "ROLE_TEAM_LEAD":
+//                // Team leads can see their own overdue clients or their team members
+//                if (!currentUserId.equals(userId) && !teamService.isTeamMemberOf(currentUserId, userId)) {
+//                    throw new AccessDeniedException("You can only view your own or your team members' overdue clients");
+//                }
+//                break;
+//            case "ROLE_ADMIN":
+//                // Admins can see anyone's overdue clients - no additional check needed
+//                break;
+//            default:
+//                throw new AccessDeniedException("Unauthorized");
+//        }
+//
+//
+//        Page<ClientDto> overdueClients = clientService.getOverdueClientsByUser(userId, page, limit);
+//
+//        List<ClientRest> result = overdueClients.stream().map(dto -> {
+//            ClientRest rest = modelMapper.map(dto, ClientRest.class);
+//
+//            rest.setClientId(dto.getClientId());
+//            rest.setFirstName(dto.getFirstName());
+//            rest.setLastName(dto.getLastName());
+//            rest.setPhoneNumber(dto.getPhoneNumber());
+//            rest.setClientStatus(dto.getClientStatus());
+//
+//            if (dto.getCreatedDate() != null) {
+//                rest.setCreatedAt(dto.getCreatedDate().toInstant()
+//                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
+//            }
+//
+//            if (dto.getLastUpdated() != null) {
+//                rest.setLastUpdated(dto.getLastUpdated().toInstant()
+//                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
+//
+//                Instant lastUpdatedInstant = dto.getLastUpdated().toInstant();
+//                Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
+//
+//                rest.setLastAction(utils.getExactDuration(duration));
+//            }
+//
+//            if (dto.getCreatedBy() != null) {
+//                rest.setCreatedBy(dto.getCreatedBy().getFirstName() + " " + dto.getCreatedBy().getLastName());
+//            }
+//
+//            if (dto.getAssignedTo() != null) {
+//                rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
+//            }
+//
+//            return rest;
+//        }).toList();
+//
+//        PaginatedResponse<ClientRest> res = new PaginatedResponse<>();
+//        res.setData(result);
+//        res.setCurrentPage(overdueClients.getNumber());
+//        res.setTotalPages(overdueClients.getTotalPages());
+//        res.setTotalItems(overdueClients.getTotalElements());
+//        res.setPageSize(overdueClients.getSize());
+//        res.setHasNext(overdueClients.hasNext());
+//        res.setHasPrevious(overdueClients.hasPrevious());
+//
+//        return ResponseEntity.ok(res);
+//    }
 
-        // Extract role of the logged-in user
-        String role = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(r -> r.equals("ROLE_TEAM_LEAD") || r.equals("ROLE_TEAM_MEMBER") || r.equals("ROLE_ADMIN"))
-                .findFirst()
-                .orElseThrow(() -> new AccessDeniedException("Unauthorized"));
+@PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
+@GetMapping("/user/{userId}/overdueClients")
+public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(@PathVariable String userId, @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @AuthenticationPrincipal UserPrincipal authentication) {
 
-        Page<ClientDto> overdueClients = clientService.getOverdueClientsByUser(userId, page, limit, role);
+    Pageable pageable = PageRequest.of(page, size);
+    String loggedInUserId =  authentication.getId();
+    String role = authentication.getAuthorities().iterator().next().getAuthority();
 
-        List<ClientRest> result = overdueClients.stream().map(dto -> {
-            ClientRest rest = modelMapper.map(dto, ClientRest.class);
+    PaginatedResponse<ClientRest> overdueClients = clientService.getOverdueClientsForUserRole(
+            loggedInUserId, role, userId, pageable);
 
-            rest.setClientId(dto.getClientId());
-            rest.setFirstName(dto.getFirstName());
-            rest.setLastName(dto.getLastName());
-            rest.setPhoneNumber(dto.getPhoneNumber());
-            rest.setClientStatus(dto.getClientStatus());
+    return ResponseEntity.ok(overdueClients);
+}
 
-            if (dto.getCreatedDate() != null) {
-                rest.setCreatedAt(dto.getCreatedDate().toInstant()
-                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
-            }
-
-            if (dto.getLastUpdated() != null) {
-                rest.setLastUpdated(dto.getLastUpdated().toInstant()
-                        .atZone(ZoneId.systemDefault()).toLocalDateTime());
-
-                Instant lastUpdatedInstant = dto.getLastUpdated().toInstant();
-                Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
-
-                rest.setLastAction(utils.getExactDuration(duration));
-            }
-
-            if (dto.getCreatedBy() != null) {
-                rest.setCreatedBy(dto.getCreatedBy().getFirstName() + " " + dto.getCreatedBy().getLastName());
-            }
-
-            if (dto.getAssignedTo() != null) {
-                rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
-            }
-
-            return rest;
-        }).toList();
-
-        PaginatedResponse<ClientRest> res = new PaginatedResponse<>();
-        res.setData(result);
-        res.setCurrentPage(overdueClients.getNumber());
-        res.setTotalPages(overdueClients.getTotalPages());
-        res.setTotalItems(overdueClients.getTotalElements());
-        res.setPageSize(overdueClients.getSize());
-        res.setHasNext(overdueClients.hasNext());
-        res.setHasPrevious(overdueClients.hasPrevious());
-
-        return ResponseEntity.ok(res);
-    }
 
 }
 

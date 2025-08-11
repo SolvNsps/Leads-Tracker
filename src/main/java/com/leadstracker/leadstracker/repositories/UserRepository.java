@@ -61,5 +61,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     List<UserEntity> findByEmailContainingIgnoreCase(String keyword);
 
+    boolean existsByUserIdAndTeamLead_UserId(String targetUserId, String loggedInUserId);
+
 //    UserEntity findByUsername(String username);
 }

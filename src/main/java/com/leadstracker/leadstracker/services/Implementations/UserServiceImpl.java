@@ -438,14 +438,6 @@ public class UserServiceImpl implements UserService {
         }
         userEntity.setRole(role);
 
-        //setting team of a user
-//        TeamsEntity team = teamsRepository.findByNameIgnoreCase(userDto.getTeamName());
-//
-//        if (team == null) {
-//            throw new RuntimeException("Team not found");
-//        }
-//
-//        userEntity.setTeam(team);
         userEntity.setCreatedDate(LocalDateTime.now());
 
         // Handling the team member case
@@ -492,9 +484,15 @@ public class UserServiceImpl implements UserService {
                 .map(user -> {
                     UserDto dto = modelMapper.map(user, UserDto.class);
 
-                    UserEntity lead = user.getTeamLead() != null
-                            ? user.getTeamLead()
-                            : (user.getTeam() != null ? user.getTeam().getTeamLead() : null);
+                    UserEntity lead;
+
+                    if (user.getTeamLead() != null) {
+                        lead = user.getTeamLead();
+                    } else if (user.getTeam() != null) {
+                        lead = user.getTeam().getTeamLead();
+                    } else {
+                        lead = null;
+                    }
 
                     if (lead != null) {
                         dto.setTeamLeadName(lead.getFirstName() + " " + lead.getLastName());
@@ -617,7 +615,7 @@ public class UserServiceImpl implements UserService {
 
         // Setting the team of the team lead
         teamLead.setTeam(savedTeam);
-        userRepository.save(teamLead); // Save update to team lead
+        userRepository.save(teamLead);
 
         TeamDto responseDto = modelMapper.map(savedTeam, TeamDto.class);
         responseDto.setTeamLeadId(teamLead.getUserId());
@@ -657,7 +655,7 @@ public class UserServiceImpl implements UserService {
 
         List<UserEntity> users;
 
-        // If keyword contains '@', search full email
+        // If the keyword contains '@', search full email
         if (keyword.contains("@")) {
             users = userRepository.findByEmailContainingIgnoreCase(keyword);
         }
@@ -744,6 +742,29 @@ public class UserServiceImpl implements UserService {
 
         teamEntity.setActive(false);
         teamsRepository.save(teamEntity);
+    }
+
+    /**
+     * @param name
+     * @return
+     */
+    @Override
+    public List<TeamDto> searchTeamByName(String name) {
+        List<TeamsEntity> teamEntities = teamsRepository.findByNameContainingIgnoreCase(name);
+
+        if (teamEntities.isEmpty()) {
+            throw new RuntimeException("No teams found with name containing: " + name);
+        }
+
+        return teamEntities.stream().map(team -> {
+            TeamDto dto = modelMapper.map(team, TeamDto.class);
+            if (team.getTeamLead() != null) {
+                dto.setTeamLeadId(team.getTeamLead().getUserId());
+                dto.setTeamLeadName(team.getTeamLead().getFirstName() + " " +
+                        team.getTeamLead().getLastName());
+            }
+            return dto;
+        }).toList();
     }
 
 }
