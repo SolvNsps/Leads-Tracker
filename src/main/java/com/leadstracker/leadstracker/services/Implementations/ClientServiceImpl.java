@@ -8,6 +8,7 @@ import com.leadstracker.leadstracker.response.PaginatedResponse;
 import com.leadstracker.leadstracker.response.Statuses;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
+import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -772,7 +773,23 @@ public class ClientServiceImpl implements ClientService {
 
         switch (role) {
             case "ROLE_ADMIN" -> {
-                clientsPage = clientRepository.findByCreatedBy_UserId(targetUserId, pageable);
+                UserEntity targetUser = userRepository.findByUserId(targetUserId);
+
+                if (targetUser.getRole().getName().equals("ROLE_TEAM_LEAD")) {
+                    // Get team lead + all their team members' userIds
+                    List<String> userIds = new ArrayList<>();
+                    userIds.add(targetUserId); // team lead
+                    userIds.addAll(userRepository.findByTeamLead_UserId(targetUserId)
+                            .stream()
+                            .map(UserEntity::getUserId)
+                            .toList());
+
+                    clientsPage = clientRepository.findByCreatedBy_UserIdIn(userIds, pageable);
+
+                } else {
+                    // Just that user's clients
+                    clientsPage = clientRepository.findByCreatedBy_UserId(targetUserId, pageable);
+                }
             }
             case "ROLE_TEAM_LEAD" -> {
                 if (loggedInUserId.equals(targetUserId)) {

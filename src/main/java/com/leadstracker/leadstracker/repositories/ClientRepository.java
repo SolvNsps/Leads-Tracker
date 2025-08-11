@@ -66,30 +66,7 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
 
     Page<ClientEntity> findByCreatedBy_Id(String userId, Pageable pageableRequest);
 
-
-    @Query("SELECT c FROM clients c WHERE c.lastUpdated < CURRENT_DATE")
-    Page<ClientEntity> findAllOverdue(Pageable pageable);
-
-    @Query("SELECT c FROM clients c WHERE c.lastUpdated < CURRENT_DATE AND c.createdBy = :createdBy")
-    Page<ClientEntity> findOverdueByCreatedBy(@Param("createdBy") Long createdBy, Pageable pageable);
-
-    @Query("SELECT c FROM clients c " +
-            "WHERE c.lastUpdated < CURRENT_DATE AND " +
-            "(c.createdBy = :leadId OR c.teamLead = :leadId)")
-    Page<ClientEntity> findOverdueForLeadAndMembers(@Param("leadId") Long leadId, Pageable pageable);
-
-//    Page<ClientEntity> findByAssignedTo_Id(Long userIdLong, Pageable pageableRequest);
+    Page<ClientEntity> findByCreatedBy_UserIdIn(List<String> userIds, Pageable pageable);
 
 
-//    List<ClientEntity> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String name, String name1);
-//
-//    List<ClientEntity> findByClientStatus(Statuses status);
-//
-//    List<ClientEntity> findByCreatedDateBetween(LocalDateTime start, LocalDateTime end);
-//
-//    List<ClientEntity> searchClients(String s, String status, Object o, Object o1);
-
-//    List<ClientEntity> findByLastUpdated();
-//
-//    List<ClientEntity> lastUpdated(Date lastUpdated);
 }
