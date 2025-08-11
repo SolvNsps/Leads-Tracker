@@ -911,17 +911,45 @@ public class ClientServiceImpl implements ClientService {
                 .map(client -> {
                     ClientRest dto = modelMapper.map(client, ClientRest.class);
 
+                    // createdBy display name
                     if (client.getCreatedBy() != null) {
-                        dto.setCreatedBy(client.getCreatedBy().getUserId());
-                        dto.setCreatedBy(
-                                client.getCreatedBy().getFirstName() + " " + client.getCreatedBy().getLastName()
-                        );
+                        dto.setCreatedBy(client.getCreatedBy().getFirstName() + " " + client.getCreatedBy().getLastName());
+                    } else {
+                        dto.setCreatedBy("Unknown");
+                    }
+
+                    if (dto.getCreatedAt() == null) {
+                        if (client.getCreatedDate() != null) {
+                            LocalDateTime ldt = client.getCreatedDate().toInstant()
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDateTime();
+                            dto.setCreatedAt(ldt);
+                        } else {
+                            dto.setCreatedAt(LocalDateTime.of(1970, 1, 1, 0, 0)); // default epoch time
+                        }
+                    }
+
+                    if (dto.getLastAction() == null) {
+                        if (client.getLastUpdated() != null) {
+                            LocalDateTime ldt = client.getLastUpdated().toInstant()
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDateTime();
+                            dto.setLastAction(String.valueOf(ldt));
+                        }
+                    }
+
+
+                    if (dto.getAssignedTo() == null) {
+                        if (client.getTeamLead() != null) {
+                            dto.setAssignedTo(client.getTeamLead().getFirstName() + " " + client.getTeamLead().getLastName());
+                        } else {
+                            dto.setAssignedTo("Unassigned");
+                        }
                     }
 
                     return dto;
                 })
                 .toList();
-
 
         // Building paginated response
         PaginatedResponse<ClientRest> response = new PaginatedResponse<>();
