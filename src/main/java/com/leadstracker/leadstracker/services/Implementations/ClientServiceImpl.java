@@ -528,7 +528,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public List<ClientDto> getClientsByTeamMember(String userId, int page, int limit) {
         if (page > 0) page--;
-        Pageable pageable = PageRequest.of(page, limit);
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
 
         UserEntity member = userRepository.findByUserId(userId);
         List<ClientEntity> clients = clientRepository.findByCreatedBy(member, pageable);

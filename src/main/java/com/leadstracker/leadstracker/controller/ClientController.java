@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -316,7 +317,7 @@ public class ClientController {
         String role = authentication.getAuthorities().iterator().next().getAuthority();
 
         PaginatedResponse<ClientRest> clients = clientService.getMyClientsForUserRole(
-                loggedInUserId, role, userId, PageRequest.of(page, size));
+                loggedInUserId, role, userId, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate")));
 
         return ResponseEntity.ok(clients);
     }
