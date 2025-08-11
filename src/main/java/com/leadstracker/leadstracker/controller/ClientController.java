@@ -305,21 +305,22 @@ public class ClientController {
 
     //getting all clients under a user
     @GetMapping("/all-clients/{userId}")
-    public ResponseEntity<?> getClients(
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size,
-           @AuthenticationPrincipal UserPrincipal authentication) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
+    public ResponseEntity<PaginatedResponse<ClientRest>> getClients(
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal UserPrincipal authentication) {
 
-        String email = authentication.getUsername();
+        String loggedInUserId = authentication.getId();
+        String role = authentication.getAuthorities().iterator().next().getAuthority();
 
-        if (page != null && size != null) {
-            Page<ClientDto> clients = clientService.getClients(email, page, size);
-            return ResponseEntity.ok(clients);
-        } else {
-            List<ClientDto> clients = clientService.getMyClients(email);
-            return ResponseEntity.ok(clients);
-        }
+        PaginatedResponse<ClientRest> clients = clientService.getMyClientsForUserRole(
+                loggedInUserId, role, userId, PageRequest.of(page, size));
+
+        return ResponseEntity.ok(clients);
     }
+
 
 
     @GetMapping("/team-member/{memberId}/clients")

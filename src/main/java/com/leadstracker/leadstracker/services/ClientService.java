@@ -6,6 +6,7 @@ import com.leadstracker.leadstracker.response.ClientRest;
 import com.leadstracker.leadstracker.response.PaginatedResponse;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -47,10 +48,9 @@ public interface ClientService {
 
     List<ClientSearchDto> searchClients(String name, String status, LocalDate date);
 
-    List<ClientDto> getMyClients(String email);
-
     Page<ClientDto> getClients(String email, Integer page, Integer size);
 
     PaginatedResponse<ClientRest> getOverdueClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable);
 
+    PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable);
 }

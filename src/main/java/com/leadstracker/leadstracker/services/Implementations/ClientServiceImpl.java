@@ -698,38 +698,6 @@ public class ClientServiceImpl implements ClientService {
         }).collect(Collectors.toList());
     }
 
-    /**
-     * @param email
-     * @return
-     */
-    @Override
-    public List<ClientDto> getMyClients(String email) {
-        UserEntity user = userRepository.findByEmail(email);
-
-        List<ClientEntity> clients;
-
-        if (user.getRole().getName().equals("ROLE_ADMIN")) {
-            clients = clientRepository.findAll();
-        }
-        else if (user.getRole().getName().equals("ROLE_TEAM_LEAD")) {
-            // Own clients + team members' clients
-            List<String> userIds = new ArrayList<>();
-            userIds.add(user.getUserId());
-
-            List<UserEntity> members = userRepository.findByTeamLead_UserId(user.getUserId());
-            members.forEach(m -> userIds.add(m.getUserId()));
-
-            clients = clientRepository.findByCreatedByIdIn(userIds);
-        }
-        else {
-            // TEAM_MEMBER → only own clients
-            clients = clientRepository.findByCreatedBy_UserId(user.getUserId());
-        }
-
-        return clients.stream()
-                .map(client -> modelMapper.map(client, ClientDto.class))
-                .collect(Collectors.toList());
-    }
 
     /**
      * @param email
@@ -874,6 +842,90 @@ public class ClientServiceImpl implements ClientService {
         // Building PaginatedResponse
         PaginatedResponse<ClientRest> response = new PaginatedResponse<>();
         response.setData(result);
+        response.setCurrentPage(clientsPage.getNumber());
+        response.setTotalPages(clientsPage.getTotalPages());
+        response.setTotalItems(clientsPage.getTotalElements());
+        response.setPageSize(clientsPage.getSize());
+        response.setHasNext(clientsPage.hasNext());
+        response.setHasPrevious(clientsPage.hasPrevious());
+
+        return response;
+    }
+
+    /**
+     * @param loggedInUserId
+     * @param role
+     * @param userId
+     * @param pageable
+     * @return
+     */
+    @Override
+    public PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable) {
+        Page<ClientEntity> clientsPage;
+
+        switch (role) {
+            case "ROLE_ADMIN" -> {
+                // Admin can get clients of any user (lead/member)
+                UserEntity targetUser = userRepository.findByUserId(userId);
+
+                if (targetUser.getRole().getName().equals("ROLE_TEAM_LEAD")) {
+                    // Lead + members
+                    List<String> userIds = new ArrayList<>();
+                    userIds.add(userId);
+                    userIds.addAll(userRepository.findByTeamLead_UserId(userId)
+                            .stream()
+                            .map(UserEntity::getUserId)
+                            .toList());
+                    clientsPage = clientRepository.findByCreatedBy_UserIdIn(userIds, pageable);
+                } else {
+                    // Just that user's clients
+                    clientsPage = clientRepository.findByCreatedBy_UserId(userId, pageable);
+                }
+            }
+            case "ROLE_TEAM_LEAD" -> {
+                if (loggedInUserId.equals(userId)) {
+                    // Lead fetching own + members
+                    List<String> userIds = new ArrayList<>();
+                    userIds.add(loggedInUserId);
+                    userIds.addAll(userRepository.findByTeamLead_UserId(loggedInUserId)
+                            .stream()
+                            .map(UserEntity::getUserId)
+                            .toList());
+                    clientsPage = clientRepository.findByCreatedBy_UserIdIn(userIds, pageable);
+                } else {
+                    // Lead fetching a member's clients
+                    boolean isMember = userRepository.existsByUserIdAndTeamLead_UserId(userId, loggedInUserId);
+                    if (!isMember) throw new AccessDeniedException("You can only view your own or your team members' clients");
+                    clientsPage = clientRepository.findByCreatedBy_UserId(userId, pageable);
+                }
+            }
+            case "ROLE_TEAM_MEMBER" -> {
+                if (!loggedInUserId.equals(userId))
+                    throw new AccessDeniedException("You can only view your own clients");
+                clientsPage = clientRepository.findByCreatedBy_UserId(loggedInUserId, pageable);
+            }
+            default -> throw new AccessDeniedException("Invalid role");
+        }
+
+        List<ClientRest> dtoList = clientsPage.stream()
+                .map(client -> {
+                    ClientRest dto = modelMapper.map(client, ClientRest.class);
+
+                    if (client.getCreatedBy() != null) {
+                        dto.setCreatedBy(client.getCreatedBy().getUserId());
+                        dto.setCreatedBy(
+                                client.getCreatedBy().getFirstName() + " " + client.getCreatedBy().getLastName()
+                        );
+                    }
+
+                    return dto;
+                })
+                .toList();
+
+
+        // Building paginated response
+        PaginatedResponse<ClientRest> response = new PaginatedResponse<>();
+        response.setData(dtoList);
         response.setCurrentPage(clientsPage.getNumber());
         response.setTotalPages(clientsPage.getTotalPages());
         response.setTotalItems(clientsPage.getTotalElements());

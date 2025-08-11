@@ -58,15 +58,16 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
     List<ClientEntity> findByCreatedBy_UserId(String userId);
 
     Page<ClientEntity> findByCreatedBy_UserId(String userId, Pageable pageable);
-    Page<ClientEntity> findByCreatedByIdIn(List<String> userIds, Pageable pageable);
 
-//    Page<ClientEntity> findByAssignedToUserId(String userId, Pageable pageableRequest);
+    Page<ClientEntity> findByCreatedByIdIn(List<String> userIds, Pageable pageable);
 
     Page<ClientEntity> findByTeamLead_Id(String userId, Pageable pageableRequest);
 
     Page<ClientEntity> findByCreatedBy_Id(String userId, Pageable pageableRequest);
 
     Page<ClientEntity> findByCreatedBy_UserIdIn(List<String> userIds, Pageable pageable);
+
+
 
 
 }
