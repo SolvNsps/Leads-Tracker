@@ -17,6 +17,7 @@ import com.leadstracker.leadstracker.response.UserTargetResponseDto;
 import com.leadstracker.leadstracker.services.NotificationService;
 import com.leadstracker.leadstracker.services.TeamTargetService;
 import com.leadstracker.leadstracker.services.UserService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,11 +25,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,6 +52,9 @@ public class TeamTargetServiceImpl implements TeamTargetService {
 
     @Autowired
     UserTargetRepository userTargetRepository;
+
+    @Autowired
+    ModelMapper mapper;
 
 
     @Override
@@ -284,5 +285,48 @@ public class TeamTargetServiceImpl implements TeamTargetService {
 
         return response;
     }
+
+    /**
+     * @param email
+     * @return
+     */
+    @Override
+    public TeamTargetResponseDto getMyTeamTarget(String email) {
+        // Fetch the team lead
+        UserEntity teamLead = userRepository.findByEmail(email);
+
+        // Ensure the user is indeed a team lead
+        if (!teamLead.getRole().getName().equals("ROLE_TEAM_LEAD")) {
+            throw new RuntimeException("Access denied: Not a team lead");
+        }
+
+        // Fetch the team assigned to this lead
+        TeamsEntity team = teamLead.getTeam();
+        if (team == null) {
+            throw new RuntimeException("No team assigned to this lead");
+        }
+
+        // Fetch the target for the team
+        Optional<TeamTargetEntity> targetOpt = teamTargetRepository.findByTeam(team);
+        if (targetOpt.isEmpty()) {
+            throw new RuntimeException("No target set for this team");
+        }
+
+        TeamTargetEntity target = targetOpt.get();
+
+        // Populate DTO
+        TeamTargetResponseDto dto = new TeamTargetResponseDto();
+        dto.setId(target.getId());
+        dto.setTeamName(team.getName());
+        dto.setTeamLeadFullName(teamLead.getFirstName() + " " + teamLead.getLastName());
+        dto.setTargetValue(target.getTargetValue());
+        dto.setDueDate(target.getDueDate());
+
+        return dto;
+
+        // Map entity to DTO
+//        return mapper.map(target, TeamTargetResponseDto.class);
+    }
+
 
 }

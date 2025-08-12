@@ -426,8 +426,24 @@ public class UserController {
         return ResponseEntity.ok(targets);
     }
 
-    //Team lead viewing profile
 //    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+//    @GetMapping("/team-lead/team-target")
+//    public ResponseEntity<TeamTargetResponseDto> getTeamLeadTargets(@AuthenticationPrincipal UserPrincipal principal) {
+//        TeamTargetResponseDto myTeamTarget = teamTargetService.viewMyTeamTarget();
+//        return ResponseEntity.ok(myTeamTarget);
+//    }
+
+    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    @GetMapping("/team-lead/team-target")
+    public ResponseEntity<TeamTargetResponseDto> getMyTeamTarget(@AuthenticationPrincipal UserPrincipal principal) {
+        String email = principal.getUsername();
+        TeamTargetResponseDto target = teamTargetService.getMyTeamTarget(email);
+
+        return ResponseEntity.ok(target);
+    }
+
+
+
 
     // Viewing the profile of all users (Admin, Team lead, Team member)
     @GetMapping("/profile")

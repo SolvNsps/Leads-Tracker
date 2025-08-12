@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.repositories;
 
 import com.leadstracker.leadstracker.entities.TeamTargetEntity;
+import com.leadstracker.leadstracker.entities.TeamsEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -18,5 +19,8 @@ public interface TeamTargetRepository extends JpaRepository<TeamTargetEntity, Lo
     Optional<TeamTargetEntity> findByTeamId(Long teamId);
 
     Optional<TeamTargetEntity> findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(Long teamId, LocalDate currentDate);
+
+//    Optional<Object> findByTeam(TeamsEntity team);
+Optional<TeamTargetEntity> findByTeam(TeamsEntity team);
 
 }
