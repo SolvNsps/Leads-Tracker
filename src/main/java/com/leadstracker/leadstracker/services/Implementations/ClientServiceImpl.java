@@ -583,7 +583,7 @@ public class ClientServiceImpl implements ClientService {
 
         Map<String, Long> overallStatusCounts = new HashMap<>();
         for (ClientStatusCountDto stat : overallStats) {
-            overallStatusCounts.put(stat.getStatus().getDisplayName(), stat.getCount());
+            overallStatusCounts.put(stat.getStatus().toString(), stat.getCount());
         }
 
         // Calculating date range based on duration
@@ -603,7 +603,7 @@ public class ClientServiceImpl implements ClientService {
 
             Map<String, Long> teamStatusCounts = teamClients.stream()
                     .collect(Collectors.groupingBy(
-                            c -> c.getClientStatus().getDisplayName(),
+                            c -> c.getClientStatus().toString(),
                             Collectors.counting()));
 
             teamStatsList.add(new ClientStatsDto(team.getName(), teamClients.size(), teamStatusCounts));

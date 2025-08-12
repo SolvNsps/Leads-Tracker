@@ -419,7 +419,7 @@ public class UserController {
     }
 
     //Admin viewing the targets set
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/team-targets")
     public ResponseEntity<List<TeamTargetResponseDto>> getAllTargets() {
         List<TeamTargetResponseDto> targets = teamTargetService.getAllTargets();
