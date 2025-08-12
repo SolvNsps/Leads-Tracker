@@ -583,7 +583,7 @@ public class ClientServiceImpl implements ClientService {
 
         Map<String, Long> overallStatusCounts = new HashMap<>();
         for (ClientStatusCountDto stat : overallStats) {
-            overallStatusCounts.put(stat.getStatus().toString(), stat.getCount());
+            overallStatusCounts.put(stat.getStatus().getDisplayName(), stat.getCount());
         }
 
         // Calculating date range based on duration
