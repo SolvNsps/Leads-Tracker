@@ -10,6 +10,8 @@ public class TeamTargetOverviewDto {
     private LocalDate dueDate;
     private LocalDate dateAssigned;
     private int progressPercentage;
+//    private int progressRemaining;
+//    private int progressValue;
 
     // Team Target Distribution
     private List<UserTargetResponseDto> memberDistributions;

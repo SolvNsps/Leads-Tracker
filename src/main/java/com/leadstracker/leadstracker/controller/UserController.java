@@ -533,11 +533,12 @@ public class UserController {
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
     @PostMapping("/targets/assign")
     public ResponseEntity<?> assignTargetToTeamMembers(@RequestBody TargetDistributionRequest requestDto,
-                                                            @AuthenticationPrincipal UserDetails userDetails) {
-        String teamLeadEmail =  userDetails.getEmail();
+                                                            @AuthenticationPrincipal UserPrincipal userDetails) {
+        String teamLeadEmail =  userDetails.getUsername();
 
         Map<Long, Integer> memberTargetMap = requestDto.getMemberTargets().stream()
-                .collect(Collectors.toMap(
+                .collect
+                        (Collectors.toMap(
                         MemberTargetDto::getMemberId,
                         MemberTargetDto::getAssignedTarget
                 ));

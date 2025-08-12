@@ -123,18 +123,18 @@ public class TeamTargetServiceImpl implements TeamTargetService {
 
     @Override
     public TeamTargetOverviewDto getTeamTargetOverview(String teamLeadEmail) {
-        // 1. Get the Team Lead
+        //  Getting the Team Lead
         UserEntity teamLead = userRepository.findByEmail(teamLeadEmail);
         if (teamLead == null) {
             throw new RuntimeException("Team Lead not found");
         }
-        // 2. Check if they have a team
+        // Checking if they have a team
         TeamsEntity team = teamLead.getTeam();
         if (team == null) {
             throw new RuntimeException("You have not been assigned to any team.");
         }
 
-        // 3. Get the team target
+        // Getting the team target
         TeamTargetEntity teamTarget = teamTargetRepository.findByTeamId(team.getId())
                 .orElseThrow(() -> new RuntimeException("No target has been assigned to your team yet."));
 
@@ -260,24 +260,27 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             throw new RuntimeException("Team Member not found.");
         }
 
-        // Get the latest assigned target (you can adjust this if multiple are allowed)
+        // Getting the latest assigned target
         UserTargetEntity userTarget = userTargetRepository.findTopByUserOrderByAssignedDateDesc(teamMember);
         if (userTarget == null) {
             throw new RuntimeException("No target has been assigned to you yet.");
         }
 
-        //Calculate the progress made (sum of client values)
+        //Calculating the progress made
         int assignedValue = userTarget.getTargetValue();
         int currentProgress = userTarget.getProgress(); // assumes this is updated periodically
         int progressRemaining = Math.max(assignedValue - currentProgress, 0);
+        int progressPercentage = (int) (double) ((currentProgress / assignedValue) * 100);
 
-
-        //Build response
+        //Building response
         MyTargetResponse response = new MyTargetResponse();
-        response.setTargetValue(userTarget.getTargetValue());
+        response.setTotalTargetValue(userTarget.getTargetValue());
         response.setDueDate(userTarget.getDueDate());
         response.setAssignedDate(userTarget.getAssignedDate());
         response.setProgressRemaining(progressRemaining);
+        response.setProgressPercentage(progressPercentage);
+        response.setProgressValue(currentProgress);
+
 
         return response;
     }

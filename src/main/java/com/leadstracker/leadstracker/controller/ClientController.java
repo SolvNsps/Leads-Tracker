@@ -7,6 +7,7 @@ import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
 import com.leadstracker.leadstracker.response.PaginatedResponse;
+import com.leadstracker.leadstracker.response.Statuses;
 import com.leadstracker.leadstracker.response.UserRest;
 import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
@@ -407,8 +408,7 @@ public class ClientController {
 
     //search for clients
     @GetMapping("/search-client")
-    public ResponseEntity<List<ClientSearchDto>> searchClients(
-            @RequestParam(required = false) String name,
+    public ResponseEntity<List<ClientSearchDto>> searchClients(@RequestParam(required = false) String name,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
@@ -423,7 +423,7 @@ public class ClientController {
         @RequestParam(defaultValue = "10") int size,
         @AuthenticationPrincipal UserPrincipal authentication) {
 
-    Pageable pageable = PageRequest.of(page, size);
+    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
     String loggedInUserId =  authentication.getId();
     String role = authentication.getAuthorities().iterator().next().getAuthority();
 

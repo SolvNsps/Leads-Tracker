@@ -85,15 +85,10 @@ public class ClientServiceImpl implements ClientService {
         clientEntity.setLastName(clientDto.getLastName());
 //        clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
         clientEntity.setGpsLocation(clientDto.getGpsLocation());
-
-        // Insert the debug + enum mapping here:
-        System.out.println("Received clientStatus: " + clientDto.getClientStatus());
         Statuses statusEnum = null;
         try {
             statusEnum = Statuses.fromString(clientDto.getClientStatus());
-            System.out.println("Mapped clientStatus to enum: " + statusEnum);
         } catch (Exception e) {
-            System.err.println("Error mapping clientStatus: " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid client status: " + clientDto.getClientStatus());
         }
         clientEntity.setClientStatus(statusEnum);
@@ -113,10 +108,9 @@ public class ClientServiceImpl implements ClientService {
 
         ClientEntity saved = clientRepository.save(clientEntity);
 
-        // Map back to DTO
+        // Mapping back to DTO
         ClientDto result = modelMapper.map(saved, ClientDto.class);
 
-//  Add team lead manually
         UserDto assignedToDto = modelMapper.map(saved.getTeamLead(), UserDto.class);
         result.setAssignedTo(assignedToDto);
 
@@ -624,7 +618,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Page<ClientDto> getOverdueClients(int page, int limit) {
 
-        Pageable pageableRequest = PageRequest.of(page, limit);
+        Pageable pageableRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
         Page<ClientEntity> allClients = clientRepository.findAll(pageableRequest);
 
         List<ClientDto> overdueClients = new ArrayList<>();
@@ -684,16 +678,16 @@ public class ClientServiceImpl implements ClientService {
                 endDateTime
         );
 
-        return clients.stream().map(c -> {
+        return clients.stream().map(client -> {
             ClientSearchDto dto = new ClientSearchDto();
-            dto.setClientId(c.getClientId());
-            dto.setFirstName(c.getFirstName());
-            dto.setLastName(c.getLastName());
-            dto.setPhoneNumber(c.getPhoneNumber());
-            dto.setCreatedByName(c.getCreatedBy().getFirstName() + " " + c.getCreatedBy().getLastName());
-            dto.setCreatedByEmail(c.getCreatedBy().getEmail());
-            dto.setCreatedDate(c.getCreatedDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-            dto.setStatus(c.getClientStatus() != null ? c.getClientStatus().name() : null);
+            dto.setClientId(client.getClientId());
+            dto.setFirstName(client.getFirstName());
+            dto.setLastName(client.getLastName());
+            dto.setPhoneNumber(client.getPhoneNumber());
+            dto.setCreatedByName(client.getCreatedBy().getFirstName() + " " + client.getCreatedBy().getLastName());
+            dto.setCreatedByEmail(client.getCreatedBy().getEmail());
+            dto.setCreatedDate(client.getCreatedDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+            dto.setStatus(client.getClientStatus() != null ? client.getClientStatus().name() : null);
             return dto;
         }).collect(Collectors.toList());
     }
