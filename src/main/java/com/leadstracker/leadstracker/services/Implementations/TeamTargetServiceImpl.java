@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import java.util.stream.Collectors;
@@ -147,7 +146,7 @@ public class TeamTargetServiceImpl implements TeamTargetService {
     }
 
     @Override
-    public void assignTargetToTeamMembers(Long teamTargetId, Map<Long, Integer> memberTargets, String teamLeadEmail) {
+    public void assignTargetToTeamMembers(Long teamTargetId, Map<String, Integer> memberTargets, String teamLeadEmail) {
         // Validation
         UserEntity teamLead = userRepository.findByEmail(teamLeadEmail);
         if (teamLead == null) {
@@ -173,12 +172,11 @@ public class TeamTargetServiceImpl implements TeamTargetService {
         }
 
         // Save assignments
-        for (Map.Entry<Long, Integer> entry : memberTargets.entrySet()) {
-            Long memberId = entry.getKey();
+        for (Map.Entry<String, Integer> entry : memberTargets.entrySet()) {
+            String memberId = entry.getKey();
             Integer value = entry.getValue();
 
-            UserEntity member = userRepository.findById(memberId)
-                    .orElseThrow(() -> new RuntimeException("Team Member not found"));
+            UserEntity member = userRepository.findByUserId(memberId);
 
             if (!Objects.equals(member.getTeamLead().getId(), teamLead.getId())) {
                 throw new RuntimeException("User is not your team member.");

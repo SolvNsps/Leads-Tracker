@@ -426,13 +426,8 @@ public class UserController {
         return ResponseEntity.ok(targets);
     }
 
-//    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
-//    @GetMapping("/team-lead/team-target")
-//    public ResponseEntity<TeamTargetResponseDto> getTeamLeadTargets(@AuthenticationPrincipal UserPrincipal principal) {
-//        TeamTargetResponseDto myTeamTarget = teamTargetService.viewMyTeamTarget();
-//        return ResponseEntity.ok(myTeamTarget);
-//    }
 
+    //team lead views team's target set by Admin
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
     @GetMapping("/team-lead/team-target")
     public ResponseEntity<TeamTargetResponseDto> getMyTeamTarget(@AuthenticationPrincipal UserPrincipal principal) {
@@ -474,13 +469,6 @@ public class UserController {
         ));
     }
 
-    //Team member viewing profile
-//    @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
-//    @GetMapping("/member/profile")
-//    public ResponseEntity<UserProfileResponseDto> getTeamMemberProfile(@AuthenticationPrincipal UserPrincipal principal) {
-//        UserProfileResponseDto profile = userProfileService.getProfile(principal.getUsername());
-//        return ResponseEntity.ok(profile);
-//    }
 
     //Team member editing profile
     @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
@@ -503,13 +491,7 @@ public class UserController {
         ));
     }
 
-    //Admin viewing profile
-//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-//    @GetMapping("/admin/profile")
-//    public ResponseEntity<UserProfileResponseDto> getAdminProfile(@AuthenticationPrincipal UserPrincipal principal) {
-//        UserProfileResponseDto profile = userProfileService.getProfile(principal.getUsername());
-//        return ResponseEntity.ok(profile);
-//    }
+
 
     //Admin editing profile
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -518,6 +500,8 @@ public class UserController {
         UserProfileResponseDto profile = userProfileService.getProfile(principal.getName());
         return ResponseEntity.ok(profile);
     }
+
+
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/changeAdminNumber/profile")
     public ResponseEntity<UserProfileResponseDto> updateAdminPhone(@RequestBody @Valid UpdateUserProfileRequestDto request,
@@ -538,6 +522,7 @@ public class UserController {
         ));
     }
 
+    //team lead views targets set for members
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
     @GetMapping("/team-lead/view-target")
     public ResponseEntity<TeamTargetOverviewDto> viewTeamTargetOverview(@AuthenticationPrincipal UserPrincipal authentication) {
@@ -548,11 +533,11 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
     @PostMapping("/targets/assign")
-    public ResponseEntity<?> assignTargetToTeamMembers(@RequestBody TargetDistributionRequest requestDto,
+    public ResponseEntity<DistributionDto> assignTargetToTeamMembers(@RequestBody TargetDistributionRequest requestDto,
                                                             @AuthenticationPrincipal UserPrincipal userDetails) {
         String teamLeadEmail =  userDetails.getUsername();
 
-        Map<Long, Integer> memberTargetMap = requestDto.getMemberTargets().stream()
+        Map<String, Integer> memberTargetMap = requestDto.getMemberTargets().stream()
                 .collect
                         (Collectors.toMap(
                         MemberTargetDto::getMemberId,
@@ -560,9 +545,8 @@ public class UserController {
                 ));
         teamTargetService.assignTargetToTeamMembers(requestDto.getTeamTargetId(), memberTargetMap, teamLeadEmail);
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Target successfully assigned to team members."
-        ));
+        DistributionDto allMembers = new DistributionDto(requestDto.getTeamTargetId(), memberTargetMap);
+        return ResponseEntity.ok(allMembers);
 
     }
 

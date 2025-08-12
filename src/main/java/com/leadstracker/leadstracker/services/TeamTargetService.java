@@ -17,7 +17,7 @@ public interface TeamTargetService {
 
     TeamTargetOverviewDto getTeamTargetOverview(String teamLeadEmail);
 
-    void assignTargetToTeamMembers(Long teamTargetId, Map<Long, Integer> memberTargets, String teamLeadEmail);
+    void assignTargetToTeamMembers(Long teamTargetId, Map<String, Integer> memberTargets, String teamLeadEmail);
 
     List<UserTargetResponseDto> getTeamMemberTargets(Long teamTargetId, String teamLeadEmail);
 
