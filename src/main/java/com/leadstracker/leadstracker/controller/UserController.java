@@ -624,5 +624,4 @@ public class UserController {
                 "teams", teamRestList,
                 "message", "Search completed successfully"));
     }
-
 }
