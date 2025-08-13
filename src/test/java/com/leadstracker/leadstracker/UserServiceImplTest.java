@@ -2,6 +2,7 @@ package com.leadstracker.leadstracker;
 
 
 import com.leadstracker.leadstracker.DTO.AmazonSES;
+import com.leadstracker.leadstracker.DTO.TeamDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.RoleEntity;
@@ -26,14 +27,14 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -436,5 +437,221 @@ class UserServiceImplTest {
 
         verify(userRepository).findByUserId(userId);
         verify(userRepository).delete(mockUser);
+    }
+
+    @Test
+    void testSearchTeamByName_Found() {
+        // Arrange
+        String searchName = "Alpha";
+
+        TeamsEntity teamEntity = new TeamsEntity();
+        teamEntity.setName("Alpha Team");
+
+        UserEntity teamLead = new UserEntity();
+        teamLead.setUserId("lead123");
+        teamLead.setFirstName("John");
+        teamLead.setLastName("Doe");
+        teamEntity.setTeamLead(teamLead);
+
+        List<TeamsEntity> teams = List.of(teamEntity);
+
+        when(teamsRepository.findByNameContainingIgnoreCase(searchName))
+                .thenReturn(teams);
+
+        TeamDto mappedDto = new TeamDto();
+        mappedDto.setName("Alpha Team");
+
+        when(modelMapper.map(teamEntity, TeamDto.class))
+                .thenReturn(mappedDto);
+
+        // Act
+        List<TeamDto> result = userService.searchTeamByName(searchName);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        TeamDto dto = result.get(0);
+        assertEquals("Alpha Team", dto.getName());
+        assertEquals("lead123", dto.getTeamLeadId());
+        assertEquals("John Doe", dto.getTeamLeadName());
+
+        verify(teamsRepository).findByNameContainingIgnoreCase(searchName);
+        verify(modelMapper).map(teamEntity, TeamDto.class);
+    }
+
+    @Test
+    void testSearchTeamByName_NotFound_ThrowsException() {
+        // Arrange
+        String searchName = "NonExisting";
+        when(teamsRepository.findByNameContainingIgnoreCase(searchName))
+                .thenReturn(Collections.emptyList());
+
+        // Act & Assert
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> userService.searchTeamByName(searchName));
+
+        assertEquals("No teams found with name containing: " + searchName, ex.getMessage());
+        verify(teamsRepository).findByNameContainingIgnoreCase(searchName);
+        verifyNoInteractions(modelMapper);
+    }
+
+    @Test
+    void testDeactivateTeam_Success() {
+        // Arrange
+        String teamId = "1";
+        TeamsEntity teamEntity = new TeamsEntity();
+        teamEntity.setId(1L);
+        teamEntity.setActive(true);
+
+        when(teamsRepository.findById(1L)).thenReturn(Optional.of(teamEntity));
+
+        // Act
+        userService.deactivateTeam(teamId);
+
+        // Assert
+        assertFalse(teamEntity.isActive(), "Team should be deactivated");
+        verify(teamsRepository).findById(1L);
+        verify(teamsRepository).save(teamEntity);
+    }
+
+    @Test
+    void testDeactivateTeam_TeamNotFound_ThrowsException() {
+        // Arrange
+        String teamId = "999";
+        when(teamsRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> userService.deactivateTeam(teamId));
+
+        assertEquals("Team not found", ex.getMessage());
+        verify(teamsRepository).findById(999L);
+        verify(teamsRepository, never()).save(any());
+    }
+
+    @Test
+    void testUpdateTeam_Success_UpdateNameAndLead() {
+        // Arrange
+        String teamId = "1";
+        String teamLeadId = "lead123";
+
+        TeamsEntity existingTeam = new TeamsEntity();
+        existingTeam.setId(1L);
+        existingTeam.setName("Old Name");
+        existingTeam.setActive(true);
+
+        UserEntity teamLead = new UserEntity();
+        teamLead.setUserId(teamLeadId);
+        teamLead.setFirstName("John");
+        teamLead.setLastName("Doe");
+
+        TeamDto updateDto = new TeamDto();
+        updateDto.setName("New Team Name");
+        updateDto.setTeamLeadId(teamLeadId);
+
+        when(teamsRepository.findById(1L)).thenReturn(Optional.of(existingTeam));
+        when(userRepository.findByUserId(teamLeadId)).thenReturn(teamLead);
+        when(teamsRepository.save(any(TeamsEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(modelMapper.map(any(TeamsEntity.class), eq(TeamDto.class))).thenReturn(new TeamDto());
+
+        // Act
+        TeamDto result = userService.updateTeam(teamId, updateDto);
+
+        // Assert
+        verify(teamsRepository).findById(1L);
+        verify(userRepository).findByUserId(teamLeadId);
+        verify(teamsRepository).save(existingTeam);
+        assertEquals(teamLead, existingTeam.getTeamLead());
+        assertEquals("New Team Name", existingTeam.getName());
+        assertNotNull(result);
+    }
+
+    @Test
+    void testUpdateTeam_Success_UpdateNameOnly() {
+        // Arrange
+        String teamId = "2";
+
+        TeamsEntity existingTeam = new TeamsEntity();
+        existingTeam.setId(2L);
+        existingTeam.setName("Old Name");
+
+        TeamDto updateDto = new TeamDto();
+        updateDto.setName("Updated Name");
+
+        when(teamsRepository.findById(2L)).thenReturn(Optional.of(existingTeam));
+        when(teamsRepository.save(any(TeamsEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(modelMapper.map(any(TeamsEntity.class), eq(TeamDto.class))).thenReturn(new TeamDto());
+
+        // Act
+        TeamDto result = userService.updateTeam(teamId, updateDto);
+
+        // Assert
+        verify(teamsRepository).findById(2L);
+        verify(userRepository, never()).findByUserId(any());
+        verify(teamsRepository).save(existingTeam);
+        assertEquals("Updated Name", existingTeam.getName());
+        assertNotNull(result);
+    }
+
+    @Test
+    void testUpdateTeam_TeamNotFound_ThrowsException() {
+        // Arrange
+        String teamId = "999";
+        when(teamsRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> userService.updateTeam(teamId, new TeamDto()));
+
+        assertEquals("Team not found", ex.getMessage());
+        verify(teamsRepository).findById(999L);
+        verify(teamsRepository, never()).save(any());
+    }
+
+    @Test
+    void testGetTeamById_Success_WithTeamLead() {
+        // Arrange
+        String teamId = "1";
+
+        UserEntity teamLead = new UserEntity();
+        teamLead.setUserId("lead123");
+        teamLead.setFirstName("John");
+        teamLead.setLastName("Doe");
+
+        TeamsEntity teamEntity = new TeamsEntity();
+        teamEntity.setId(1L);
+        teamEntity.setName("Marketing");
+        teamEntity.setTeamLead(teamLead);
+
+        TeamDto mappedDto = new TeamDto();
+        mappedDto.setName("Marketing");
+
+        when(teamsRepository.findById(1L)).thenReturn(Optional.of(teamEntity));
+        when(modelMapper.map(teamEntity, TeamDto.class)).thenReturn(mappedDto);
+
+        // Act
+        TeamDto result = userService.getTeamById(teamId);
+
+        // Assert
+        verify(teamsRepository).findById(1L);
+        verify(modelMapper).map(teamEntity, TeamDto.class);
+        assertEquals("lead123", result.getTeamLeadId());
+        assertEquals("John Doe", result.getTeamLeadName());
+        assertEquals("Marketing", result.getName());
+    }
+
+    @Test
+    void testGetTeamById_TeamNotFound_ThrowsException() {
+        // Arrange
+        String teamId = "999";
+        when(teamsRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> userService.getTeamById(teamId));
+
+        assertEquals("Team not found", ex.getMessage());
+        verify(teamsRepository).findById(999L);
+        verifyNoInteractions(modelMapper);
     }
 }

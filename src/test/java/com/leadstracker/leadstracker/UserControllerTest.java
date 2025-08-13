@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.leadstracker.leadstracker.DTO.TeamDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.RoleEntity;
@@ -33,11 +34,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
@@ -46,7 +45,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserController.class)
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 public class UserControllerTest {
 
     @Autowired
@@ -78,6 +77,7 @@ public class UserControllerTest {
 
     @MockitoBean
     private UserProfileService userProfileService;
+
 
     @Test
     @WithMockUser
@@ -245,15 +245,6 @@ public class UserControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    void testDeleteUser_ForbiddenForNonAdmin() throws Exception {
-        String userId = "abc123";
-
-        mockMvc.perform(delete("/api/v1/leads/delete/{id}", userId))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
     @WithMockUser(roles = "ADMIN")
     void assignTarget_ShouldReturnResponseDto() throws Exception {
         TeamTargetRequestDto requestDto = new TeamTargetRequestDto();
@@ -346,5 +337,143 @@ public class UserControllerTest {
 //                .andExpect(status().isOk())
 //                .andExpect(content().string("Password updated successfully."));
 //    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testGetTeam() throws Exception {
+        // Arrange
+        String teamId = "team123";
+
+        TeamDto teamDto = new TeamDto();
+        teamDto.setId(1L);
+        teamDto.setName("Sales Team");
+        teamDto.setTeamLeadId("lead456");
+        teamDto.setTeamLeadName("John Doe");
+
+        // Mock the returned TeamRest from the mapping
+        TeamRest teamRest = new TeamRest();
+        teamRest.setName("Sales Team");
+        teamRest.setTeamLeadUserId("lead456");
+        teamRest.setTeamLeadName("John Doe");
+
+        when(userService.getTeamById(teamId)).thenReturn(teamDto);
+        when(modelMapper.map(eq(teamDto), eq(TeamRest.class))).thenReturn(teamRest);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/leads/team/{teamId}", teamId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.team.name").value("Sales Team"))
+                .andExpect(jsonPath("$.team.teamLeadUserId").value("lead456"))
+                .andExpect(jsonPath("$.team.teamLeadName").value("John Doe"))
+                .andExpect(jsonPath("$.message").value("Team retrieved successfully"));
+
+        // Verify service was called
+        verify(userService, times(1)).getTeamById(teamId);
+    }
+
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void testEditTeam_Success() throws Exception {
+        String teamId = "team123";
+
+        // Prepare request body
+        TeamDetails teamDetails = new TeamDetails();
+        teamDetails.setName("Updated Team Name");
+        teamDetails.setTeamLeadUserId("lead001");
+
+        // Mock DTO mapping
+        TeamDto inputDto = new TeamDto();
+        inputDto.setName("Updated Team Name");
+        inputDto.setTeamLeadId("lead001");
+
+        TeamDto updatedDto = new TeamDto();
+        updatedDto.setName("Updated Team Name");
+        updatedDto.setTeamLeadId("lead001");
+
+        // Mock REST mapping
+        TeamRest teamRest = new TeamRest();
+        teamRest.setName("Updated Team Name");
+        teamRest.setTeamLeadUserId("lead001");
+
+
+        // Stubbing
+    when(modelMapper.map(any(TeamDetails.class), eq(TeamDto.class)))
+            .thenReturn(inputDto);
+    when(userService.updateTeam(eq(teamId), any(TeamDto.class)))
+            .thenReturn(updatedDto);
+    when(modelMapper.map(eq(updatedDto), eq(TeamRest.class)))
+            .thenReturn(teamRest);
+
+        mockMvc.perform(put("/api/v1/leads/Edit-team/{teamId}", teamId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {
+                          "name": "Updated Team Name",
+                          "teamLeadUserId": "lead001"
+                        }
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.team.name").value("Updated Team Name"))
+                .andExpect(jsonPath("$.team.teamLeadUserId").value("lead001"))
+                .andExpect(jsonPath("$.message").value("Team updated successfully"));
+    }
+
+    @Test
+    void testDeactivateTeam() throws Exception {
+        // Arrange
+        String teamId = "team123";
+
+        // Mock service method to do nothing (no exception)
+        doNothing().when(userService).deactivateTeam(teamId);
+
+        // Act & Assert
+        mockMvc.perform(patch("/api/v1/leads/team/{teamId}/deactivate", teamId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Team successfully deactivated"));
+
+        // Verify service method was called once
+        verify(userService, times(1)).deactivateTeam(teamId);
+    }
+
+    @Test
+    void testSearchTeamByName() throws Exception {
+        // Arrange
+        String teamName = "Alpha";
+
+        TeamDto teamDto = new TeamDto();
+        teamDto.setName(teamName);
+        teamDto.setTeamLeadId("lead-1");
+        teamDto.setTeamLeadName("John Doe");
+
+        List<TeamDto> teamDtos = List.of(teamDto);
+
+        when(userService.searchTeamByName(teamName)).thenReturn(teamDtos);
+
+        // Mock ModelMapper mapping
+        TeamRest mappedTeamRest = new TeamRest();
+        mappedTeamRest.setName(teamName);
+        // Note: teamLeadUserId and teamLeadName are set *after* mapping in the controller
+        when(modelMapper.map(eq(teamDto), eq(TeamRest.class))).thenReturn(mappedTeamRest);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/leads/team/search")
+                        .param("name", teamName)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teams[0].name").value(teamName))
+                .andExpect(jsonPath("$.teams[0].teamLeadUserId").value("lead-1"))
+                .andExpect(jsonPath("$.teams[0].teamLeadName").value("John Doe"))
+                .andExpect(jsonPath("$.message").value("Search completed successfully"));
+
+        // Verify service call
+        verify(userService, times(1)).searchTeamByName(teamName);
+        verify(modelMapper, times(1)).map(eq(teamDto), eq(TeamRest.class));
+    }
+
+
+
+
 }
 

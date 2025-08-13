@@ -17,9 +17,18 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -174,4 +183,93 @@ public class ClientServiceImplTest {
         assertTrue(ex.getReason().contains("Unauthorized"));
         verify(clientRepository, never()).save(any());
     }
+
+//    @Test
+//    void testGetOverdueClients_WithOverdueClients() {
+//        // Arrange
+//        int page = 0;
+//        int limit = 10;
+//        Pageable pageable = PageRequest.of(page, limit);
+//
+//        // Creator's team lead
+//        UserEntity teamLead = new UserEntity();
+//        teamLead.setUserId("lead123");
+//
+//        // Creator (team member)
+//        UserEntity creator = new UserEntity();
+//        creator.setUserId("creator123");
+//        creator.setTeamLead(teamLead);
+//
+//        // Overdue client (7 days ago, status = PENDING)
+//        ClientEntity overdueClient = new ClientEntity();
+//        overdueClient.setLastUpdated(Date.from(LocalDate.now().minusDays(7)
+//                .atStartOfDay(ZoneId.systemDefault()).toInstant()));
+//        overdueClient.setClientStatus(Statuses.PENDING);
+//        overdueClient.setCreatedBy(creator);
+//
+//        // Non-overdue client (3 days ago, status = PENDING)
+//        ClientEntity recentClient = new ClientEntity();
+//        recentClient.setLastUpdated(Date.from(LocalDate.now().minusDays(3)
+//                .atStartOfDay(ZoneId.systemDefault()).toInstant()));
+//        recentClient.setClientStatus(Statuses.PENDING);
+//
+//        // Client with null lastUpdated
+//        ClientEntity nullDateClient = new ClientEntity();
+//        nullDateClient.setLastUpdated(null);
+//        nullDateClient.setClientStatus(Statuses.PENDING);
+//
+//        Page<ClientEntity> pageResult = new PageImpl<>(
+//                List.of(overdueClient, recentClient, nullDateClient),
+//                pageable,
+//                3
+//        );
+//
+//        when(clientRepository.findAll(pageable)).thenReturn(pageResult);
+//
+//        ClientDto mappedClientDto = new ClientDto();
+//        UserDto mappedCreatorDto = new UserDto();
+//        UserDto mappedTeamLeadDto = new UserDto();
+//
+//        when(modelMapper.map(overdueClient, ClientDto.class)).thenReturn(mappedClientDto);
+//        when(modelMapper.map(creator, UserDto.class)).thenReturn(mappedCreatorDto);
+//        when(modelMapper.map(teamLead, UserDto.class)).thenReturn(mappedTeamLeadDto);
+//
+//        // Act
+//        Page<ClientDto> result = clientService.getOverdueClients(page, limit);
+//
+//        // Assert
+//        verify(clientRepository).findAll(pageable);
+//        verify(modelMapper).map(overdueClient, ClientDto.class);
+//        verify(modelMapper).map(creator, UserDto.class);
+//        verify(modelMapper).map(teamLead, UserDto.class);
+//
+//        assertEquals(1, result.getTotalElements(), "Only one overdue client should be returned");
+//        assertTrue(result.getContent().contains(mappedClientDto), "Returned list must include the mapped overdue client");
+//    }
+
+//    @Test
+//    void testGetOverdueClients_NoOverdueClients() {
+//        // Arrange
+//        int page = 0;
+//        int limit = 10;
+//        Pageable pageable = PageRequest.of(page, limit);
+//
+//        // Client 3 days ago (not overdue)
+//        ClientEntity recentClient = new ClientEntity();
+//        recentClient.setLastUpdated(Date.from(LocalDate.now().minusDays(3)
+//                .atStartOfDay(ZoneId.systemDefault()).toInstant()));
+//        recentClient.setClientStatus(Statuses.PENDING);
+//
+//        Page<ClientEntity> pageResult = new PageImpl<>(List.of(recentClient), pageable, 1);
+//
+//        when(clientRepository.findAll(pageable)).thenReturn(pageResult);
+//
+//        // Act
+//        Page<ClientDto> result = clientService.getOverdueClients(page, limit);
+//
+//        // Assert
+//        verify(clientRepository).findAll(pageable);
+//        verifyNoInteractions(modelMapper);
+//        assertEquals(0, result.getTotalElements(), "No clients should be returned");
+//    }
 }
