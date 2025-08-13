@@ -140,10 +140,10 @@ public class TeamTargetServiceImpl implements TeamTargetService {
         TeamTargetEntity teamTarget = teamTargetRepository.findByTeamId(team.getId())
                 .orElseThrow(() -> new RuntimeException("No target has been assigned to your team yet."));
 
-        // 4. Get all user targets under this team target
+        //Get all user targets under this team target
         List<UserTargetEntity> userTargets = userTargetRepository.findByTeamTargetId(teamTarget.getId());
 
-        // 5. Map to response DTO
+        // Map to response DTO
         return mapToTeamTargetOverviewDto(teamTarget, userTargets);
     }
 

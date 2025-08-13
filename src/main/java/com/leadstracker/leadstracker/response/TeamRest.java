@@ -3,6 +3,7 @@ package com.leadstracker.leadstracker.response;
 import java.time.LocalDateTime;
 
 public class TeamRest {
+    private Long teamId;
     private String name;
     private String teamLeadUserId;
     private String teamLeadName;
@@ -10,6 +11,14 @@ public class TeamRest {
     private String leadPhoneNumber;
     private String leadStaffId;
     private LocalDateTime  createdDate;
+
+    public Long getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(Long teamId) {
+        this.teamId = teamId;
+    }
 
     public String getName() {
         return name;

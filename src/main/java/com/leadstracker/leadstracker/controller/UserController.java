@@ -102,13 +102,6 @@ public class UserController {
                                             @RequestParam(required = false, defaultValue = "week") String duration) throws Exception {
 
         UserDto userDto = userService.getUserByUserId(userId);
-
-//         Checking that the user has the TEAM_LEAD role
-//        if (!"ROLE_TEAM_LEAD".equalsIgnoreCase(userDto.getRole())) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-//                    .body(null);
-//        }
-
         // Get team performance
         TeamPerformanceDto performance = clientService.getTeamPerformance(userId, duration);
 
@@ -123,11 +116,6 @@ public class UserController {
     public ResponseEntity<List<TeamMemberPerformanceDto>> getAllTeamMembers(@RequestParam(defaultValue = "week") String duration) {
         List<UserDto> teamMembers = userService.getAllTeamMembers();
 
-//        List<UserRest> response = teamMembers.stream()
-//                .map(dto -> modelMapper.map(dto, UserRest.class))
-//                .toList();
-//
-//        return ResponseEntity.ok(response);
         List<TeamMemberPerformanceDto> response = teamMembers.stream()
                 .map(userDto -> clientService.getMemberPerformance(userDto.getUserId(), duration)).toList();
 
@@ -377,6 +365,7 @@ public class UserController {
         TeamDto teamDto = userService.getTeamById(teamId);
 
         TeamRest teamRest = modelMapper.map(teamDto, TeamRest.class);
+        teamRest.setTeamId(teamDto.getId());
         teamRest.setTeamLeadUserId(teamDto.getTeamLeadId());
         teamRest.setTeamLeadName(teamDto.getTeamLeadName());
         teamRest.setTeamLeadEmail(teamDto.getTeamLeadEmail());

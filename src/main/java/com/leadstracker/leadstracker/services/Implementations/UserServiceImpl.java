@@ -691,6 +691,7 @@ public class UserServiceImpl implements UserService {
         TeamDto teamDto = modelMapper.map(teamEntity, TeamDto.class);
 
         if (teamEntity.getTeamLead() != null) {
+            teamDto.setId(teamEntity.getId());
             teamDto.setTeamLeadId(teamEntity.getTeamLead().getUserId());
             teamDto.setTeamLeadName(teamEntity.getTeamLead().getFirstName() + " " +
                     teamEntity.getTeamLead().getLastName());
