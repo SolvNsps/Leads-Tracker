@@ -631,4 +631,28 @@ public class UserController {
                 "message", "Search completed successfully"));
     }
 
+
+    //Team lead edit the target of a team member
+    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    @PutMapping("/targets/{teamTargetId}/members/{memberId}")
+    public ResponseEntity<DistributionDto> editMemberTarget(
+            @PathVariable Long teamTargetId,
+            @PathVariable String memberId,
+            @RequestBody UpdateTargetRequest updateRequest,
+            @AuthenticationPrincipal UserPrincipal userDetails) {
+
+        String teamLeadEmail = userDetails.getUsername();
+
+        teamTargetService.editMemberTarget(teamTargetId, memberId, updateRequest.getNewTargetValue(), teamLeadEmail);
+
+        DistributionDto updatedTarget = new DistributionDto(
+                teamTargetId,
+                Map.of(memberId, updateRequest.getNewTargetValue())
+        );
+
+        return ResponseEntity.ok(updatedTarget);
+    }
+
+
+
 }

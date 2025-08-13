@@ -9,6 +9,7 @@ import com.leadstracker.leadstracker.repositories.TeamTargetRepository;
 import com.leadstracker.leadstracker.repositories.TeamsRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
 import com.leadstracker.leadstracker.repositories.UserTargetRepository;
+import com.leadstracker.leadstracker.request.TargetDistributionRequest;
 import com.leadstracker.leadstracker.request.TeamTargetRequestDto;
 import com.leadstracker.leadstracker.response.MyTargetResponse;
 import com.leadstracker.leadstracker.response.TeamTargetOverviewDto;
@@ -20,6 +21,7 @@ import com.leadstracker.leadstracker.services.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -322,9 +324,61 @@ public class TeamTargetServiceImpl implements TeamTargetService {
 
         return dto;
 
-        // Map entity to DTO
-//        return mapper.map(target, TeamTargetResponseDto.class);
     }
 
+    /**
+     * @param teamTargetId
+     * @param memberId
+     * @param newTargetValue
+     * @param teamLeadEmail
+     */
+    @Override
+    public void editMemberTarget(Long teamTargetId, String memberId, Integer newTargetValue, String teamLeadEmail) {
+        // Validating team lead
+        UserEntity teamLead = userRepository.findByEmail(teamLeadEmail);
+        if (teamLead == null) {
+            throw new RuntimeException("Team Lead not found");
+        }
+
+        TeamsEntity team = teamLead.getTeam();
+        if (team == null) {
+            throw new RuntimeException("You have not been assigned to any team.");
+        }
+
+        // Validating team target
+        TeamTargetEntity teamTarget = teamTargetRepository.findById(teamTargetId)
+                .orElseThrow(() -> new RuntimeException("Team Target not found."));
+
+        if (!teamTarget.getTeam().getId().equals(team.getId())) {
+            throw new RuntimeException("You are not authorized to edit this target.");
+        }
+
+        // Validating that the member belongs to the team lead
+        UserEntity member = userRepository.findByUserId(memberId);
+        if (member == null) {
+            throw new RuntimeException("Team member not found.");
+        }
+        if (!Objects.equals(member.getTeamLead().getId(), teamLead.getId())) {
+            throw new RuntimeException("User is not your team member.");
+        }
+
+        // Finding the existing user target
+        UserTargetEntity userTarget = userTargetRepository
+                .findByTeamTarget_IdAndUser_UserId(teamTargetId, memberId)
+                .orElseThrow(() -> new RuntimeException("Target for this member not found."));
+
+        //Validating total distribution after change
+        int currentTotal = userTargetRepository.findByTeamTarget_Id(teamTargetId).stream()
+                .filter(t -> !t.getUser().getUserId().equals(memberId))
+                .mapToInt(UserTargetEntity::getTargetValue)
+                .sum();
+        if (currentTotal + newTargetValue > teamTarget.getTargetValue()) {
+            throw new RuntimeException("Total distributed target exceeds the team target value.");
+        }
+
+        // Updating and save
+        userTarget.setTargetValue(newTargetValue);
+        userTargetRepository.save(userTarget);
+    }
 
 }

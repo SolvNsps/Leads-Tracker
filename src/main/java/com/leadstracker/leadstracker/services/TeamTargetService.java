@@ -24,5 +24,6 @@ public interface TeamTargetService {
     MyTargetResponse getMyTarget(String teamMemberEmail);
 
     TeamTargetResponseDto getMyTeamTarget(String email);
-}
 
+    void editMemberTarget(Long teamTargetId, String memberId, Integer newTargetValue, String teamLeadEmail);
+}
