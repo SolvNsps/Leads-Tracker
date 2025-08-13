@@ -147,6 +147,7 @@ public class TeamTargetServiceImpl implements TeamTargetService {
         return mapToTeamTargetOverviewDto(teamTarget, userTargets);
     }
 
+
     @Override
     public void assignTargetToTeamMembers(Long teamTargetId, Map<String, Integer> memberTargets, String teamLeadEmail) {
         // Validation
@@ -173,7 +174,7 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             throw new RuntimeException("Total distributed target exceeds the team target value.");
         }
 
-        // Save assignments
+        // Save or update assignments
         for (Map.Entry<String, Integer> entry : memberTargets.entrySet()) {
             String memberId = entry.getKey();
             Integer value = entry.getValue();
@@ -184,20 +185,25 @@ public class TeamTargetServiceImpl implements TeamTargetService {
                 throw new RuntimeException("User is not your team member.");
             }
 
-            UserTargetEntity userTarget = new UserTargetEntity();
+            UserTargetEntity userTarget = userTargetRepository
+                    .findByTeamTarget_IdAndUser_UserId(teamTargetId, memberId)
+                    .orElse(new UserTargetEntity());
+
             userTarget.setTeamTarget(teamTarget);
             userTarget.setUser(member);
             userTarget.setTargetValue(value);
             userTarget.setAssignedDate(LocalDate.now());
             userTarget.setDueDate(teamTarget.getDueDate());
+
             userTargetRepository.save(userTarget);
         }
     }
 
 
-            @Override
-            public List<UserTargetResponseDto> getTeamMemberTargets(Long teamTargetId, String teamLeadEmail) {
-                UserEntity teamLead = userRepository.findByEmail(teamLeadEmail);
+
+    @Override
+    public List<UserTargetResponseDto> getTeamMemberTargets(Long teamTargetId, String teamLeadEmail) {
+        UserEntity teamLead = userRepository.findByEmail(teamLeadEmail);
                 if (teamLead == null) {
                     throw new RuntimeException("Team Lead not found");
                 }
