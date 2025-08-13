@@ -47,7 +47,7 @@ public interface ClientService {
 
     OverallSystemDto getClientStats(String duration);
 
-    List<ClientSearchDto> searchClients(String name, String status, LocalDate date);
+    List<ClientSearchDto> searchClients(String name, Statuses status, LocalDate date);
 
     Page<ClientDto> getClients(String email, Integer page, Integer size);
 

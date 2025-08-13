@@ -412,9 +412,14 @@ public class ClientController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        return ResponseEntity.ok(clientService.searchClients(name, status, date));
+        {
+            Statuses statusEnum = null;
+            if (status != null && !status.trim().isEmpty()) {
+                statusEnum = Statuses.fromString(status);
+            }
+            return ResponseEntity.ok(clientService.searchClients(name, statusEnum, date));
+        }
     }
-
 
     //getting overdue clients under a user
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")

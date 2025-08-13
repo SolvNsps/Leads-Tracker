@@ -667,13 +667,13 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public List<ClientSearchDto> searchClients(String name, String status, LocalDate date) {
+    public List<ClientSearchDto> searchClients(String name, Statuses status, LocalDate date) {
         Date startDateTime = (date != null) ? Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant()) : null;
         Date endDateTime = (date != null) ? Date.from(date.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant()) : null;
 
         List<ClientEntity> clients = clientRepository.searchClients(
                 (name != null && !name.trim().isEmpty()) ? name.trim() : null,
-                (status != null && !status.trim().isEmpty()) ? status.trim() : null,
+                status ,
                 startDateTime,
                 endDateTime
         );
