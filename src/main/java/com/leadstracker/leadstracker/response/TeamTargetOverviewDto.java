@@ -5,7 +5,6 @@ import java.util.List;
 
 public class TeamTargetOverviewDto {
 
-    // Team Lead Assigned Target
     private int totalTargetValue;
     private LocalDate dueDate;
     private LocalDate dateAssigned;

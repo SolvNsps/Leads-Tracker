@@ -342,7 +342,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-
+//Admin creates a team
     @PostMapping(value = "/team", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createTeam(@RequestBody TeamDetails teamDetails) throws Exception {
 
@@ -554,7 +554,7 @@ public class UserController {
     }
 
 
-    //Team member view their target
+    //Team member views their target
     @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
     @GetMapping("/my-target")
     public ResponseEntity<MyTargetResponse> getMyTarget(@AuthenticationPrincipal UserPrincipal authentication) {
@@ -641,7 +641,6 @@ public class UserController {
 
         return ResponseEntity.ok(updatedTarget);
     }
-
 
 
 }
