@@ -152,7 +152,7 @@ public class UserController {
                                                            @RequestParam(required = false) String duration) throws Exception {
 
         UserDto userDto = userService.getMemberUnderLead(userId, memberId);
-        // Get member performance
+        // Getting team member performance
         TeamMemberPerformanceDto performance = clientService.getMemberPerformance(memberId, duration);
 
         PerfRest perfRest = modelMapper.map(userDto, PerfRest.class);
@@ -273,8 +273,7 @@ public class UserController {
             );
         }
 
-        // OTP is valid. Generating JWT
-//        String jwt = SecurityConstants.generateToken(request.getEmail(), SecurityConstants.Expiration_Time_In_Seconds);
+        // Generating JWT
         String tokenSecret = (String) SpringApplicationContext.getBean("secretKey");
 
         byte[] secretKeyBytes = Base64.getEncoder().encode(tokenSecret.getBytes());

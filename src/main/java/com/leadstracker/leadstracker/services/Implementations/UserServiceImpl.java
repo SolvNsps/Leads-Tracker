@@ -517,8 +517,6 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Team member not found under the specified team lead."));
 
-        ModelMapper modelMapper = new ModelMapper();
-
         return modelMapper.map(memberEntity, UserDto.class);
     }
 
