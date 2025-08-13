@@ -379,6 +379,10 @@ public class UserController {
         TeamRest teamRest = modelMapper.map(teamDto, TeamRest.class);
         teamRest.setTeamLeadUserId(teamDto.getTeamLeadId());
         teamRest.setTeamLeadName(teamDto.getTeamLeadName());
+        teamRest.setTeamLeadEmail(teamDto.getTeamLeadEmail());
+        teamRest.setLeadPhoneNumber(teamDto.getLeadPhoneNumber());
+        teamRest.setLeadStaffId(teamDto.getLeadStaffId());
+        teamRest.setCreatedDate(teamDto.getCreatedDate());
 
         return ResponseEntity.ok(Map.of(
                 "team", teamRest,
@@ -531,6 +535,7 @@ public class UserController {
         return ResponseEntity.ok(overview);
     }
 
+    //Team lead set target for team members
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
     @PostMapping("/targets/assign")
     public ResponseEntity<DistributionDto> assignTargetToTeamMembers(@RequestBody TargetDistributionRequest requestDto,
@@ -560,6 +565,7 @@ public class UserController {
     }
 
 
+    //Team member view their target
     @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
     @GetMapping("/my-target")
     public ResponseEntity<MyTargetResponse> getMyTarget(@AuthenticationPrincipal UserPrincipal authentication) {

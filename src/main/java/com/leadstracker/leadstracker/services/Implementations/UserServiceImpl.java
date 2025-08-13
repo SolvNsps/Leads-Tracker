@@ -694,6 +694,10 @@ public class UserServiceImpl implements UserService {
             teamDto.setTeamLeadId(teamEntity.getTeamLead().getUserId());
             teamDto.setTeamLeadName(teamEntity.getTeamLead().getFirstName() + " " +
                     teamEntity.getTeamLead().getLastName());
+            teamDto.setTeamLeadEmail(teamEntity.getTeamLead().getEmail());
+            teamDto.setLeadPhoneNumber(teamEntity.getTeamLead().getPhoneNumber());
+            teamDto.setLeadStaffId(teamEntity.getTeamLead().getStaffId());
+            teamDto.setCreatedDate(teamEntity.getTeamLead().getCreatedDate());
         }
 
         return teamDto;
