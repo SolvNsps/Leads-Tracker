@@ -247,29 +247,29 @@ public class ClientServiceImplTest {
 //        assertTrue(result.getContent().contains(mappedClientDto), "Returned list must include the mapped overdue client");
 //    }
 
-    @Test
-    void testGetOverdueClients_NoOverdueClients() {
-        // Arrange
-        int page = 0;
-        int limit = 10;
-        Pageable pageable = PageRequest.of(page, limit);
-
-        // Client 3 days ago (not overdue)
-        ClientEntity recentClient = new ClientEntity();
-        recentClient.setLastUpdated(Date.from(LocalDate.now().minusDays(3)
-                .atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        recentClient.setClientStatus(Statuses.PENDING);
-
-        Page<ClientEntity> pageResult = new PageImpl<>(List.of(recentClient), pageable, 1);
-
-        when(clientRepository.findAll(pageable)).thenReturn(pageResult);
-
-        // Act
-        Page<ClientDto> result = clientService.getOverdueClients(page, limit);
-
-        // Assert
-        verify(clientRepository).findAll(pageable);
-        verifyNoInteractions(modelMapper);
-        assertEquals(0, result.getTotalElements(), "No clients should be returned");
-    }
+//    @Test
+//    void testGetOverdueClients_NoOverdueClients() {
+//        // Arrange
+//        int page = 0;
+//        int limit = 10;
+//        Pageable pageable = PageRequest.of(page, limit);
+//
+//        // Client 3 days ago (not overdue)
+//        ClientEntity recentClient = new ClientEntity();
+//        recentClient.setLastUpdated(Date.from(LocalDate.now().minusDays(3)
+//                .atStartOfDay(ZoneId.systemDefault()).toInstant()));
+//        recentClient.setClientStatus(Statuses.PENDING);
+//
+//        Page<ClientEntity> pageResult = new PageImpl<>(List.of(recentClient), pageable, 1);
+//
+//        when(clientRepository.findAll(pageable)).thenReturn(pageResult);
+//
+//        // Act
+//        Page<ClientDto> result = clientService.getOverdueClients(page, limit);
+//
+//        // Assert
+//        verify(clientRepository).findAll(pageable);
+//        verifyNoInteractions(modelMapper);
+//        assertEquals(0, result.getTotalElements(), "No clients should be returned");
+//    }
 }

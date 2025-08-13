@@ -4,6 +4,7 @@ import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.response.ClientRest;
 import com.leadstracker.leadstracker.response.PaginatedResponse;
+import com.leadstracker.leadstracker.response.Statuses;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,7 +47,7 @@ public interface ClientService {
 
     OverallSystemDto getClientStats(String duration);
 
-    List<ClientSearchDto> searchClients(String name, String status, LocalDate date);
+    List<ClientSearchDto> searchClients(String name, Statuses status, LocalDate date);
 
     Page<ClientDto> getClients(String email, Integer page, Integer size);
 

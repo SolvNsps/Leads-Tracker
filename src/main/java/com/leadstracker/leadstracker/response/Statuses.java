@@ -21,16 +21,40 @@ public enum Statuses {
     }
 
     public static Statuses fromString(String status) {
-
         if (status == null || status.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client status is required.");
         }
 
+        // Normalize: uppercase, replace spaces with underscores
+        String normalized = status.trim().replace(" ", "_").toUpperCase();
+
         for (Statuses s : values()) {
-            if (s.name().equalsIgnoreCase(status) || s.getDisplayName().equalsIgnoreCase(status)) {
+            // Match enum name
+            if (s.name().equalsIgnoreCase(normalized)) {
+                return s;
+            }
+            // Match display name ignoring spaces/underscores
+            String displayNormalized = s.getDisplayName().replace(" ", "_").toUpperCase();
+            if (displayNormalized.equals(normalized)) {
                 return s;
             }
         }
+
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status: " + status);
     }
+
+
+//    public static Statuses fromString(String status) {
+//
+//        if (status == null || status.isBlank()) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client status is required.");
+//        }
+//
+//        for (Statuses s : values()) {
+//            if (s.name().equalsIgnoreCase(status) || s.getDisplayName().equalsIgnoreCase(status)) {
+//                return s;
+//            }
+//        }
+//        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status: " + status);
+//    }
 }

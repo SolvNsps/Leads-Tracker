@@ -84,27 +84,6 @@ public class AppConfig {
                     m.map(ClientDetails::getGpsLocation, ClientDto::setGpsLocation);
                 });
 
-//        mapper.typeMap(ClientDto.class, ClientRest.class).addMappings(m -> {
-//            m.map(ClientDto::getClientId, ClientRest::setClientId);
-//            m.map(ClientDto::getFirstName, ClientRest::setFirstName);
-//            m.map(ClientDto::getLastName, ClientRest::setLastName);
-//            m.map(ClientDto::getPhoneNumber, ClientRest::setPhoneNumber);
-//            m.<String>map(src -> {
-//                if (src.getClientStatus() == null) return null;
-//                try {
-//                    Statuses statusEnum = Statuses.fromString(src.getClientStatus());
-//                    return statusEnum.getDisplayName();
-//                } catch (Exception e) {
-//                    return src.getClientStatus(); // fallback
-//                }
-//            }, ClientRest::setClientStatus);
-//
-//            // Handle createdDate and lastUpdated if they are already LocalDateTime
-//            m.<LocalDateTime>map(ClientDto::getCreatedDate, ClientRest::setCreatedAt);
-//            m.<LocalDateTime>map(ClientDto::getLastUpdated, ClientRest::setLastUpdated);
-//
-//            m.map(ClientDto::getGpsLocation, ClientRest::setGpsLocation);
-//        });
 
         Converter<Date, LocalDateTime> dateToLocalDateTimeConverter = ctx -> {
             Date source = ctx.getSource();
@@ -123,11 +102,11 @@ public class AppConfig {
                     Statuses statusEnum = Statuses.fromString(src.getClientStatus());
                     return statusEnum.getDisplayName();
                 } catch (Exception e) {
-                    return src.getClientStatus(); // fallback
+                    return src.getClientStatus();
                 }
             }, ClientRest::setClientStatus);
 
-            // Use explicit converter here:
+            // Use explicit converter
             m.using(dateToLocalDateTimeConverter).map(ClientDto::getCreatedDate, ClientRest::setCreatedAt);
             m.using(dateToLocalDateTimeConverter).map(ClientDto::getLastUpdated, ClientRest::setLastUpdated);
 

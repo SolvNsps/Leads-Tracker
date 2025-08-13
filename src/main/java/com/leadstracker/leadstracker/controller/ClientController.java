@@ -7,6 +7,7 @@ import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
 import com.leadstracker.leadstracker.response.PaginatedResponse;
+import com.leadstracker.leadstracker.response.Statuses;
 import com.leadstracker.leadstracker.response.UserRest;
 import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -316,7 +318,7 @@ public class ClientController {
         String role = authentication.getAuthorities().iterator().next().getAuthority();
 
         PaginatedResponse<ClientRest> clients = clientService.getMyClientsForUserRole(
-                loggedInUserId, role, userId, PageRequest.of(page, size));
+                loggedInUserId, role, userId, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate")));
 
         return ResponseEntity.ok(clients);
     }
@@ -406,14 +408,18 @@ public class ClientController {
 
     //search for clients
     @GetMapping("/search-client")
-    public ResponseEntity<List<ClientSearchDto>> searchClients(
-            @RequestParam(required = false) String name,
+    public ResponseEntity<List<ClientSearchDto>> searchClients(@RequestParam(required = false) String name,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        return ResponseEntity.ok(clientService.searchClients(name, status, date));
+        {
+            Statuses statusEnum = null;
+            if (status != null && !status.trim().isEmpty()) {
+                statusEnum = Statuses.fromString(status);
+            }
+            return ResponseEntity.ok(clientService.searchClients(name, statusEnum, date));
+        }
     }
-
 
     //getting overdue clients under a user
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
@@ -422,7 +428,7 @@ public class ClientController {
         @RequestParam(defaultValue = "10") int size,
         @AuthenticationPrincipal UserPrincipal authentication) {
 
-    Pageable pageable = PageRequest.of(page, size);
+    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
     String loggedInUserId =  authentication.getId();
     String role = authentication.getAuthorities().iterator().next().getAuthority();
 

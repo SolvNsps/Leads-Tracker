@@ -3,18 +3,20 @@ package com.leadstracker.leadstracker.response;
 import java.time.LocalDate;
 
 public class MyTargetResponse {
-    private Integer targetValue;
+    private Integer totalTargetValue;
     private LocalDate dueDate;
     private LocalDate assignedDate;
     private Integer progressRemaining;
+    private Integer progressPercentage;
+    private Integer progressValue;
 
 
-    public Integer getTargetValue() {
-        return targetValue;
+    public Integer getTotalTargetValue() {
+        return totalTargetValue;
     }
 
-    public void setTargetValue(Integer targetValue) {
-        this.targetValue = targetValue;
+    public void setTotalTargetValue(Integer totalTargetValue) {
+        this.totalTargetValue = totalTargetValue;
     }
 
     public LocalDate getDueDate() {
@@ -39,5 +41,21 @@ public class MyTargetResponse {
 
     public void setProgressRemaining(Integer progressRemaining) {
         this.progressRemaining = progressRemaining;
+    }
+
+    public Integer getProgressPercentage() {
+        return progressPercentage;
+    }
+
+    public void setProgressPercentage(Integer progressPercentage) {
+        this.progressPercentage = progressPercentage;
+    }
+
+    public Integer getProgressValue() {
+        return progressValue;
+    }
+
+    public void setProgressValue(Integer progressValue) {
+        this.progressValue = progressValue;
     }
 }

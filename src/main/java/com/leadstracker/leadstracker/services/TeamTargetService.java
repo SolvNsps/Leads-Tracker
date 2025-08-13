@@ -12,10 +12,18 @@ import java.util.Map;
 public interface TeamTargetService {
 
     TeamTargetResponseDto assignTargetToTeam(TeamTargetRequestDto dto);
-    List<TeamTargetResponseDto> getAllTargets();
-    TeamTargetOverviewDto getTeamTargetOverview(String teamLeadEmail);
-    void assignTargetToTeamMembers(Long teamTargetId, Map<Long, Integer> memberTargets, String teamLeadEmail);
-    List<UserTargetResponseDto> getTeamMemberTargets(Long teamTargetId, String teamLeadEmail);
-    MyTargetResponse getMyTarget(String teamMemberEmail);
-}
 
+    List<TeamTargetResponseDto> getAllTargets();
+
+    TeamTargetOverviewDto getTeamTargetOverview(String teamLeadEmail);
+
+    void assignTargetToTeamMembers(Long teamTargetId, Map<String, Integer> memberTargets, String teamLeadEmail);
+
+    List<UserTargetResponseDto> getTeamMemberTargets(Long teamTargetId, String teamLeadEmail);
+
+    MyTargetResponse getMyTarget(String teamMemberEmail);
+
+    TeamTargetResponseDto getMyTeamTarget(String email);
+
+    void editMemberTarget(Long teamTargetId, String memberId, Integer newTargetValue, String teamLeadEmail);
+}

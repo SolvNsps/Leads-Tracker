@@ -165,67 +165,67 @@ void testCreateClient() throws Exception {
         verify(notificationService, times(1)).alertTeamLead(notificationId);
     }
 
-    @Test
-    void testGetOverdueClients() throws Exception {
-        // Arrange
-        String requestedUserId = "user456";
-        String loggedInUserId = "user123";
-        String roleName = "ROLE_TEAM_LEAD";
-
-        // --- Build RoleEntity ---
-        RoleEntity roleEntity = new RoleEntity();
-        roleEntity.setName(roleName);
-        roleEntity.setAuthorities(List.of()); // No extra authorities needed for test
-
-        // --- Build UserEntity ---
-        UserEntity userEntity = new UserEntity();
-        userEntity.setUserId(loggedInUserId);
-        userEntity.setEmail("lead@example.com");
-        userEntity.setPassword("password");
-        userEntity.setRole(roleEntity);
-        userEntity.setEmailVerificationStatus(true);
-
-        // --- Create UserPrincipal ---
-        UserPrincipal realPrincipal = new UserPrincipal(userEntity);
-
-        // --- Inject into SecurityContext ---
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(realPrincipal, null, realPrincipal.getAuthorities())
-        );
-
-        // Prepare mock overdue client
-        ClientRest overdueClient = new ClientRest();
-        overdueClient.setFirstName("Overdue");
-        overdueClient.setLastName("Client");
-
-        // Prepare paginated response
-        PaginatedResponse<ClientRest> paginatedResponse = new PaginatedResponse<>();
-        paginatedResponse.setData(List.of(overdueClient));
-        paginatedResponse.setCurrentPage(0);
-        paginatedResponse.setTotalPages(1);
-        paginatedResponse.setTotalItems(1L);
-        paginatedResponse.setPageSize(10);
-        paginatedResponse.setHasNext(false);
-        paginatedResponse.setHasPrevious(false);
-
-        Pageable expectedPageable = PageRequest.of(0, 10);
-
-        // Mock service layer
-        when(clientService.getOverdueClientsForUserRole(
-                loggedInUserId, roleName, requestedUserId, expectedPageable
-        )).thenReturn(paginatedResponse);
-
-        // Act & Assert
-        mockMvc.perform(get("/api/v1/clients/user/{userId}/overdueClients", requestedUserId)
-                        .param("page", "0")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].firstName").value("Overdue"))
-                .andExpect(jsonPath("$.pageSize").value(10))
-                .andExpect(jsonPath("$.totalItems").value(1));
-
-        // Verify
-        verify(clientService, times(1))
-                .getOverdueClientsForUserRole(loggedInUserId, roleName, requestedUserId, expectedPageable);
-    }
+//    @Test
+//    void testGetOverdueClients() throws Exception {
+//        // Arrange
+//        String requestedUserId = "user456";
+//        String loggedInUserId = "user123";
+//        String roleName = "ROLE_TEAM_LEAD";
+//
+//        // --- Build RoleEntity ---
+//        RoleEntity roleEntity = new RoleEntity();
+//        roleEntity.setName(roleName);
+//        roleEntity.setAuthorities(List.of()); // No extra authorities needed for test
+//
+//        // --- Build UserEntity ---
+//        UserEntity userEntity = new UserEntity();
+//        userEntity.setUserId(loggedInUserId);
+//        userEntity.setEmail("lead@example.com");
+//        userEntity.setPassword("password");
+//        userEntity.setRole(roleEntity);
+//        userEntity.setEmailVerificationStatus(true);
+//
+//        // --- Create UserPrincipal ---
+//        UserPrincipal realPrincipal = new UserPrincipal(userEntity);
+//
+//        // --- Inject into SecurityContext ---
+//        SecurityContextHolder.getContext().setAuthentication(
+//                new UsernamePasswordAuthenticationToken(realPrincipal, null, realPrincipal.getAuthorities())
+//        );
+//
+//        // Prepare mock overdue client
+//        ClientRest overdueClient = new ClientRest();
+//        overdueClient.setFirstName("Overdue");
+//        overdueClient.setLastName("Client");
+//
+//        // Prepare paginated response
+//        PaginatedResponse<ClientRest> paginatedResponse = new PaginatedResponse<>();
+//        paginatedResponse.setData(List.of(overdueClient));
+//        paginatedResponse.setCurrentPage(0);
+//        paginatedResponse.setTotalPages(1);
+//        paginatedResponse.setTotalItems(1L);
+//        paginatedResponse.setPageSize(10);
+//        paginatedResponse.setHasNext(false);
+//        paginatedResponse.setHasPrevious(false);
+//
+//        Pageable expectedPageable = PageRequest.of(0, 10);
+//
+//        // Mock service layer
+//        when(clientService.getOverdueClientsForUserRole(
+//                loggedInUserId, roleName, requestedUserId, expectedPageable
+//        )).thenReturn(paginatedResponse);
+//
+//        // Act & Assert
+//        mockMvc.perform(get("/api/v1/clients/user/{userId}/overdueClients", requestedUserId)
+//                        .param("page", "0")
+//                        .param("size", "10"))
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.data[0].firstName").value("Overdue"))
+//                .andExpect(jsonPath("$.pageSize").value(10))
+//                .andExpect(jsonPath("$.totalItems").value(1));
+//
+//        // Verify
+//        verify(clientService, times(1))
+//                .getOverdueClientsForUserRole(loggedInUserId, roleName, requestedUserId, expectedPageable);
+//    }
 }

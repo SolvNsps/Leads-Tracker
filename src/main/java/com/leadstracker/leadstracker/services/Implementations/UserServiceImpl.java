@@ -517,8 +517,6 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Team member not found under the specified team lead."));
 
-        ModelMapper modelMapper = new ModelMapper();
-
         return modelMapper.map(memberEntity, UserDto.class);
     }
 
@@ -691,9 +689,14 @@ public class UserServiceImpl implements UserService {
         TeamDto teamDto = modelMapper.map(teamEntity, TeamDto.class);
 
         if (teamEntity.getTeamLead() != null) {
+            teamDto.setId(teamEntity.getId());
             teamDto.setTeamLeadId(teamEntity.getTeamLead().getUserId());
             teamDto.setTeamLeadName(teamEntity.getTeamLead().getFirstName() + " " +
                     teamEntity.getTeamLead().getLastName());
+            teamDto.setTeamLeadEmail(teamEntity.getTeamLead().getEmail());
+            teamDto.setLeadPhoneNumber(teamEntity.getTeamLead().getPhoneNumber());
+            teamDto.setLeadStaffId(teamEntity.getTeamLead().getStaffId());
+            teamDto.setCreatedDate(teamEntity.getTeamLead().getCreatedDate());
         }
 
         return teamDto;

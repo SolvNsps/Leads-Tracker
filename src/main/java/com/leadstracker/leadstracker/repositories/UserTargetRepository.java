@@ -3,10 +3,12 @@ package com.leadstracker.leadstracker.repositories;
 import com.leadstracker.leadstracker.entities.TeamTargetEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.entities.UserTargetEntity;
+import com.leadstracker.leadstracker.request.TargetDistributionRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UserTargetRepository extends JpaRepository<UserTargetEntity, Long> {
@@ -20,4 +22,9 @@ public interface UserTargetRepository extends JpaRepository<UserTargetEntity, Lo
     boolean existsByUserAndTeamTarget(UserEntity user, TeamTargetEntity teamTarget);
 
     UserTargetEntity findTopByUserOrderByAssignedDateDesc(UserEntity user);
+
+    Optional<UserTargetEntity> findByTeamTarget_IdAndUser_UserId(Long teamTargetId, String userId);
+
+    List<UserTargetEntity> findByTeamTarget_Id(Long teamTargetId);
+
 }

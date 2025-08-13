@@ -30,7 +30,7 @@ public class TeamsController {
     }
 
 
-    // Get list of unassigned members (team members without a team)
+    // Getting the list of unassigned members (team members without a team)
     @GetMapping("/unassigned-members")
     public ResponseEntity<List<UserDto>> getUnassignedMembers() {
         return ResponseEntity.ok(teamService.getUnassignedMembers());

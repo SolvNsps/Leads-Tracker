@@ -85,15 +85,10 @@ public class ClientServiceImpl implements ClientService {
         clientEntity.setLastName(clientDto.getLastName());
 //        clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
         clientEntity.setGpsLocation(clientDto.getGpsLocation());
-
-        // Insert the debug + enum mapping here:
-        System.out.println("Received clientStatus: " + clientDto.getClientStatus());
         Statuses statusEnum = null;
         try {
             statusEnum = Statuses.fromString(clientDto.getClientStatus());
-            System.out.println("Mapped clientStatus to enum: " + statusEnum);
         } catch (Exception e) {
-            System.err.println("Error mapping clientStatus: " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid client status: " + clientDto.getClientStatus());
         }
         clientEntity.setClientStatus(statusEnum);
@@ -113,10 +108,9 @@ public class ClientServiceImpl implements ClientService {
 
         ClientEntity saved = clientRepository.save(clientEntity);
 
-        // Map back to DTO
+        // Mapping back to DTO
         ClientDto result = modelMapper.map(saved, ClientDto.class);
 
-//  Add team lead manually
         UserDto assignedToDto = modelMapper.map(saved.getTeamLead(), UserDto.class);
         result.setAssignedTo(assignedToDto);
 
@@ -528,7 +522,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public List<ClientDto> getClientsByTeamMember(String userId, int page, int limit) {
         if (page > 0) page--;
-        Pageable pageable = PageRequest.of(page, limit);
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
 
         UserEntity member = userRepository.findByUserId(userId);
         List<ClientEntity> clients = clientRepository.findByCreatedBy(member, pageable);
@@ -609,7 +603,7 @@ public class ClientServiceImpl implements ClientService {
 
             Map<String, Long> teamStatusCounts = teamClients.stream()
                     .collect(Collectors.groupingBy(
-                            c -> c.getClientStatus().getDisplayName(),
+                            c -> c.getClientStatus().toString(),
                             Collectors.counting()));
 
             teamStatsList.add(new ClientStatsDto(team.getName(), teamClients.size(), teamStatusCounts));
@@ -624,7 +618,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Page<ClientDto> getOverdueClients(int page, int limit) {
 
-        Pageable pageableRequest = PageRequest.of(page, limit);
+        Pageable pageableRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
         Page<ClientEntity> allClients = clientRepository.findAll(pageableRequest);
 
         List<ClientDto> overdueClients = new ArrayList<>();
@@ -673,27 +667,27 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public List<ClientSearchDto> searchClients(String name, String status, LocalDate date) {
+    public List<ClientSearchDto> searchClients(String name, Statuses status, LocalDate date) {
         Date startDateTime = (date != null) ? Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant()) : null;
         Date endDateTime = (date != null) ? Date.from(date.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant()) : null;
 
         List<ClientEntity> clients = clientRepository.searchClients(
                 (name != null && !name.trim().isEmpty()) ? name.trim() : null,
-                (status != null && !status.trim().isEmpty()) ? status.trim() : null,
+                status ,
                 startDateTime,
                 endDateTime
         );
 
-        return clients.stream().map(c -> {
+        return clients.stream().map(client -> {
             ClientSearchDto dto = new ClientSearchDto();
-            dto.setClientId(c.getClientId());
-            dto.setFirstName(c.getFirstName());
-            dto.setLastName(c.getLastName());
-            dto.setPhoneNumber(c.getPhoneNumber());
-            dto.setCreatedByName(c.getCreatedBy().getFirstName() + " " + c.getCreatedBy().getLastName());
-            dto.setCreatedByEmail(c.getCreatedBy().getEmail());
-            dto.setCreatedDate(c.getCreatedDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-            dto.setStatus(c.getClientStatus() != null ? c.getClientStatus().name() : null);
+            dto.setClientId(client.getClientId());
+            dto.setFirstName(client.getFirstName());
+            dto.setLastName(client.getLastName());
+            dto.setPhoneNumber(client.getPhoneNumber());
+            dto.setCreatedByName(client.getCreatedBy().getFirstName() + " " + client.getCreatedBy().getLastName());
+            dto.setCreatedByEmail(client.getCreatedBy().getEmail());
+            dto.setCreatedDate(client.getCreatedDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+            dto.setStatus(client.getClientStatus() != null ? client.getClientStatus().name() : null);
             return dto;
         }).collect(Collectors.toList());
     }
@@ -911,17 +905,53 @@ public class ClientServiceImpl implements ClientService {
                 .map(client -> {
                     ClientRest dto = modelMapper.map(client, ClientRest.class);
 
+                    // createdBy display name
                     if (client.getCreatedBy() != null) {
-                        dto.setCreatedBy(client.getCreatedBy().getUserId());
-                        dto.setCreatedBy(
-                                client.getCreatedBy().getFirstName() + " " + client.getCreatedBy().getLastName()
-                        );
+                        dto.setCreatedBy(client.getCreatedBy().getFirstName() + " " + client.getCreatedBy().getLastName());
+                    } else {
+                        dto.setCreatedBy("Unknown");
+                    }
+
+                    if (dto.getCreatedAt() == null) {
+                        if (client.getCreatedDate() != null) {
+                            LocalDateTime ldt = client.getCreatedDate().toInstant()
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDateTime();
+                            dto.setCreatedAt(ldt);
+                        } else {
+                            dto.setCreatedAt(LocalDateTime.of(1970, 1, 1, 0, 0)); // default epoch time
+                        }
+                    }
+
+//                    if (dto.getLastAction() == null) {
+//                        if (client.getLastUpdated() != null) {
+//                            LocalDateTime ldt = client.getLastUpdated().toInstant()
+//                                    .atZone(ZoneId.systemDefault())
+//                                    .toLocalDateTime();
+//                            dto.setLastAction(String.valueOf(ldt));
+//                        }
+//                    }
+                    if (client.getLastUpdated() != null) {
+                        dto.setLastUpdated(client.getLastUpdated().toInstant()
+                                .atZone(ZoneId.systemDefault()).toLocalDateTime());
+
+                        Instant lastUpdatedInstant = client.getLastUpdated().toInstant();
+                        Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
+                        dto.setLastAction(utils.getExactDuration(duration));
+                    }
+
+
+                    if (dto.getAssignedTo() == null) {
+                        if (client.getTeamLead() != null) {
+                            dto.setAssignedTo(client.getTeamLead().getFirstName() + " " + client.getTeamLead().getLastName());
+                        } else {
+                            dto.setAssignedTo("Unassigned");
+                        }
                     }
 
                     return dto;
                 })
                 .toList();
-
 
         // Building paginated response
         PaginatedResponse<ClientRest> response = new PaginatedResponse<>();

@@ -102,13 +102,6 @@ public class UserController {
                                             @RequestParam(required = false, defaultValue = "week") String duration) throws Exception {
 
         UserDto userDto = userService.getUserByUserId(userId);
-
-//         Checking that the user has the TEAM_LEAD role
-//        if (!"ROLE_TEAM_LEAD".equalsIgnoreCase(userDto.getRole())) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-//                    .body(null);
-//        }
-
         // Get team performance
         TeamPerformanceDto performance = clientService.getTeamPerformance(userId, duration);
 
@@ -123,11 +116,6 @@ public class UserController {
     public ResponseEntity<List<TeamMemberPerformanceDto>> getAllTeamMembers(@RequestParam(defaultValue = "week") String duration) {
         List<UserDto> teamMembers = userService.getAllTeamMembers();
 
-//        List<UserRest> response = teamMembers.stream()
-//                .map(dto -> modelMapper.map(dto, UserRest.class))
-//                .toList();
-//
-//        return ResponseEntity.ok(response);
         List<TeamMemberPerformanceDto> response = teamMembers.stream()
                 .map(userDto -> clientService.getMemberPerformance(userDto.getUserId(), duration)).toList();
 
@@ -164,7 +152,7 @@ public class UserController {
                                                            @RequestParam(required = false) String duration) throws Exception {
 
         UserDto userDto = userService.getMemberUnderLead(userId, memberId);
-        // Get member performance
+        // Getting team member performance
         TeamMemberPerformanceDto performance = clientService.getMemberPerformance(memberId, duration);
 
         PerfRest perfRest = modelMapper.map(userDto, PerfRest.class);
@@ -285,8 +273,7 @@ public class UserController {
             );
         }
 
-        // OTP is valid. Generating JWT
-//        String jwt = SecurityConstants.generateToken(request.getEmail(), SecurityConstants.Expiration_Time_In_Seconds);
+        // Generating JWT
         String tokenSecret = (String) SpringApplicationContext.getBean("secretKey");
 
         byte[] secretKeyBytes = Base64.getEncoder().encode(tokenSecret.getBytes());
@@ -378,8 +365,13 @@ public class UserController {
         TeamDto teamDto = userService.getTeamById(teamId);
 
         TeamRest teamRest = modelMapper.map(teamDto, TeamRest.class);
+        teamRest.setTeamId(teamDto.getId());
         teamRest.setTeamLeadUserId(teamDto.getTeamLeadId());
         teamRest.setTeamLeadName(teamDto.getTeamLeadName());
+        teamRest.setTeamLeadEmail(teamDto.getTeamLeadEmail());
+        teamRest.setLeadPhoneNumber(teamDto.getLeadPhoneNumber());
+        teamRest.setLeadStaffId(teamDto.getLeadStaffId());
+        teamRest.setCreatedDate(teamDto.getCreatedDate());
 
         return ResponseEntity.ok(Map.of(
                 "team", teamRest,
@@ -420,15 +412,26 @@ public class UserController {
     }
 
     //Admin viewing the targets set
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/team-targets")
     public ResponseEntity<List<TeamTargetResponseDto>> getAllTargets() {
         List<TeamTargetResponseDto> targets = teamTargetService.getAllTargets();
         return ResponseEntity.ok(targets);
     }
 
-    //Team lead viewing profile
-//    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+
+    //team lead views team's target set by Admin
+    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    @GetMapping("/team-lead/team-target")
+    public ResponseEntity<TeamTargetResponseDto> getMyTeamTarget(@AuthenticationPrincipal UserPrincipal principal) {
+        String email = principal.getUsername();
+        TeamTargetResponseDto target = teamTargetService.getMyTeamTarget(email);
+
+        return ResponseEntity.ok(target);
+    }
+
+
+
 
     // Viewing the profile of all users (Admin, Team lead, Team member)
     @GetMapping("/profile")
@@ -459,13 +462,6 @@ public class UserController {
         ));
     }
 
-    //Team member viewing profile
-//    @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
-//    @GetMapping("/member/profile")
-//    public ResponseEntity<UserProfileResponseDto> getTeamMemberProfile(@AuthenticationPrincipal UserPrincipal principal) {
-//        UserProfileResponseDto profile = userProfileService.getProfile(principal.getUsername());
-//        return ResponseEntity.ok(profile);
-//    }
 
     //Team member editing profile
     @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
@@ -488,13 +484,7 @@ public class UserController {
         ));
     }
 
-    //Admin viewing profile
-//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-//    @GetMapping("/admin/profile")
-//    public ResponseEntity<UserProfileResponseDto> getAdminProfile(@AuthenticationPrincipal UserPrincipal principal) {
-//        UserProfileResponseDto profile = userProfileService.getProfile(principal.getUsername());
-//        return ResponseEntity.ok(profile);
-//    }
+
 
     //Admin editing profile
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -503,6 +493,8 @@ public class UserController {
         UserProfileResponseDto profile = userProfileService.getProfile(principal.getName());
         return ResponseEntity.ok(profile);
     }
+
+
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/changeAdminNumber/profile")
     public ResponseEntity<UserProfileResponseDto> updateAdminPhone(@RequestBody @Valid UpdateUserProfileRequestDto request,
@@ -523,6 +515,7 @@ public class UserController {
         ));
     }
 
+    //team lead views targets set for members
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
     @GetMapping("/team-lead/view-target")
     public ResponseEntity<TeamTargetOverviewDto> viewTeamTargetOverview(@AuthenticationPrincipal UserPrincipal authentication) {
@@ -531,22 +524,23 @@ public class UserController {
         return ResponseEntity.ok(overview);
     }
 
+    //Team lead set target for team members
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
     @PostMapping("/targets/assign")
-    public ResponseEntity<?> assignTargetToTeamMembers(@RequestBody TargetDistributionRequest requestDto,
-                                                            @AuthenticationPrincipal UserDetails userDetails) {
-        String teamLeadEmail =  userDetails.getEmail();
+    public ResponseEntity<DistributionDto> assignTargetToTeamMembers(@RequestBody TargetDistributionRequest requestDto,
+                                                            @AuthenticationPrincipal UserPrincipal userDetails) {
+        String teamLeadEmail =  userDetails.getUsername();
 
-        Map<Long, Integer> memberTargetMap = requestDto.getMemberTargets().stream()
-                .collect(Collectors.toMap(
+        Map<String, Integer> memberTargetMap = requestDto.getMemberTargets().stream()
+                .collect
+                        (Collectors.toMap(
                         MemberTargetDto::getMemberId,
                         MemberTargetDto::getAssignedTarget
                 ));
         teamTargetService.assignTargetToTeamMembers(requestDto.getTeamTargetId(), memberTargetMap, teamLeadEmail);
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Target successfully assigned to team members."
-        ));
+        DistributionDto allMembers = new DistributionDto(requestDto.getTeamTargetId(), memberTargetMap);
+        return ResponseEntity.ok(allMembers);
 
     }
 
@@ -560,6 +554,7 @@ public class UserController {
     }
 
 
+    //Team member view their target
     @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
     @GetMapping("/my-target")
     public ResponseEntity<MyTargetResponse> getMyTarget(@AuthenticationPrincipal UserPrincipal authentication) {
@@ -624,4 +619,26 @@ public class UserController {
                 "teams", teamRestList,
                 "message", "Search completed successfully"));
     }
+
+    //Team lead edit the target of a team member
+    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    @PutMapping("/targets/{teamTargetId}/members/{memberId}")
+    public ResponseEntity<DistributionDto> editMemberTarget(
+            @PathVariable Long teamTargetId,
+            @PathVariable String memberId,
+            @RequestBody UpdateTargetRequest updateRequest,
+            @AuthenticationPrincipal UserPrincipal userDetails) {
+
+        String teamLeadEmail = userDetails.getUsername();
+
+        teamTargetService.editMemberTarget(teamTargetId, memberId, updateRequest.getNewTargetValue(), teamLeadEmail);
+
+        DistributionDto updatedTarget = new DistributionDto(
+                teamTargetId,
+                Map.of(memberId, updateRequest.getNewTargetValue())
+        );
+
+        return ResponseEntity.ok(updatedTarget);
+    }
+
 }
