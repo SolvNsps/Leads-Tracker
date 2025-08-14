@@ -621,6 +621,12 @@ public class ClientServiceImpl implements ClientService {
         Pageable pageableRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
         Page<ClientEntity> allClients = clientRepository.findAll(pageableRequest);
 
+        EnumSet<Statuses> allowedStatuses = EnumSet.of(
+                Statuses.PENDING,
+                Statuses.INTERESTED,
+                Statuses.AWAITING_DOCUMENTATION
+        );
+
         List<ClientDto> overdueClients = new ArrayList<>();
 
         for (ClientEntity client : allClients) {
@@ -634,8 +640,7 @@ public class ClientServiceImpl implements ClientService {
             );
 
             if (daysPending > 5 &&
-                    EnumSet.of(Statuses.PENDING, Statuses.INTERESTED, Statuses.AWAITING_DOCUMENTATION)
-                            .contains(client.getClientStatus().getDisplayName())) {
+                    allowedStatuses.contains(client.getClientStatus())) {
 
                 ClientDto dto = modelMapper.map(client, ClientDto.class);
 
@@ -645,6 +650,10 @@ public class ClientServiceImpl implements ClientService {
                     // Assign the team lead of the creator
                     if (client.getCreatedBy().getTeamLead() != null) {
                         dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
+                    }
+                    else {
+                        // Creator is a team lead → assign to themselves
+                        dto.setAssignedTo(modelMapper.map(client.getCreatedBy(), UserDto.class));
                     }
                 }
                 dto.setClientStatus(client.getClientStatus().getDisplayName());
