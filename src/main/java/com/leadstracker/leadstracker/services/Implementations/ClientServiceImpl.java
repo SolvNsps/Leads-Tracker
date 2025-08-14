@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -965,5 +966,62 @@ public class ClientServiceImpl implements ClientService {
 
         return response;
     }
+
+
+    @Override
+    public Object getClientStatsForLoggedInUser(String duration) {
+        // Get the logged-in user
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+
+        String email = principal.getUsername();
+        UserEntity loggedInUser = userRepository.findByEmail(email);
+
+        //  Date range
+        Date[] dateRange = calculateDateRange(duration);
+        Date startDate = dateRange[0];
+        Date endDate = dateRange[1];
+
+        // Role-based stats
+        if (loggedInUser.getRole().getName().equals("ROLE_ADMIN")) {
+            // Admin → full system stats
+            return getClientStats(duration);
+        }
+        else if (loggedInUser.getRole().getName().equals("ROLE_TEAM_LEAD")) {
+            // Team Lead → stats for their team
+            List<UserEntity> members = userRepository.findByTeam(loggedInUser.getTeam());
+            List<ClientEntity> teamClients = clientRepository
+                    .findByCreatedByInAndCreatedDateBetween(members, startDate, endDate);
+
+            Map<String, Long> statusCounts = teamClients.stream()
+                    .collect(Collectors.groupingBy(
+                            c -> c.getClientStatus().toString(),
+                            Collectors.counting()));
+
+            return new ClientStatsDto(
+                    loggedInUser.getTeam().getName(),
+                    teamClients.size(),
+                    statusCounts
+            );
+        }
+        else {
+            // Team Member → only their own stats
+            List<ClientEntity> myClients = clientRepository
+                    .findByCreatedByAndCreatedDateBetween(loggedInUser, startDate, endDate);
+
+            Map<String, Long> statusCounts = myClients.stream()
+                    .collect(Collectors.groupingBy(
+                            c -> c.getClientStatus().toString(),
+                            Collectors.counting()));
+
+            return new UserStatsDto(
+                    loggedInUser.getUserId(),
+                    loggedInUser.getFirstName() + " " + loggedInUser.getLastName(),
+                    myClients.size(),
+                    statusCounts
+            );
+        }
+    }
+
 
 }

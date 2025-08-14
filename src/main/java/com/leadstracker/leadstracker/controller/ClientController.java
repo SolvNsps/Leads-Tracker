@@ -438,5 +438,13 @@ public class ClientController {
     return ResponseEntity.ok(overdueClients);
    }
 
+
+   //my statistics
+   @GetMapping("/my-statistics")
+   public ResponseEntity<?> getMyStats(@RequestParam(defaultValue = "week") String duration) {
+       return ResponseEntity.ok(clientService.getClientStatsForLoggedInUser(duration));
+   }
+
+
 }
 
