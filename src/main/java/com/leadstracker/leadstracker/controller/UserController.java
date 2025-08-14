@@ -484,15 +484,13 @@ public class UserController {
         ));
     }
 
-
-
-    //Admin editing profile
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @GetMapping("/admin/profile")
-    public ResponseEntity<UserProfileResponseDto> getAdminProfile(Principal principal) {
-        UserProfileResponseDto profile = userProfileService.getProfile(principal.getName());
-        return ResponseEntity.ok(profile);
-    }
+    //Admin viewing profile
+//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+//    @GetMapping("/admin/profile")
+//    public ResponseEntity<UserProfileResponseDto> getAdminProfile(Principal principal) {
+//        UserProfileResponseDto profile = userProfileService.getProfile(principal.getName());
+//        return ResponseEntity.ok(profile);
+//    }
 
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")

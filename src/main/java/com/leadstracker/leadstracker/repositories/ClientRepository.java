@@ -81,6 +81,22 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
     Page<ClientEntity> findByCreatedBy_UserIdIn(List<String> userIds, Pageable pageable);
 
 
+    @Query("""
+    SELECT c FROM clients c
+    WHERE c.createdBy.userId IN :userIds
+    AND (:name IS NULL OR LOWER(CONCAT(c.firstName, ' ', c.lastName)) LIKE LOWER(CONCAT('%', :name, '%')))
+    AND (:status IS NULL OR c.clientStatus = :status)
+    AND (:startDate IS NULL OR c.createdDate >= :startDate)
+    AND (:endDate IS NULL OR c.createdDate <= :endDate)
+""")
+    Page<ClientEntity> searchClientsWithUserIds(
+            @Param("userIds") List<String> userIds,
+            @Param("name") String name,
+            @Param("status") Statuses status,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            Pageable pageable
+    );
 
 
 }

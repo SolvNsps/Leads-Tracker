@@ -312,13 +312,21 @@ public class ClientController {
             @PathVariable String userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String name, @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal UserPrincipal authentication) {
 
         String loggedInUserId = authentication.getId();
         String role = authentication.getAuthorities().iterator().next().getAuthority();
 
+        Statuses statusEnum = null;
+        if (status != null && !status.trim().isEmpty()) {
+            statusEnum = Statuses.fromString(status);
+        }
+
         PaginatedResponse<ClientRest> clients = clientService.getMyClientsForUserRole(
-                loggedInUserId, role, userId, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate")));
+                        loggedInUserId, role, userId, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate")), name, statusEnum,
+                date);
 
         return ResponseEntity.ok(clients);
     }
