@@ -400,6 +400,8 @@ public class ClientServiceImpl implements ClientService {
                 dto.setAssignedTo(teamLeadDto);
             }
 
+            dto.setClientStatus(clientEntity.getClientStatus().getDisplayName());
+
             return dto;
         });
     }
