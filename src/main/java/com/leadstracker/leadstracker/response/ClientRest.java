@@ -14,6 +14,7 @@ public class ClientRest {
     private String createdBy;
     private String assignedTo;
     private String gpsLocation;
+    private String teamName;
 
     public String getClientId() {
         return clientId;
@@ -101,5 +102,13 @@ public class ClientRest {
 
     public String getGpsLocation() {
         return gpsLocation;
+    }
+
+    public String getTeamName() {
+        return teamName;
+    }
+
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
     }
 }

@@ -27,6 +27,7 @@ public class ClientDto implements Serializable {
     private Date lastUpdated;
     private String clientStatus;
     private UserDto assignedTo;
+    private TeamDto teamName;
 
     public long getId() {
         return id;
@@ -68,12 +69,10 @@ public class ClientDto implements Serializable {
         this.phoneNumber = phoneNumber;
     }
 
-//    @JsonProperty("gpslocation")
     public String getGpsLocation() {
         return gpsLocation;
     }
 
-//    @JsonProperty("gpslocation")
     public void setGpsLocation(String gpsLocation) {
         this.gpsLocation = gpsLocation;
     }
@@ -124,6 +123,14 @@ public class ClientDto implements Serializable {
 
     public void setAssignedTo(UserDto assignedTo) {
         this.assignedTo = assignedTo;
+    }
+
+    public TeamDto getTeamName() {
+        return teamName;
+    }
+
+    public void setTeamName(TeamDto teamName) {
+        this.teamName = teamName;
     }
 
     @Override

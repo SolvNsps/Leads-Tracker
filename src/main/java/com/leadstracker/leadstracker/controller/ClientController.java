@@ -168,6 +168,10 @@ public class ClientController {
                 rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
             }
 
+            if (dto.getCreatedBy() != null && dto.getCreatedBy().getTeamName() != null) {
+                rest.setTeamName(dto.getCreatedBy().getTeamName());
+            }
+
             return rest;
         }).toList();
 
@@ -287,6 +291,10 @@ public class ClientController {
             if (dto.getAssignedTo() != null) {
                 UserDto teamLead = dto.getAssignedTo();
                 rest.setAssignedTo(teamLead.getFirstName() + " " + teamLead.getLastName());
+            }
+
+            if (dto.getCreatedBy() != null && dto.getCreatedBy().getTeamName() != null) {
+                rest.setTeamName(dto.getCreatedBy().getTeamName());
             }
 
             return rest;

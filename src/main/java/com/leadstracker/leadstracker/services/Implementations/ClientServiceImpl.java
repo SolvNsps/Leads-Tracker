@@ -387,6 +387,14 @@ public class ClientServiceImpl implements ClientService {
         return clientPage.map(clientEntity -> {
             ClientDto dto = modelMapper.map(clientEntity, ClientDto.class);
 
+            if (clientEntity.getCreatedBy() != null) {
+                UserDto createdByDto = modelMapper.map(clientEntity.getCreatedBy(), UserDto.class);
+                if (clientEntity.getCreatedBy().getTeam() != null) {
+                    createdByDto.setTeamName(clientEntity.getCreatedBy().getTeam().getName());
+                }
+                dto.setCreatedBy(createdByDto);
+            }
+
             if (clientEntity.getTeamLead() != null) {
                 UserDto teamLeadDto = modelMapper.map(clientEntity.getTeamLead(), UserDto.class);
                 dto.setAssignedTo(teamLeadDto);
@@ -645,17 +653,22 @@ public class ClientServiceImpl implements ClientService {
                 ClientDto dto = modelMapper.map(client, ClientDto.class);
 
                 if (client.getCreatedBy() != null) {
-                    dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
+                    UserDto createdByDto = modelMapper.map(client.getCreatedBy(), UserDto.class);
+                    if (client.getCreatedBy().getTeam() != null) {
+                        createdByDto.setTeamName(client.getCreatedBy().getTeam().getName());
+                    }
+                    dto.setCreatedBy(createdByDto);
 
                     // Assign the team lead of the creator
                     if (client.getCreatedBy().getTeamLead() != null) {
                         dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
-                    }
-                    else {
+                    } else {
                         // Creator is a team lead → assign to themselves
                         dto.setAssignedTo(modelMapper.map(client.getCreatedBy(), UserDto.class));
                     }
                 }
+
+
                 dto.setClientStatus(client.getClientStatus().getDisplayName());
                 overdueClients.add(dto);
             }
