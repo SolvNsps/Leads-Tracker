@@ -562,7 +562,6 @@ public class UserController {
     }
 
     //searching for a user
-//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/search-users")
     public ResponseEntity<List<UserDto>> searchUsers(
             @RequestParam(required = false) String keyword) {

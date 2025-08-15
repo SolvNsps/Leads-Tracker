@@ -27,8 +27,6 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
 
     List<ClientEntity> findByCreatedBy(UserEntity userEntity, Pageable pageable);
 
-//    Page<ClientEntity> findByTeamLead(UserEntity teamLead, Pageable pageable);
-
     // For unpaginated fetch
     List<ClientEntity> findByTeamLead(UserEntity teamLead);
     List<ClientEntity> findByCreatedBy(UserEntity createdBy);
@@ -45,13 +43,6 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
             + "FROM clients c group by c.clientStatus")
     List<ClientStatusCountDto> countClientsByStatus();
 
-//    @Query("SELECT c FROM clients c " +
-//            "WHERE (:name IS NULL OR LOWER(c.firstName || c.lastName) LIKE LOWER(CONCAT('%', :name, '%'))) " +
-//            "AND (:status IS NULL OR c.clientStatus = :status) " +
-//            "AND (:startDate IS NULL OR c.createdDate >= :startDate) " +
-//            "AND (:endDate IS NULL OR c.createdDate <= :endDate)")
-//    List<ClientEntity> searchClients(@Param("name") String name, @Param("status") Statuses status, @Param("startDate") Date startDate,
-//                                     @Param("endDate") Date endDate);
 
     @Query("""
     SELECT c FROM clients c
@@ -60,10 +51,8 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
       AND (:startDate IS NULL OR c.createdDate >= :startDate)
       AND (:endDate IS NULL OR c.createdDate <= :endDate)
 """)
-    List<ClientEntity> searchClients(@Param("name") String name,
-                                     @Param("status") Statuses status,
-                                     @Param("startDate") Date startDate,
-                                     @Param("endDate") Date endDate);
+    List<ClientEntity> searchClients(@Param("name") String name, @Param("status") Statuses status,
+                                     @Param("startDate") Date startDate, @Param("endDate") Date endDate);
 
 
     List<ClientEntity> findByCreatedByIdIn(List<String> userIds);
@@ -90,13 +79,7 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
     AND (:endDate IS NULL OR c.createdDate <= :endDate)
 """)
     Page<ClientEntity> searchClientsWithUserIds(
-            @Param("userIds") List<String> userIds,
-            @Param("name") String name,
-            @Param("status") Statuses status,
-            @Param("startDate") Date startDate,
-            @Param("endDate") Date endDate,
-            Pageable pageable
-    );
-
+            @Param("userIds") List<String> userIds, @Param("name") String name,
+            @Param("status") Statuses status, @Param("startDate") Date startDate, @Param("endDate") Date endDate, Pageable pageable);
 
 }

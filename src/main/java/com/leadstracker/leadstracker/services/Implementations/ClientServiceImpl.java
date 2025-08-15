@@ -665,7 +665,7 @@ public class ClientServiceImpl implements ClientService {
                     if (client.getCreatedBy().getTeamLead() != null) {
                         dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
                     } else {
-                        // Creator is a team lead → assign to themselves
+                        // Creator is a team lead --- assign to themselves
                         dto.setAssignedTo(modelMapper.map(client.getCreatedBy(), UserDto.class));
                     }
                 }
@@ -757,6 +757,12 @@ public class ClientServiceImpl implements ClientService {
 
         Page<ClientEntity> clientsPage;
 
+        EnumSet<Statuses> allowedStatuses = EnumSet.of(
+                Statuses.PENDING,
+                Statuses.INTERESTED,
+                Statuses.AWAITING_DOCUMENTATION
+        );
+
         switch (role) {
             case "ROLE_ADMIN" -> {
                 UserEntity targetUser = userRepository.findByUserId(targetUserId);
@@ -806,20 +812,26 @@ public class ClientServiceImpl implements ClientService {
                             LocalDate.now()
                     );
                     return daysPending > 5 &&
-                            EnumSet.of(Statuses.PENDING, Statuses.INTERESTED, Statuses.AWAITING_DOCUMENTATION)
-                                    .contains(client.getClientStatus());
+                            allowedStatuses.contains(client.getClientStatus());
                 })
                 .map(client -> {
                     ClientDto dto = modelMapper.map(client, ClientDto.class);
 
                     if (client.getCreatedBy() != null) {
                         dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
+
                         if (client.getCreatedBy().getTeamLead() != null) {
                             dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
                         }
+                        else {
+                            // Creator is a team lead → assign to themselves
+                            dto.setAssignedTo(modelMapper.map(client.getCreatedBy(), UserDto.class));
+                        }
                     }
 
-                    dto.setClientStatus(client.getClientStatus().name());
+
+
+                    dto.setClientStatus(client.getClientStatus().getDisplayName());
                     return dto;
                 })
                 .toList();
@@ -853,6 +865,7 @@ public class ClientServiceImpl implements ClientService {
             if (dto.getAssignedTo() != null) {
                 rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
             }
+
 
             return rest;
         }).toList();
@@ -1005,14 +1018,8 @@ public class ClientServiceImpl implements ClientService {
 
 
     @Override
-    public PaginatedResponse<ClientRest> getMyClientsForUserRole(
-            String loggedInUserId,
-            String role,
-            String userId,
-            Pageable pageable,
-            String name,
-            Statuses status,
-            LocalDate date) {
+    public PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId,
+            Pageable pageable, String name, Statuses status, LocalDate date) {
 
         List<String> allowedUserIds = new ArrayList<>();
 
@@ -1054,7 +1061,7 @@ public class ClientServiceImpl implements ClientService {
             default -> throw new AccessDeniedException("Invalid role");
         }
 
-        // Convert date filters
+        // Converting date filters
         Date startDateTime = (date != null)
                 ? Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant())
                 : null;
@@ -1062,17 +1069,11 @@ public class ClientServiceImpl implements ClientService {
                 ? Date.from(date.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
                 : null;
 
-        // Call repository search method
-        Page<ClientEntity> clientsPage = clientRepository.searchClientsWithUserIds(
-                allowedUserIds,
-                (name != null && !name.trim().isEmpty()) ? name.trim() : null,
-                status,
-                startDateTime,
-                endDateTime,
-                pageable
+        // Calling repository search method
+        Page<ClientEntity> clientsPage = clientRepository.searchClientsWithUserIds(allowedUserIds, (name != null && !name.trim().isEmpty()) ? name.trim() : null,
+                status, startDateTime, endDateTime, pageable
         );
 
-        // Mapping logic (unchanged)
         List<ClientRest> dtoList = clientsPage.stream()
                 .map(client -> {
                     ClientRest dto = modelMapper.map(client, ClientRest.class);

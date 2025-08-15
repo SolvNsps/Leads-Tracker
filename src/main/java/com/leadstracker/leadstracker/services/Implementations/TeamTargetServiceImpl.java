@@ -6,7 +6,6 @@ import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.entities.UserTargetEntity;
 import com.leadstracker.leadstracker.repositories.*;
-import com.leadstracker.leadstracker.request.TargetDistributionRequest;
 import com.leadstracker.leadstracker.request.TeamTargetRequestDto;
 import com.leadstracker.leadstracker.response.MyTargetResponse;
 import com.leadstracker.leadstracker.response.TeamTargetOverviewDto;
@@ -18,13 +17,13 @@ import com.leadstracker.leadstracker.services.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.*;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -230,11 +229,15 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             }
 
 
+
     private TeamTargetOverviewDto mapToTeamTargetOverviewDto(TeamTargetEntity teamTarget, List<UserTargetEntity> userTargets) {
         TeamTargetOverviewDto dto = new TeamTargetOverviewDto();
         dto.setTotalTargetValue(teamTarget.getTargetValue());
         dto.setDueDate(teamTarget.getDueDate());
         dto.setDateAssigned(teamTarget.getAssignedDate());
+
+        // Calculating total achieved across all members
+        AtomicInteger totalAchieved = new AtomicInteger();
 
         List<UserTargetResponseDto> memberDistributions = userTargets.stream().map(userTarget -> {
             UserTargetResponseDto memberDto = new UserTargetResponseDto();
@@ -251,28 +254,24 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             memberDto.setDueDate(userTarget.getDueDate());
             memberDto.setDateAssigned(userTarget.getAssignedDate());
 
-            // Calculate progress: total clients submitted / target
-            int totalClients = Math.toIntExact(clientRepository.countByCreatedBy(member));
-            memberDto.setProgressAchieved(totalClients + "/" + userTarget.getTargetValue());
+            // Calculating member progress: total clients submitted / target
+            int memberClients = Math.toIntExact(clientRepository.countByCreatedBy(member));
+            memberDto.setProgressAchieved(memberClients + "/" + userTarget.getTargetValue());
+
+            // Adding to total
+            totalAchieved.addAndGet(memberClients);
 
             return memberDto;
         }).collect(Collectors.toList());
 
-        dto.setMemberDistributions(memberDistributions);
+        // Setting team progress
+        dto.setProgressPercentage(totalAchieved + "/" + teamTarget.getTargetValue());
 
-        // Optional: Calculate overall progressPercentage for the team
-//        int totalClientsAll = memberDistributions.stream()
-//                .mapToInt(md -> {
-//                    int fraction = md.getProgressAchieved();
-//                    return Integer.parseInt(fraction[1]);
-//                }).sum();
-//
-//        dto.setProgressPercentage(teamTarget.getTargetValue() > 0
-//                ? (int) Math.ceil((totalClientsAll * 100.0) / teamTarget.getTargetValue())
-//                : 0);
+        dto.setMemberDistributions(memberDistributions);
 
         return dto;
     }
+
 
 
     @Override

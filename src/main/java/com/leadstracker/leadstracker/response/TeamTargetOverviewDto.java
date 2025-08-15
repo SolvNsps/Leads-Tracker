@@ -8,7 +8,7 @@ public class TeamTargetOverviewDto {
     private int totalTargetValue;
     private LocalDate dueDate;
     private LocalDate dateAssigned;
-    private int progressPercentage;
+    private String progressPercentage;
 //    private int progressRemaining;
 //    private int progressValue;
 
@@ -42,11 +42,11 @@ public class TeamTargetOverviewDto {
         this.dateAssigned = dateAssigned;
     }
 
-    public int getProgressPercentage() {
+    public String getProgressPercentage() {
         return progressPercentage;
     }
 
-    public void setProgressPercentage(int progressPercentage) {
+    public void setProgressPercentage(String progressPercentage) {
         this.progressPercentage = progressPercentage;
     }
 
