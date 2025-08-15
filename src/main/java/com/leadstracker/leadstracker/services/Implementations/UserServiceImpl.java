@@ -747,6 +747,43 @@ public class UserServiceImpl implements UserService {
         teamsRepository.save(teamEntity);
     }
 
+
+    @Override
+    public void reactivateTeam(String teamId, String newTeamLeadId) {
+        TeamsEntity teamEntity = teamsRepository.findById(Long.valueOf(teamId))
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+
+        if (teamEntity.isActive()) {
+            throw new RuntimeException("Team is already active");
+        }
+
+        UserEntity currentLead = teamEntity.getTeamLead();
+
+        //checking the role for validity
+        boolean leadIsValid = currentLead != null && "ROLE_TEAM_LEAD".equals(currentLead.getRole());
+
+        if (!leadIsValid) {
+            if (newTeamLeadId != null) {
+                // Assigning new team lead
+                UserEntity newLead = userRepository.findByUserId(newTeamLeadId);
+
+                if (!newLead.getRole().equals(leadIsValid)) {
+                    throw new RuntimeException("Selected user is not a team lead");
+                }
+
+                teamEntity.setTeamLead(newLead);
+            } else {
+                throw new RuntimeException("Current team lead is invalid. Please provide a new team lead ID.");
+            }
+        }
+
+        // Reactivating team
+        teamEntity.setActive(true);
+        teamsRepository.save(teamEntity);
+    }
+
+
+
     /**
      * @param name
      * @return

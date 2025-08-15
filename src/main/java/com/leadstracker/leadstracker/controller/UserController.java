@@ -484,15 +484,9 @@ public class UserController {
         ));
     }
 
-    //Admin viewing profile
-//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-//    @GetMapping("/admin/profile")
-//    public ResponseEntity<UserProfileResponseDto> getAdminProfile(Principal principal) {
-//        UserProfileResponseDto profile = userProfileService.getProfile(principal.getName());
-//        return ResponseEntity.ok(profile);
-//    }
 
 
+    //Admin editing phone number
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/changeAdminNumber/profile")
     public ResponseEntity<UserProfileResponseDto> updateAdminPhone(@RequestBody @Valid UpdateUserProfileRequestDto request,
@@ -567,6 +561,7 @@ public class UserController {
             @RequestParam(required = false) String keyword) {
 
         List<UserDto> users = userService.searchUsers(keyword);
+
         return ResponseEntity.ok(users);
     }
 
@@ -597,6 +592,19 @@ public class UserController {
         return ResponseEntity.ok(Map.of(
                 "message", "Team successfully deactivated"));
     }
+
+
+    //Reactivating a team
+    @PatchMapping(value = "/team/{teamId}/reactivate")
+    public ResponseEntity<?> reactivateTeam(@PathVariable String teamId, @RequestParam(required = false)
+                                            String newTeamLeadId) throws Exception {
+
+        userService.reactivateTeam(teamId, newTeamLeadId);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Team successfully reactivated"));
+    }
+
 
 
     //searching a team
