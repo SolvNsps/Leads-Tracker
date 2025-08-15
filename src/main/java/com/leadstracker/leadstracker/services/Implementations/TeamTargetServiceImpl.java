@@ -237,7 +237,7 @@ public class TeamTargetServiceImpl implements TeamTargetService {
         dto.setDateAssigned(teamTarget.getAssignedDate());
 
         // Calculating total achieved across all members
-        AtomicInteger totalAchieved = new AtomicInteger();
+        final int[] totalAchieved = {0};
 
         List<UserTargetResponseDto> memberDistributions = userTargets.stream().map(userTarget -> {
             UserTargetResponseDto memberDto = new UserTargetResponseDto();
@@ -249,7 +249,7 @@ public class TeamTargetServiceImpl implements TeamTargetService {
                 memberDto.setFullName(member.getFirstName() + " " + member.getLastName());
             }
 
-            // Assigned target value for this member
+            // Assigned target value for member
             memberDto.setAssignedTargetValue(userTarget.getTargetValue());
             memberDto.setDueDate(userTarget.getDueDate());
             memberDto.setDateAssigned(userTarget.getAssignedDate());
@@ -259,13 +259,19 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             memberDto.setProgressAchieved(memberClients + "/" + userTarget.getTargetValue());
 
             // Adding to total
-            totalAchieved.addAndGet(memberClients);
+            totalAchieved[0] = totalAchieved[0] + memberClients;
 
             return memberDto;
         }).collect(Collectors.toList());
 
         // Setting team progress
-        dto.setProgressPercentage(totalAchieved + "/" + teamTarget.getTargetValue());
+        dto.setProgressAchieve(totalAchieved[0] + "/" + teamTarget.getTargetValue());
+        if (teamTarget.getTargetValue() > 0) {
+            double percentage = ((double) totalAchieved[0] / teamTarget.getTargetValue()) * 100;
+            dto.setProgressPercentage((int) Math.round(percentage));
+        } else {
+            dto.setProgressPercentage(0);
+        }
 
         dto.setMemberDistributions(memberDistributions);
 
