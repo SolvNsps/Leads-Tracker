@@ -52,4 +52,6 @@ public interface ClientService {
     PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable, String name, Statuses status, LocalDate date);
 
    Object getClientStatsForLoggedInUser(String duration);
+
+    void deactivateClient(String clientId);
 }

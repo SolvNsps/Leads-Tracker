@@ -83,8 +83,8 @@ public class ClientServiceImpl implements ClientService {
         clientEntity.setClientId(utils.generateUserId(30));
         clientEntity.setFirstName(clientDto.getFirstName());
         clientEntity.setLastName(clientDto.getLastName());
-//        clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
         clientEntity.setGpsLocation(clientDto.getGpsLocation());
+        clientEntity.setActive(true);
         Statuses statusEnum = null;
         try {
             statusEnum = Statuses.fromString(clientDto.getClientStatus());
@@ -830,7 +830,6 @@ public class ClientServiceImpl implements ClientService {
                     }
 
 
-
                     dto.setClientStatus(client.getClientStatus().getDisplayName());
                     return dto;
                 })
@@ -883,138 +882,18 @@ public class ClientServiceImpl implements ClientService {
         return response;
     }
 
-    /**
-     * @param loggedInUserId
-     * @param role
-     * @param userId
-     * @param pageable
-     * @return
-     */
-//    @Override
-//    public PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable, String name, Statuses status, LocalDate date) {
-//        Page<ClientEntity> clientsPage;
-//        List<String> allowedUserIds = new ArrayList<>();
-//
-//        switch (role) {
-//            case "ROLE_ADMIN" -> {
-//                // Admin can get clients of any user (lead/member)
-//                UserEntity targetUser = userRepository.findByUserId(userId);
-//
-//                if (targetUser.getRole().getName().equals("ROLE_TEAM_LEAD")) {
-//                    // Lead + members
-//                    List<String> userIds = new ArrayList<>();
-//                    userIds.add(userId);
-//                    userIds.addAll(userRepository.findByTeamLead_UserId(userId)
-//                            .stream()
-//                            .map(UserEntity::getUserId)
-//                            .toList());
-//                    clientsPage = clientRepository.findByCreatedBy_UserIdIn(userIds, pageable);
-//                } else {
-//                    // Just that user's clients
-//                    clientsPage = clientRepository.findByCreatedBy_UserId(userId, pageable);
-//                }
-//            }
-//            case "ROLE_TEAM_LEAD" -> {
-//                if (loggedInUserId.equals(userId)) {
-//                    // Lead fetching own + members
-//                    List<String> userIds = new ArrayList<>();
-//                    userIds.add(loggedInUserId);
-//                    userIds.addAll(userRepository.findByTeamLead_UserId(loggedInUserId)
-//                            .stream()
-//                            .map(UserEntity::getUserId)
-//                            .toList());
-//                    clientsPage = clientRepository.findByCreatedBy_UserIdIn(userIds, pageable);
-//                } else {
-//                    // Lead fetching a member's clients
-//                    boolean isMember = userRepository.existsByUserIdAndTeamLead_UserId(userId, loggedInUserId);
-//                    if (!isMember) throw new AccessDeniedException("You can only view your own or your team members' clients");
-//                    clientsPage = clientRepository.findByCreatedBy_UserId(userId, pageable);
-//                }
-//            }
-//            case "ROLE_TEAM_MEMBER" -> {
-//                if (!loggedInUserId.equals(userId))
-//                    throw new AccessDeniedException("You can only view your own clients");
-//                clientsPage = clientRepository.findByCreatedBy_UserId(loggedInUserId, pageable);
-//            }
-//            default -> throw new AccessDeniedException("Invalid role");
-//        }
-//
-//
-//        // Converting date filters
-//        Date startDateTime = (date != null)
-//                ? Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant())
-//                : null;
-//        Date endDateTime = (date != null)
-//                ? Date.from(date.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
-//                : null;
-//
-//
-//        // Call repository search method
-//        Page<ClientEntity> clientsPage = clientRepository.searchClientsWithUserIds(
-//                allowedUserIds,
-//                (name != null && !name.trim().isEmpty()) ? name.trim() : null,
-//                status,
-//                startDateTime,
-//                endDateTime,
-//                pageable
-//        );
-//
-//        List<ClientRest> dtoList = clientsPage.stream()
-//                .map(client -> {
-//                    ClientRest dto = modelMapper.map(client, ClientRest.class);
-//
-//                    // createdBy display name
-//                    if (client.getCreatedBy() != null) {
-//                        dto.setCreatedBy(client.getCreatedBy().getFirstName() + " " + client.getCreatedBy().getLastName());
-//                    } else {
-//                        dto.setCreatedBy("Unknown");
-//                    }
-//
-//                    if (dto.getCreatedAt() == null) {
-//                        if (client.getCreatedDate() != null) {
-//                            LocalDateTime ldt = client.getCreatedDate().toInstant()
-//                                    .atZone(ZoneId.systemDefault())
-//                                    .toLocalDateTime();
-//                            dto.setCreatedAt(ldt);
-//                        } else {
-//                            dto.setCreatedAt(LocalDateTime.of(1970, 1, 1, 0, 0)); // default epoch time
-//                        }
-//                    }
-//
-//                    if (client.getLastUpdated() != null) {
-//                        dto.setLastUpdated(client.getLastUpdated().toInstant()
-//                                .atZone(ZoneId.systemDefault()).toLocalDateTime());
-//
-//                        Instant lastUpdatedInstant = client.getLastUpdated().toInstant();
-//                        Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
-//                        dto.setLastAction(utils.getExactDuration(duration));
-//                    }
-//
-//
-//                    if (dto.getAssignedTo() == null) {
-//                        if (client.getTeamLead() != null) {
-//                            dto.setAssignedTo(client.getTeamLead().getFirstName() + " " + client.getTeamLead().getLastName());
-//                        } else {
-//                            dto.setAssignedTo("Unassigned");
-//                        }
-//                    }
-//
-//                    return dto;
-//                })
-//                .toList();
-//
-//        // Building paginated response
-//        PaginatedResponse<ClientRest> response = new PaginatedResponse<>();
-//        response.setData(dtoList);
-//        response.setCurrentPage(clientsPage.getNumber());
-//        response.setTotalPages(clientsPage.getTotalPages());
-//        response.setTotalItems(clientsPage.getTotalElements());
-//        response.setPageSize(clientsPage.getSize());
-//        response.setHasNext(clientsPage.hasNext());
-//        response.setHasPrevious(clientsPage.hasPrevious());
-//
-//        return response;
-//    }
+    @Override
+    public void deactivateClient(String clientId) {
+        ClientEntity clientEntity = clientRepository.findByClientId(clientId);
+
+        if (!clientEntity.isActive()) {
+            throw new RuntimeException("Client is already inactive");
+        }
+
+        clientEntity.setActive(false);
+        clientRepository.save(clientEntity);
+    }
+
 
 
     @Override

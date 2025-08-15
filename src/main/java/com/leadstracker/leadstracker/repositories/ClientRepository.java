@@ -82,4 +82,6 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
             @Param("userIds") List<String> userIds, @Param("name") String name,
             @Param("status") Statuses status, @Param("startDate") Date startDate, @Param("endDate") Date endDate, Pageable pageable);
 
+    List<ClientEntity> findByActiveTrue();
+
 }

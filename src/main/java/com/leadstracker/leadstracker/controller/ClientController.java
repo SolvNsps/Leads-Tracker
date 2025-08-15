@@ -462,5 +462,15 @@ public class ClientController {
    }
 
 
+   //deactivating client
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN, ROLE_TEAM_LEAD')")
+   @PatchMapping("/{clientId}/deactivate")
+   public ResponseEntity<?> deactivateClient(@PathVariable String clientId) {
+       clientService.deactivateClient(clientId);
+       return ResponseEntity.ok(Map.of(
+               "message", "Client successfully deactivated"
+       ));
+   }
+
 }
 
