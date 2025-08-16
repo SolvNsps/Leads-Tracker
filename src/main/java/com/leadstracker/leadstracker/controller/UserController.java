@@ -383,7 +383,7 @@ public class UserController {
     //Viewing and managing the data of all team members under a team lead
     @GetMapping("/team-leads/{userId}/members/data")
     public ResponseEntity<PaginatedResponse<UserRest>> getTeamMembersData(
-            @PathVariable String userId, @RequestParam(value = "page", defaultValue = "1")
+            @PathVariable String userId, @RequestParam(value = "page", defaultValue = "0")
             int page, @RequestParam(value = "limit", defaultValue = "10") int limit) {
 
         Page<UserDto> allMembers = userService.getTeamMembersData(userId, page, limit);

@@ -441,10 +441,10 @@ public class ClientController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     @GetMapping("/user/{userId}/overdueClients")
     public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(@PathVariable String userId, @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "10") int limit,
         @AuthenticationPrincipal UserPrincipal authentication) {
 
-    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
+    Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
     String loggedInUserId =  authentication.getId();
     String role = authentication.getAuthorities().iterator().next().getAuthority();
 
