@@ -929,7 +929,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId,
-            Pageable pageable, String name, Statuses status, LocalDate date) {
+            Pageable pageable, String name, Statuses status, LocalDate fromDate, LocalDate toDate) {
 
         List<String> allowedUserIds = new ArrayList<>();
 
@@ -972,11 +972,12 @@ public class ClientServiceImpl implements ClientService {
         }
 
         // Converting date filters
-        Date startDateTime = (date != null)
-                ? Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant())
+        Date startDateTime = (fromDate != null)
+                ? Date.from(fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
                 : null;
-        Date endDateTime = (date != null)
-                ? Date.from(date.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
+
+        Date endDateTime = (toDate != null)
+                ? Date.from(toDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
                 : null;
 
         // Calling repository search method

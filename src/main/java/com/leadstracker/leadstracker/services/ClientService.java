@@ -49,7 +49,7 @@ public interface ClientService {
 
     PaginatedResponse<ClientRest> getOverdueClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable, String name, Statuses status, LocalDate fromDate, LocalDate toDate);
 
-    PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable, String name, Statuses status, LocalDate date);
+    PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable, String name, Statuses status, LocalDate fromDate, LocalDate toDate);
 
    Object getClientStatsForLoggedInUser(String duration);
 

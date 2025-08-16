@@ -321,7 +321,8 @@ public class ClientController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(required = false) String name, @RequestParam(required = false) String status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @AuthenticationPrincipal UserPrincipal authentication) {
 
         String loggedInUserId = authentication.getId();
@@ -334,7 +335,7 @@ public class ClientController {
 
         PaginatedResponse<ClientRest> clients = clientService.getMyClientsForUserRole(
                         loggedInUserId, role, userId, PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate")), name, statusEnum,
-                date);
+                fromDate, endDate);
 
         return ResponseEntity.ok(clients);
     }
