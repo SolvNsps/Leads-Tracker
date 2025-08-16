@@ -26,7 +26,8 @@ public enum Statuses {
         }
 
         // Normalize: uppercase, replace spaces with underscores
-        String normalized = status.trim().replace(" ", "_").toUpperCase();
+//        String normalized = status.trim().replace(" ", "_").toUpperCase();
+        String normalized = status.trim().replaceAll("\\s+", "_").toUpperCase();
 
         for (Statuses s : values()) {
             // Match enum name
@@ -34,7 +35,8 @@ public enum Statuses {
                 return s;
             }
             // Match display name ignoring spaces/underscores
-            String displayNormalized = s.getDisplayName().replace(" ", "_").toUpperCase();
+//            String displayNormalized = s.getDisplayName().replace(" ", "_").toUpperCase();
+            String displayNormalized = s.getDisplayName().trim().replaceAll("\\s+", "_").toUpperCase();
             if (displayNormalized.equals(normalized)) {
                 return s;
             }

@@ -441,36 +441,42 @@ public class ClientController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     @GetMapping("/user/{userId}/overdueClients")
     public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(@PathVariable String userId, @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int limit,
+        @RequestParam(defaultValue = "10") int limit, @RequestParam(required = false) String name, @RequestParam(required = false) String status,
+                                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
         @AuthenticationPrincipal UserPrincipal authentication) {
 
     Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
     String loggedInUserId =  authentication.getId();
     String role = authentication.getAuthorities().iterator().next().getAuthority();
 
+        Statuses statusEnum = null;
+        if (status != null && !status.trim().isEmpty()) {
+            statusEnum = Statuses.fromString(status);
+        }
+
     PaginatedResponse<ClientRest> overdueClients = clientService.getOverdueClientsForUserRole(
-            loggedInUserId, role, userId, pageable);
+            loggedInUserId, role, userId, pageable, name, statusEnum, fromDate, toDate);
 
     return ResponseEntity.ok(overdueClients);
    }
 
 
-   //my statistics
-   @GetMapping("/my-statistics")
-   public ResponseEntity<?> getMyStats(@RequestParam(defaultValue = "week") String duration) {
-       return ResponseEntity.ok(clientService.getClientStatsForLoggedInUser(duration));
-   }
+    //my statistics
+    @GetMapping("/my-statistics")
+    public ResponseEntity<?> getMyStats(@RequestParam(defaultValue = "week") String duration) {
+        return ResponseEntity.ok(clientService.getClientStatsForLoggedInUser(duration));
+    }
 
 
-   //deactivating client
+    //deactivating client
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN, ROLE_TEAM_LEAD')")
-   @PatchMapping("/{clientId}/deactivate")
-   public ResponseEntity<?> deactivateClient(@PathVariable String clientId) {
-       clientService.deactivateClient(clientId);
-       return ResponseEntity.ok(Map.of(
-               "message", "Client successfully deactivated"
-       ));
-   }
+    @PatchMapping("/{clientId}/deactivate")
+    public ResponseEntity<?> deactivateClient(@PathVariable String clientId) {
+        clientService.deactivateClient(clientId);
+        return ResponseEntity.ok(Map.of(
+                "message", "Client successfully deactivated"
+        ));
+    }
 
 }
 

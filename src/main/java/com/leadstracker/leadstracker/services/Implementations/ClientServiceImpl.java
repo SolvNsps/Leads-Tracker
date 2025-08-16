@@ -753,7 +753,8 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public PaginatedResponse<ClientRest> getOverdueClientsForUserRole(
-            String loggedInUserId, String role, String targetUserId, Pageable pageable) {
+            String loggedInUserId, String role, String targetUserId, Pageable pageable,
+            String name, Statuses status, LocalDate fromDate, LocalDate toDate) {
 
         Page<ClientEntity> clientsPage;
 
@@ -813,6 +814,36 @@ public class ClientServiceImpl implements ClientService {
                     );
                     return daysPending > 5 &&
                             allowedStatuses.contains(client.getClientStatus());
+                })
+
+                // name search
+                .filter(client -> {
+                    if (name == null || name.isBlank()) return true;
+                    String fullName = (client.getFirstName() + " " + client.getLastName()).toLowerCase();
+                    return fullName.contains(name.toLowerCase());
+                })
+
+                // status filter
+                .filter(client -> {
+                    if (status == null) return true;
+                    return client.getClientStatus() == status;
+                })
+
+                // date range filter
+                .filter(client -> {
+                    if (fromDate == null && toDate == null) return true;
+                    LocalDate createdDate = client.getCreatedDate().toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+
+                    if (fromDate != null && toDate != null) {
+                        return (createdDate.isEqual(fromDate) || createdDate.isAfter(fromDate)) &&
+                                (createdDate.isEqual(toDate) || createdDate.isBefore(toDate));
+                    } else if (fromDate != null) {
+                        return createdDate.isEqual(fromDate) || createdDate.isAfter(fromDate);
+                    } else {
+                        return createdDate.isEqual(toDate) || createdDate.isBefore(toDate);
+                    }
                 })
                 .map(client -> {
                     ClientDto dto = modelMapper.map(client, ClientDto.class);

@@ -47,7 +47,7 @@ public interface ClientService {
 
     Page<ClientDto> getClients(String email, Integer page, Integer size);
 
-    PaginatedResponse<ClientRest> getOverdueClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable);
+    PaginatedResponse<ClientRest> getOverdueClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable, String name, Statuses status, LocalDate fromDate, LocalDate toDate);
 
     PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable, String name, Statuses status, LocalDate date);
 
