@@ -341,7 +341,7 @@ public class ClientController {
     }
 
 
-
+//getting all clients under a team member
     @GetMapping("/team-member/{memberId}/clients")
     public ResponseEntity<PaginatedResponse<ClientRest>> getClientsOfTeamMember(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
