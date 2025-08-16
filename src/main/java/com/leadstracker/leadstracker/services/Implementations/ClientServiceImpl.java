@@ -720,14 +720,14 @@ public class ClientServiceImpl implements ClientService {
     /**
      * @param email
      * @param page
-     * @param size
+     * @param limit
      * @return
      */
     @Override
-    public Page<ClientDto> getClients(String email, Integer page, Integer size) {
+    public Page<ClientDto> getClients(String email, Integer page, Integer limit) {
         UserEntity user = userRepository.findByEmail(email);
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, limit);
         Page<ClientEntity> clientsPage;
 
         if (user.getRole().getName().equals("ROLE_ADMIN")) {
