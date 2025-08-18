@@ -84,4 +84,10 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
 
     List<ClientEntity> findByActiveTrue();
 
+    @Query("SELECT c FROM clients c " +
+            "WHERE c.lastUpdated IS NOT NULL " +
+            "AND FUNCTION('DATEDIFF', CURRENT_DATE, c.lastUpdated) > 5 " +
+            "AND c.clientStatus IN :statuses")
+    Page<ClientEntity> findOverdueClients(@Param("statuses") List<Statuses> statuses, Pageable pageable);
+
 }

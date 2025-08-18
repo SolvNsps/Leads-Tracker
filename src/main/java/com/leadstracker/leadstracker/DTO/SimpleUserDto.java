@@ -6,6 +6,16 @@ public class SimpleUserDto {
     private String lastName;
     private String email;
 
+    public SimpleUserDto(String userId, String firstName, String lastName) {
+        this.userId = userId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
+    public SimpleUserDto() {
+
+    }
+
     public String getUserId() {
         return userId;
     }

@@ -121,10 +121,11 @@ public class ClientServiceImpl implements ClientService {
     }
 
     /**
-     * @param duration
+     * @param startDate
+     * @param endDate
      * @return
      */
-    public TeamPerformanceDto getTeamPerformance(String userId, String duration) {
+    public TeamPerformanceDto getTeamPerformance(String userId, LocalDate startDate, LocalDate endDate) {
         //Getting team lead and members
         UserEntity teamLead = userRepository.findByUserId(userId);
         TeamsEntity team = teamLead.getTeam();
@@ -141,8 +142,7 @@ public class ClientServiceImpl implements ClientService {
             emptyResponse.setTeamTarget(0);
             emptyResponse.setProgressPercentage(0);
             emptyResponse.setProgressFraction("0/0");
-//            emptyResponse.setClientStatus(Collections.emptyMap());
-//            emptyResponse.setTeamMembers(Collections.emptyList());
+
             return emptyResponse;
         }
 
@@ -154,9 +154,9 @@ public class ClientServiceImpl implements ClientService {
         }
 
         //Calculating date range
-        Date[] dateRange = calculateDateRange(duration);
+        Date[] dateRange = calculateDateRange(startDate, endDate);
 
-        //Fetching all the clients of a team
+        // Fetching all the clients of the team within the range
         List<ClientEntity> clients = clientRepository.findByCreatedByInAndCreatedDateBetween(
                 teamMembers, dateRange[0], dateRange[1]
         );
@@ -169,15 +169,12 @@ public class ClientServiceImpl implements ClientService {
         response.setEmail(teamLead.getEmail());
         response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
         response.setTotalClientsAdded(clients.size());
-//        response.setTeamTarget(response.getNumberOfClients());
-//        response.setProgressPercentage(( (double) clients.size() / (response.getNumberOfClients())));
-//        response.setNumberOfTeamMembers(teamMembers.size());
         // members only (excluding lead) for display
         response.setNumberOfTeamMembers((int) teamMembers.stream()
-                .filter(ent -> !ent.getUserId().equals(teamLead.getUserId()))
+                .filter(entity -> !entity.getUserId().equals(teamLead.getUserId()))
                 .count());
 
-        //Fetching active target
+        //Fetching active team target
         Optional<TeamTargetEntity> activeTargetOpt = teamTargetRepository
                 .findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(team.getId(), LocalDate.now());
 
@@ -199,17 +196,11 @@ public class ClientServiceImpl implements ClientService {
         response.setClientStatus(
                 clients.stream()
                         .collect(Collectors.groupingBy(
-                                        ClientEntity::getClientStatus,
-                                        Collectors.summingInt(c -> 1)
+                                c -> (c.getClientStatus().getDisplayName()),
+                                Collectors.summingInt(c -> 1)
                                 )
                         ));
 
-        // Building team member stats
-//        response.setTeamMembers(
-//                teamMembers.stream()
-//                        .map(member -> teamMemberStats(member, dateRange[0], dateRange[1]))
-//                        .collect(Collectors.toList())
-//        );
 
         // Member stats (excluding lead)
         response.setTeamMembers(
@@ -223,14 +214,37 @@ public class ClientServiceImpl implements ClientService {
         return response;
     }
 
-    private Date[] calculateDateRange(String duration) {
-        LocalDate endDate = LocalDate.now();
-        LocalDate startDate = duration.equals("month") ?
-                endDate.minusMonths(1) : endDate.minusWeeks(1);
+
+    /**
+     * Calculate date range based on provided startDate and endDate.
+     * Defaults to last 5 days if nothing is provided.
+     * Enforces minimum of 5 days.
+     */
+    private Date[] calculateDateRange(LocalDate startDate, LocalDate endDate) {
+        LocalDate today = LocalDate.now();
+
+        // Case 1: If no dates provided, use last 5 days as default
+        if (startDate == null && endDate == null) {
+            endDate = today;
+            startDate = today.minusDays(4); // 5 days total
+        }
+        // Case 2: If only startDate is provided
+        else if (startDate != null && endDate == null) {
+            endDate = today;
+        }
+        // Case 3: If only endDate is provided
+        else if (startDate == null && endDate != null) {
+            startDate = endDate.minusDays(4);
+        }
+
+        // Ensure at least 5 days
+        long daysBetween = ChronoUnit.DAYS.between(startDate, endDate);
+        if (daysBetween < 4) {
+            startDate = endDate.minusDays(4);
+        }
 
         return new Date[]{
                 Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()),
-//                Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
                 Date.from(endDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
         };
     }
@@ -281,19 +295,20 @@ public class ClientServiceImpl implements ClientService {
         dto.setClientStatus(
                 memberClients.stream()
                         .collect(Collectors.groupingBy(
-                                        ClientEntity::getClientStatus,
-                                        Collectors.summingInt(c -> 1)
-                                )
-                        ));
+                                c -> (c.getClientStatus().getDisplayName()),
+                                Collectors.summingInt(c -> 1)
+                        ))
+        );
+
 
         return dto;
     }
 
 
     @Override
-    public TeamMemberPerformanceDto getMemberPerformance(String memberId, String duration) {
+    public TeamMemberPerformanceDto getMemberPerformance(String memberId, LocalDate startDate, LocalDate endDate) {
         UserEntity member = userRepository.findByUserId(memberId);
-        Date[] dateRange = calculateDateRange(duration);
+        Date[] dateRange = calculateDateRange(startDate, endDate);
 
         return teamMemberStats(member, dateRange[0], dateRange[1]);
 
@@ -586,7 +601,7 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public OverallSystemDto getClientStats(String duration) {
+    public OverallSystemDto getClientStats(LocalDate fromDate, LocalDate toDate) {
         // Getting total statistics in the system
         long totalClients = clientRepository.count();
         List<ClientStatusCountDto> overallStats = clientRepository.countClientsByStatus();
@@ -597,7 +612,7 @@ public class ClientServiceImpl implements ClientService {
         }
 
         // Calculating date range based on duration
-        Date[] dateRange = calculateDateRange(duration);
+        Date[] dateRange = calculateDateRange(fromDate, toDate);
         Date startDate = dateRange[0];
         Date endDate = dateRange[1];
 
@@ -627,61 +642,39 @@ public class ClientServiceImpl implements ClientService {
      */
     @Override
     public Page<ClientDto> getOverdueClients(int page, int limit) {
-
         Pageable pageableRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
-        Page<ClientEntity> allClients = clientRepository.findAll(pageableRequest);
 
-        EnumSet<Statuses> allowedStatuses = EnumSet.of(
+        List<Statuses> allowedStatuses = List.of(
                 Statuses.PENDING,
                 Statuses.INTERESTED,
                 Statuses.AWAITING_DOCUMENTATION
         );
 
-        List<ClientDto> overdueClients = new ArrayList<>();
+        Page<ClientEntity> overdueClients = clientRepository.findOverdueClients(allowedStatuses, pageableRequest);
 
-        for (ClientEntity client : allClients) {
-            if (client.getLastUpdated() == null) {
-                continue;
-            }
+        return overdueClients.map(client -> {
+            ClientDto dto = modelMapper.map(client, ClientDto.class);
 
-            long daysPending = ChronoUnit.DAYS.between(
-                    client.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-                    LocalDate.now()
-            );
-
-            if (daysPending > 5 &&
-                    allowedStatuses.contains(client.getClientStatus())) {
-
-                ClientDto dto = modelMapper.map(client, ClientDto.class);
-
-                if (client.getCreatedBy() != null) {
-                    UserDto createdByDto = modelMapper.map(client.getCreatedBy(), UserDto.class);
-                    if (client.getCreatedBy().getTeam() != null) {
-                        createdByDto.setTeamName(client.getCreatedBy().getTeam().getName());
-                    }
-                    dto.setCreatedBy(createdByDto);
-
-                    // Assign the team lead of the creator
-                    if (client.getCreatedBy().getTeamLead() != null) {
-                        dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
-                    } else {
-                        // Creator is a team lead --- assign to themselves
-                        dto.setAssignedTo(modelMapper.map(client.getCreatedBy(), UserDto.class));
-                    }
+            if (client.getCreatedBy() != null) {
+                UserDto createdByDto = modelMapper.map(client.getCreatedBy(), UserDto.class);
+                if (client.getCreatedBy().getTeam() != null) {
+                    createdByDto.setTeamName(client.getCreatedBy().getTeam().getName());
                 }
+                dto.setCreatedBy(createdByDto);
 
-
-                dto.setClientStatus(client.getClientStatus().getDisplayName());
-                overdueClients.add(dto);
+                if (client.getCreatedBy().getTeamLead() != null) {
+                    dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
+                } else {
+                    dto.setAssignedTo(modelMapper.map(client.getCreatedBy(), UserDto.class));
+                }
             }
-        }
 
-        return new PageImpl<>(overdueClients, pageableRequest, overdueClients.size());
-//        return allClients.map(clientEntity -> {
-//            ClientDto dto = modelMapper.map(clientEntity, ClientDto.class);
-//            return dto;
-//        });
+            dto.setClientStatus(client.getClientStatus().getDisplayName());
+            return dto;
+        });
     }
+
+
 
 
     /**
@@ -1043,7 +1036,7 @@ public class ClientServiceImpl implements ClientService {
 
 
     @Override
-    public Object getClientStatsForLoggedInUser(String duration) {
+    public Object getClientStatsForLoggedInUser(LocalDate fromDate, LocalDate toDate) {
         // Getting the logged-in user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
@@ -1052,14 +1045,14 @@ public class ClientServiceImpl implements ClientService {
         UserEntity loggedInUser = userRepository.findByEmail(email);
 
         //  Date range
-        Date[] dateRange = calculateDateRange(duration);
+        Date[] dateRange = calculateDateRange(fromDate, toDate);
         Date startDate = dateRange[0];
         Date endDate = dateRange[1];
 
         // Role-based stats
         if (loggedInUser.getRole().getName().equals("ROLE_ADMIN")) {
             // Admin → full system stats
-            return getClientStats(duration);
+            return getClientStats(fromDate, toDate);
         }
         else if (loggedInUser.getRole().getName().equals("ROLE_TEAM_LEAD")) {
             // Team Lead → stats for their team

@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,6 +40,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Principal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -86,11 +88,14 @@ public class UserController {
 
     //Viewing all team leads
     @GetMapping("/team-leads")
-    public ResponseEntity<List<TeamPerformanceDto>> getAllTeamLeads(@RequestParam(defaultValue = "week") String duration) {
+    public ResponseEntity<List<TeamPerformanceDto>> getAllTeamLeads(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
         List<UserDto> teamLeads = userService.getAllTeamLeads();
 
         List<TeamPerformanceDto> result = teamLeads.stream()
-                .map(userDto -> clientService.getTeamPerformance(userDto.getUserId(), duration)).toList();
+                .map(userDto -> clientService.getTeamPerformance(userDto.getUserId(), startDate, endDate)).toList();
 
         return ResponseEntity.ok(result);
     }
@@ -99,11 +104,12 @@ public class UserController {
     //Viewing and managing the data of each team lead
     @GetMapping(path = "/team-leads/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PerfRest> getUser(@PathVariable String userId,
-                                            @RequestParam(required = false, defaultValue = "week") String duration) throws Exception {
+                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) throws Exception {
 
         UserDto userDto = userService.getUserByUserId(userId);
         // Get team performance
-        TeamPerformanceDto performance = clientService.getTeamPerformance(userId, duration);
+        TeamPerformanceDto performance = clientService.getTeamPerformance(userId, startDate, endDate);
 
         PerfRest perfRest = modelMapper.map(userDto, PerfRest.class);
         perfRest.setTeamPerformance(performance);
@@ -113,11 +119,14 @@ public class UserController {
 
     //Viewing and managing the data of all team members
     @GetMapping(path = "/team-members", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<TeamMemberPerformanceDto>> getAllTeamMembers(@RequestParam(defaultValue = "week") String duration) {
+    public ResponseEntity<List<TeamMemberPerformanceDto>> getAllTeamMembers(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
         List<UserDto> teamMembers = userService.getAllTeamMembers();
 
         List<TeamMemberPerformanceDto> response = teamMembers.stream()
-                .map(userDto -> clientService.getMemberPerformance(userDto.getUserId(), duration)).toList();
+                .map(userDto -> clientService.getMemberPerformance(userDto.getUserId(), startDate, endDate)).toList();
 
         return ResponseEntity.ok(response);
     }
@@ -126,14 +135,15 @@ public class UserController {
     //Viewing and managing the performance of all the team members under a team lead
     @GetMapping(path = "/team-leads/{id}/members", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<PerfRest>> getTeamMembers(@PathVariable String id,
-                                                         @RequestParam(required = false) String duration) {
+                                                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         List<UserDto> teamMembers = userService.getMembersUnderLead(id);
 
         List<PerfRest> response = teamMembers.stream()
                 .map(dto -> {
                     PerfRest perfRest = modelMapper.map(dto, PerfRest.class);
 
-                    TeamMemberPerformanceDto memberPerf = clientService.getMemberPerformance(dto.getUserId(), duration);
+                    TeamMemberPerformanceDto memberPerf = clientService.getMemberPerformance(dto.getUserId(), startDate, endDate);
 
                     perfRest.setMemberPerformance(memberPerf);
 
@@ -149,11 +159,12 @@ public class UserController {
     //Viewing and managing the data of a particular team member under a team lead
     @GetMapping(path = "/team-leads/{userId}/members/{memberId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PerfRest> getTeamMemberUnderLead(@PathVariable String userId, @PathVariable String memberId,
-                                                           @RequestParam(required = false) String duration) throws Exception {
+                                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) throws Exception {
 
         UserDto userDto = userService.getMemberUnderLead(userId, memberId);
         // Getting team member performance
-        TeamMemberPerformanceDto performance = clientService.getMemberPerformance(memberId, duration);
+        TeamMemberPerformanceDto performance = clientService.getMemberPerformance(memberId, startDate, endDate);
 
         PerfRest perfRest = modelMapper.map(userDto, PerfRest.class);
         perfRest.setMemberPerformance(performance);
@@ -284,8 +295,8 @@ public class UserController {
 
         String token = Jwts.builder()
                 .setSubject(request.getEmail())
-                .claim("roles", userEntity.getRole().getName()) // Add role
-                .claim("authorities", getAuthorityNames(userEntity.getRole().getAuthorities())) // Add authorities
+                .claim("roles", userEntity.getRole().getName())
+                .claim("authorities", getAuthorityNames(userEntity.getRole().getAuthorities()))
                 .setExpiration(Date.from(now.plusMillis(expirationTime)))
                 .setIssuedAt(Date.from(now))
                 .signWith(secretKey, SignatureAlgorithm.HS512)

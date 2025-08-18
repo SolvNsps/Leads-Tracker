@@ -113,9 +113,10 @@ public class ClientController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/team-performance")
     public ResponseEntity<TeamPerformanceDto> getTeamOverview(String userId,
-                                                              @RequestParam(defaultValue = "week") String duration
+                                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        return ResponseEntity.ok(clientService.getTeamPerformance(userId, duration));
+        return ResponseEntity.ok(clientService.getTeamPerformance(userId, startDate, endDate));
     }
 
 
@@ -318,11 +319,11 @@ public class ClientController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<PaginatedResponse<ClientRest>> getClients(
             @PathVariable String userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int limit,
             @RequestParam(required = false) String name, @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @AuthenticationPrincipal UserPrincipal authentication) {
 
         String loggedInUserId = authentication.getId();
@@ -335,13 +336,14 @@ public class ClientController {
 
         PaginatedResponse<ClientRest> clients = clientService.getMyClientsForUserRole(
                         loggedInUserId, role, userId, PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate")), name, statusEnum,
-                fromDate, endDate);
+                fromDate, toDate);
 
         return ResponseEntity.ok(clients);
     }
 
 
 //getting all clients under a team member
+
     @GetMapping("/team-member/{memberId}/clients")
     public ResponseEntity<PaginatedResponse<ClientRest>> getClientsOfTeamMember(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -418,8 +420,9 @@ public class ClientController {
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/statistics")
-    public ResponseEntity<OverallSystemDto> getClientStats(@RequestParam(defaultValue = "week") String duration) {
-        OverallSystemDto stats = clientService.getClientStats(duration);
+    public ResponseEntity<OverallSystemDto> getClientStats(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+        OverallSystemDto stats = clientService.getClientStats(fromDate, toDate);
         return ResponseEntity.ok(stats);
     }
 
@@ -464,13 +467,14 @@ public class ClientController {
 
     //my statistics
     @GetMapping("/my-statistics")
-    public ResponseEntity<?> getMyStats(@RequestParam(defaultValue = "week") String duration) {
-        return ResponseEntity.ok(clientService.getClientStatsForLoggedInUser(duration));
+    public ResponseEntity<?> getMyStats(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+        return ResponseEntity.ok(clientService.getClientStatsForLoggedInUser(fromDate, toDate));
     }
 
 
     //deactivating client
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN, ROLE_TEAM_LEAD')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @PatchMapping("/{clientId}/deactivate")
     public ResponseEntity<?> deactivateClient(@PathVariable String clientId) {
         clientService.deactivateClient(clientId);
