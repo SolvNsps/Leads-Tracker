@@ -132,10 +132,13 @@ public class ClientController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/admin/overdueClients")
     public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "limit", defaultValue = "10") int limit) {
+            @RequestParam(required = false, value = "page", defaultValue = "0") int page,
+            @RequestParam(required = false, value = "limit", defaultValue = "10") int limit,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String name) {
 
-        Page<ClientDto> overdueClients = clientService.getOverdueClients(page, limit);
+        Page<ClientDto> overdueClients = clientService.getOverdueClients(page, limit, startDate, endDate, name);
 
         List<ClientRest> result = overdueClients.stream().map(dto -> {
             ClientRest rest = modelMapper.map(dto, ClientRest.class);
@@ -343,7 +346,6 @@ public class ClientController {
 
 
 //getting all clients under a team member
-
     @GetMapping("/team-member/{memberId}/clients")
     public ResponseEntity<PaginatedResponse<ClientRest>> getClientsOfTeamMember(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -445,24 +447,26 @@ public class ClientController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     @GetMapping("/user/{userId}/overdueClients")
     public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(@PathVariable String userId, @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int limit, @RequestParam(required = false) String name, @RequestParam(required = false) String status,
-                                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-        @AuthenticationPrincipal UserPrincipal authentication) {
+                                                                           @RequestParam(defaultValue = "10") int limit,
+                                                                           @RequestParam(required = false) String name, @RequestParam(required = false) String status,
+                                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+                                                                           @AuthenticationPrincipal UserPrincipal authentication) {
 
-    Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
-    String loggedInUserId =  authentication.getId();
-    String role = authentication.getAuthorities().iterator().next().getAuthority();
+        Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
+        String loggedInUserId =  authentication.getId();
+        String role = authentication.getAuthorities().iterator().next().getAuthority();
 
         Statuses statusEnum = null;
         if (status != null && !status.trim().isEmpty()) {
             statusEnum = Statuses.fromString(status);
         }
 
-    PaginatedResponse<ClientRest> overdueClients = clientService.getOverdueClientsForUserRole(
-            loggedInUserId, role, userId, pageable, name, statusEnum, fromDate, toDate);
+        PaginatedResponse<ClientRest> overdueClients = clientService.getOverdueClientsForUserRole(
+                loggedInUserId, role, userId, pageable, name, statusEnum, fromDate, toDate);
 
-    return ResponseEntity.ok(overdueClients);
-   }
+        return ResponseEntity.ok(overdueClients);
+    }
 
 
     //my statistics

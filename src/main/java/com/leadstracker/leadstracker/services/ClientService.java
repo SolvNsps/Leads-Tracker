@@ -29,7 +29,7 @@ public interface ClientService {
 
     List<ClientDto> getClientsUnderUser(String userId, int page, int limit);
 
-    Page<ClientDto> getOverdueClients(int page, int limit);
+    Page<ClientDto> getOverdueClients(int page, int limit, LocalDate startDate, LocalDate endDate, String name);
 
     List<ClientDto> getAllClientsUnderUser(String userId);
 

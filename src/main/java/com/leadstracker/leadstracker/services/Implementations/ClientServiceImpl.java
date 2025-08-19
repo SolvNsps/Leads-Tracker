@@ -641,8 +641,8 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public Page<ClientDto> getOverdueClients(int page, int limit) {
-        Pageable pageableRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
+    public Page<ClientDto> getOverdueClients(int page, int limit, LocalDate startDate, LocalDate endDate, String name) {
+        Pageable pageableRequest = PageRequest.of(page, limit);
 
         List<Statuses> allowedStatuses = List.of(
                 Statuses.PENDING,
@@ -652,28 +652,54 @@ public class ClientServiceImpl implements ClientService {
 
         Page<ClientEntity> overdueClients = clientRepository.findOverdueClients(allowedStatuses, pageableRequest);
 
-        return overdueClients.map(client -> {
-            ClientDto dto = modelMapper.map(client, ClientDto.class);
+        // Filtering in-memory
+        List<ClientDto> filtered = overdueClients
+                .stream()
+                .filter(client -> {
+                    if (startDate == null && endDate == null) return true;
+                    LocalDate createdDate = client.getCreatedDate().toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
 
-            if (client.getCreatedBy() != null) {
-                UserDto createdByDto = modelMapper.map(client.getCreatedBy(), UserDto.class);
-                if (client.getCreatedBy().getTeam() != null) {
-                    createdByDto.setTeamName(client.getCreatedBy().getTeam().getName());
-                }
-                dto.setCreatedBy(createdByDto);
+                    if (startDate != null && endDate != null) {
+                        return (createdDate.isEqual(startDate) || createdDate.isAfter(startDate)) &&
+                                (createdDate.isEqual(endDate) || createdDate.isBefore(endDate));
+                    } else if (startDate != null) {
+                        return createdDate.isEqual(startDate) || createdDate.isAfter(startDate);
+                    } else {
+                        return createdDate.isEqual(endDate) || createdDate.isBefore(endDate);
+                    }
+                })
+                .filter(client -> {
+                    if (name == null || name.isBlank()) return true;
+                    String fullName = (client.getFirstName() + " " + client.getLastName()).toLowerCase();
+                    return fullName.contains(name.toLowerCase());
+                })
+                .map(client -> {
+                    ClientDto dto = modelMapper.map(client, ClientDto.class);
 
-                if (client.getCreatedBy().getTeamLead() != null) {
-                    dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
-                } else {
-                    dto.setAssignedTo(modelMapper.map(client.getCreatedBy(), UserDto.class));
-                }
-            }
+                    if (client.getCreatedBy() != null) {
+                        UserDto createdByDto = modelMapper.map(client.getCreatedBy(), UserDto.class);
+                        if (client.getCreatedBy().getTeam() != null) {
+                            createdByDto.setTeamName(client.getCreatedBy().getTeam().getName());
+                        }
+                        dto.setCreatedBy(createdByDto);
 
-            dto.setClientStatus(client.getClientStatus().getDisplayName());
-            return dto;
-        });
+                        if (client.getCreatedBy().getTeamLead() != null) {
+                            dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
+                        } else {
+                            dto.setAssignedTo(modelMapper.map(client.getCreatedBy(), UserDto.class));
+                        }
+                    }
+
+                    dto.setClientStatus(client.getClientStatus().getDisplayName());
+                    return dto;
+                })
+                .toList();
+
+        // Wrapping the filtered list back into a Page
+        return new PageImpl<>(filtered, pageableRequest, filtered.size());
     }
-
 
 
 
