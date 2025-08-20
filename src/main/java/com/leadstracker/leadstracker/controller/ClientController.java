@@ -128,7 +128,7 @@ public class ClientController {
     }
 
 
-
+//Admin getting all overdue clients in the system
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/admin/overdueClients")
     public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(
@@ -446,8 +446,8 @@ public class ClientController {
     //getting overdue clients under a user
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     @GetMapping("/user/{userId}/overdueClients")
-    public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(@PathVariable String userId, @RequestParam(defaultValue = "0") int page,
-                                                                           @RequestParam(defaultValue = "10") int limit,
+    public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(@PathVariable String userId, @RequestParam(required = false, defaultValue = "0") int page,
+                                                                           @RequestParam(required = false, defaultValue = "10") int limit,
                                                                            @RequestParam(required = false) String name, @RequestParam(required = false) String status,
                                                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
                                                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,

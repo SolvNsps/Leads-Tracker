@@ -215,29 +215,24 @@ public class ClientServiceImpl implements ClientService {
     }
 
 
-    /**
-     * Calculate date range based on provided startDate and endDate.
-     * Defaults to last 5 days if nothing is provided.
-     * Enforces minimum of 5 days.
-     */
     private Date[] calculateDateRange(LocalDate startDate, LocalDate endDate) {
         LocalDate today = LocalDate.now();
 
-        // Case 1: If no dates provided, use last 5 days as default
+        // If no dates provided, use last 5 days as default
         if (startDate == null && endDate == null) {
             endDate = today;
             startDate = today.minusDays(4); // 5 days total
         }
-        // Case 2: If only startDate is provided
+        // If only startDate is provided
         else if (startDate != null && endDate == null) {
             endDate = today;
         }
-        // Case 3: If only endDate is provided
+        // If only endDate is provided
         else if (startDate == null && endDate != null) {
             startDate = endDate.minusDays(4);
         }
 
-        // Ensure at least 5 days
+        // Ensuring at least 5 days
         long daysBetween = ChronoUnit.DAYS.between(startDate, endDate);
         if (daysBetween < 4) {
             startDate = endDate.minusDays(4);
