@@ -3,22 +3,22 @@ package com.leadstracker.leadstracker.response;
 import java.time.LocalDate;
 
 public class UserTargetResponseDto {
-    private Long userId;
+    private String userId;
     private String fullName;
     private int assignedTargetValue;
     private LocalDate dueDate;
     private LocalDate dateAssigned;
-    private int progressAchieved; // total value achieved so far
+    private String progressAchieved; // total value achieved so far
 
 
     public UserTargetResponseDto() {
     }
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 
@@ -54,11 +54,11 @@ public class UserTargetResponseDto {
         this.dateAssigned = dateAssigned;
     }
 
-    public int getProgressAchieved() {
+    public String getProgressAchieved() {
         return progressAchieved;
     }
 
-    public void setProgressAchieved(int progressAchieved) {
+    public void setProgressAchieved(String progressAchieved) {
         this.progressAchieved = progressAchieved;
     }
 

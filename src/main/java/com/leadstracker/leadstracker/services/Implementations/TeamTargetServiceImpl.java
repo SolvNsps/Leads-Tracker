@@ -5,10 +5,7 @@ import com.leadstracker.leadstracker.entities.TeamTargetEntity;
 import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.entities.UserTargetEntity;
-import com.leadstracker.leadstracker.repositories.TeamTargetRepository;
-import com.leadstracker.leadstracker.repositories.TeamsRepository;
-import com.leadstracker.leadstracker.repositories.UserRepository;
-import com.leadstracker.leadstracker.repositories.UserTargetRepository;
+import com.leadstracker.leadstracker.repositories.*;
 import com.leadstracker.leadstracker.request.TargetDistributionRequest;
 import com.leadstracker.leadstracker.request.TeamTargetRequestDto;
 import com.leadstracker.leadstracker.response.MyTargetResponse;
@@ -53,6 +50,9 @@ public class TeamTargetServiceImpl implements TeamTargetService {
 
     @Autowired
     UserTargetRepository userTargetRepository;
+
+    @Autowired
+    ClientRepository clientRepository;
 
     @Autowired
     ModelMapper mapper;
@@ -220,7 +220,7 @@ public class TeamTargetServiceImpl implements TeamTargetService {
 
                 return userTargets.stream().map(target -> {
                     UserTargetResponseDto dto = new UserTargetResponseDto();
-                    dto.setUserId(target.getUser().getId());
+                    dto.setUserId(target.getUser().getUserId());
                     dto.setFullName(target.getUser().getFirstName() + " " + target.getUser().getLastName());
                     dto.setAssignedTargetValue(target.getTargetValue());
                     dto.setDueDate(target.getDueDate());
@@ -230,34 +230,50 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             }
 
 
+    private TeamTargetOverviewDto mapToTeamTargetOverviewDto(TeamTargetEntity teamTarget, List<UserTargetEntity> userTargets) {
+        TeamTargetOverviewDto dto = new TeamTargetOverviewDto();
+        dto.setTotalTargetValue(teamTarget.getTargetValue());
+        dto.setDueDate(teamTarget.getDueDate());
+        dto.setDateAssigned(teamTarget.getAssignedDate());
 
-            private TeamTargetOverviewDto mapToTeamTargetOverviewDto (TeamTargetEntity
-                teamTarget, List < UserTargetEntity > userTargets){
-                    TeamTargetOverviewDto dto = new TeamTargetOverviewDto();
+        List<UserTargetResponseDto> memberDistributions = userTargets.stream().map(userTarget -> {
+            UserTargetResponseDto memberDto = new UserTargetResponseDto();
 
-                    // Set team-level target section
-                    dto.setTotalTargetValue(teamTarget.getTargetValue());
-                    dto.setTotalTargetValue(teamTarget.getTargetValue());
-                    dto.setDueDate(teamTarget.getDueDate());
-                    dto.setDateAssigned(teamTarget.getAssignedDate());
+            UserEntity member = userTarget.getUser();
 
-                    // Map member distributions
-                    List<UserTargetResponseDto> memberDtos = userTargets.stream().map(ut -> {
-                        UserTargetResponseDto memberDto = new UserTargetResponseDto();
-                        memberDto.setUserId(memberDto.getUserId());
-                        memberDto.setFullName(memberDto.getFullName());
-                        memberDto.setAssignedTargetValue(memberDto.getAssignedTargetValue());
-                        memberDto.setDateAssigned(memberDto.getDateAssigned());
-                        memberDto.setDueDate(memberDto.getDueDate());
-                        memberDto.setProgressAchieved(memberDto.getProgressAchieved());
-                        return memberDto;
+            if (member != null) {
+                memberDto.setUserId(member.getUserId());
+                memberDto.setFullName(member.getFirstName() + " " + member.getLastName());
+            }
 
-                    }).toList();
+            // Assigned target value for this member
+            memberDto.setAssignedTargetValue(userTarget.getTargetValue());
+            memberDto.setDueDate(userTarget.getDueDate());
+            memberDto.setDateAssigned(userTarget.getAssignedDate());
 
-                    dto.setMemberDistributions(memberDtos);
+            // Calculate progress: total clients submitted / target
+            int totalClients = Math.toIntExact(clientRepository.countByCreatedBy(member));
+            memberDto.setProgressAchieved(totalClients + "/" + userTarget.getTargetValue());
 
-                    return dto;
-                }
+            return memberDto;
+        }).collect(Collectors.toList());
+
+        dto.setMemberDistributions(memberDistributions);
+
+        // Optional: Calculate overall progressPercentage for the team
+//        int totalClientsAll = memberDistributions.stream()
+//                .mapToInt(md -> {
+//                    int fraction = md.getProgressAchieved();
+//                    return Integer.parseInt(fraction[1]);
+//                }).sum();
+//
+//        dto.setProgressPercentage(teamTarget.getTargetValue() > 0
+//                ? (int) Math.ceil((totalClientsAll * 100.0) / teamTarget.getTargetValue())
+//                : 0);
+
+        return dto;
+    }
+
 
     @Override
     public MyTargetResponse getMyTarget(String teamMemberEmail) {

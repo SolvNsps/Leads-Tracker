@@ -6,11 +6,14 @@ import com.leadstracker.leadstracker.DTO.TeamDto;
 import com.leadstracker.leadstracker.DTO.UserDto;
 import com.leadstracker.leadstracker.DTO.Utils;
 import com.leadstracker.leadstracker.entities.RoleEntity;
+import com.leadstracker.leadstracker.entities.TeamTargetEntity;
 import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.repositories.RoleRepository;
+import com.leadstracker.leadstracker.repositories.TeamTargetRepository;
 import com.leadstracker.leadstracker.repositories.TeamsRepository;
 import com.leadstracker.leadstracker.repositories.UserRepository;
+import com.leadstracker.leadstracker.response.TeamTargetResponseDto;
 import com.leadstracker.leadstracker.services.Implementations.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +30,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -51,6 +55,9 @@ class UserServiceImplTest {
 
     @Mock
     private TeamsRepository teamsRepository;
+
+    @Mock
+    private TeamTargetRepository teamTargetRepository;
 
 
     @Mock

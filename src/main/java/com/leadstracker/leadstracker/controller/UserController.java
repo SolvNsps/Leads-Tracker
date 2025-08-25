@@ -15,7 +15,6 @@ import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.TeamTargetService;
 import com.leadstracker.leadstracker.services.UserProfileService;
 import com.leadstracker.leadstracker.services.UserService;
-//import jakarta.validation.Valid;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.validation.Valid;
@@ -342,7 +341,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-
+    //Admin creates a team
     @PostMapping(value = "/team", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createTeam(@RequestBody TeamDetails teamDetails) throws Exception {
 
@@ -554,7 +553,7 @@ public class UserController {
     }
 
 
-    //Team member view their target
+    //Team member views their target
     @PreAuthorize("hasAuthority('ROLE_TEAM_MEMBER')")
     @GetMapping("/my-target")
     public ResponseEntity<MyTargetResponse> getMyTarget(@AuthenticationPrincipal UserPrincipal authentication) {
@@ -620,6 +619,7 @@ public class UserController {
                 "message", "Search completed successfully"));
     }
 
+
     //Team lead edit the target of a team member
     @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
     @PutMapping("/targets/{teamTargetId}/members/{memberId}")
@@ -640,5 +640,6 @@ public class UserController {
 
         return ResponseEntity.ok(updatedTarget);
     }
+
 
 }

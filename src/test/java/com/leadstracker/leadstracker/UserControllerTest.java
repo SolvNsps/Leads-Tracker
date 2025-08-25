@@ -16,17 +16,22 @@ import com.leadstracker.leadstracker.services.TeamTargetService;
 import com.leadstracker.leadstracker.services.UserProfileService;
 import com.leadstracker.leadstracker.services.UserService;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import java.util.Collections;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,6 +42,7 @@ import static org.mockito.ArgumentMatchers.*;
 
 
 import static org.mockito.Mockito.*;
+import static org.modelmapper.internal.bytebuddy.matcher.ElementMatchers.is;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
@@ -472,8 +478,29 @@ public class UserControllerTest {
         verify(modelMapper, times(1)).map(eq(teamDto), eq(TeamRest.class));
     }
 
-
-
-
+//    @Test
+//    @WithMockUser(username = "lead@example.com", roles = {"TEAM_LEAD"})
+//    void testGetMyTeamTarget_Success() throws Exception {
+//        TeamTargetResponseDto responseDto = new TeamTargetResponseDto();
+//        responseDto.setId(1L);
+//        responseDto.setTeamName("Sales Team A");
+//        responseDto.setTeamLeadFullName("John Doe");
+//        responseDto.setTargetValue(5000);
+//        responseDto.setDueDate(LocalDate.of(2025, 12, 31));
+//
+//        Mockito.when(teamTargetService.getMyTeamTarget("lead@example.com"))
+//                .thenReturn(responseDto);
+//
+//        mockMvc.perform(get("/api/v1/leads/team-lead/team-target")
+//                        .contentType(MediaType.APPLICATION_JSON))
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.id").value(1L))
+//                .andExpect(jsonPath("$.teamName").value("Sales Team A"))
+//                .andExpect(jsonPath("$.teamLeadFullName").value("John Doe"))
+//                .andExpect(jsonPath("$.targetValue").value(5000))
+//                .andExpect(jsonPath("$.dueDate").value("2025-12-31"));
+//
+//        Mockito.verify(teamTargetService).getMyTeamTarget("lead@example.com");
+//    }
 }
 
