@@ -247,7 +247,6 @@ public class NotificationServiceImpl implements NotificationService {
                 dto.setAdmin(adminDto);
             }
 
-
             // Manually mapping client
             if (notification.getClient() != null) {
                 SimpleClientDto clientDto = new SimpleClientDto();
@@ -294,5 +293,6 @@ public class NotificationServiceImpl implements NotificationService {
 
         notificationRepository.save(notification);
     }
+
 
 }

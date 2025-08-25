@@ -11,7 +11,7 @@ public class TeamMemberPerformanceDto {
 //    private int numberOfClients;
     private int target;
     private double progressPercentage;
-    private Map<Statuses, Integer> clientStatus;
+    private Map<String, Integer> clientStatus;
     private String progressFraction;
     private String email;
     private String teamName;
@@ -57,11 +57,11 @@ public class TeamMemberPerformanceDto {
         this.progressPercentage = progressPercentage;
     }
 
-    public Map<Statuses, Integer> getClientStatus() {
+    public Map<String, Integer> getClientStatus() {
         return clientStatus;
     }
 
-    public void setClientStatus(Map<Statuses, Integer> clientStatus) {
+    public void setClientStatus(Map<String, Integer> clientStatus) {
         this.clientStatus = clientStatus;
     }
 

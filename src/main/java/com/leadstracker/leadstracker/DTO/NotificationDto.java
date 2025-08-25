@@ -27,30 +27,40 @@ public class NotificationDto implements Serializable {
     private String type; // e.g. FORWARDED_CLIENT, OVERDUE_FOLLOWUP
 
     private SimpleUserDto admin;
-    private SimpleUserDto teamLead;
-    private SimpleClientDto client;
 
+    private SimpleUserDto teamLead;
+
+    private SimpleClientDto client;
 
     private String actionRequired;
 
-    private String forwardedBy; // Name of admin/team member who forwarded
+    private String forwardedBy;
 
     private long daysOverdue; // For overdue notifications
 
         // Generating a consistent message
         public String generateMessage() {
-            switch (this.type) {
+            String safeType = this.type != null ? this.type : "GENERAL";
+
+            switch (safeType) {
                 case "FORWARDED_CLIENT":
                     return String.format("Client %s %s was forwarded to you by %s",
-                            client.getFirstName(), client.getLastName(), forwardedBy);
+                            client != null ? client.getFirstName() : "",
+                            client != null ? client.getLastName() : "",
+                            forwardedBy != null ? forwardedBy : "Unknown");
+
                 case "OVERDUE_FOLLOWUP":
                     return String.format("Client %s %s is still in '%s' status for %d days",
-                            client.getFirstName(), client.getLastName(),
-                            client.getClientStatus(), daysOverdue);
+                            client != null ? client.getFirstName() : "",
+                            client != null ? client.getLastName() : "",
+                            client != null ? client.getClientStatus() : "Unknown",
+                            daysOverdue);
+
                 default:
-                    return message;
+                    return message != null ? message : "No details available";
             }
         }
+
 
 
     public String getMessage() {

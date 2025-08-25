@@ -12,12 +12,10 @@ public class UserTargetEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Link for user (team member) who receives this target
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
-    // Link for team target this is part of
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_target_id", nullable = false)
     private TeamTargetEntity teamTarget;
@@ -31,6 +29,7 @@ public class UserTargetEntity {
     @Column(nullable = false)
     private LocalDate dueDate;
 
+    @Column
     private int progress;
 
     public UserTargetEntity() {}

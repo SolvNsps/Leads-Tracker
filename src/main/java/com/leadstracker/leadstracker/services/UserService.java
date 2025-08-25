@@ -59,4 +59,6 @@ public interface UserService extends UserDetailsService {
     void deactivateTeam(String teamId);
 
     List<TeamDto> searchTeamByName(String name);
+
+    void reactivateTeam(String teamId, String newTeamLeadId);
 }

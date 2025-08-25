@@ -113,9 +113,10 @@ public class ClientController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/team-performance")
     public ResponseEntity<TeamPerformanceDto> getTeamOverview(String userId,
-                                                              @RequestParam(defaultValue = "week") String duration
+                                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        return ResponseEntity.ok(clientService.getTeamPerformance(userId, duration));
+        return ResponseEntity.ok(clientService.getTeamPerformance(userId, startDate, endDate));
     }
 
 
@@ -127,14 +128,17 @@ public class ClientController {
     }
 
 
-
+//Admin getting all overdue clients in the system
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/admin/overdueClients")
     public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "limit", defaultValue = "10") int limit) {
+            @RequestParam(required = false, value = "page", defaultValue = "0") int page,
+            @RequestParam(required = false, value = "limit", defaultValue = "10") int limit,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String name) {
 
-        Page<ClientDto> overdueClients = clientService.getOverdueClients(page, limit);
+        Page<ClientDto> overdueClients = clientService.getOverdueClients(page, limit, startDate, endDate, name);
 
         List<ClientRest> result = overdueClients.stream().map(dto -> {
             ClientRest rest = modelMapper.map(dto, ClientRest.class);
@@ -166,6 +170,10 @@ public class ClientController {
 
             if (dto.getAssignedTo() != null) {
                 rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
+            }
+
+            if (dto.getCreatedBy() != null && dto.getCreatedBy().getTeamName() != null) {
+                rest.setTeamName(dto.getCreatedBy().getTeamName());
             }
 
             return rest;
@@ -289,6 +297,10 @@ public class ClientController {
                 rest.setAssignedTo(teamLead.getFirstName() + " " + teamLead.getLastName());
             }
 
+            if (dto.getCreatedBy() != null && dto.getCreatedBy().getTeamName() != null) {
+                rest.setTeamName(dto.getCreatedBy().getTeamName());
+            }
+
             return rest;
         }).toList();
 
@@ -310,21 +322,30 @@ public class ClientController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<PaginatedResponse<ClientRest>> getClients(
             @PathVariable String userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int limit,
+            @RequestParam(required = false) String name, @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @AuthenticationPrincipal UserPrincipal authentication) {
 
         String loggedInUserId = authentication.getId();
         String role = authentication.getAuthorities().iterator().next().getAuthority();
 
+        Statuses statusEnum = null;
+        if (status != null && !status.trim().isEmpty()) {
+            statusEnum = Statuses.fromString(status);
+        }
+
         PaginatedResponse<ClientRest> clients = clientService.getMyClientsForUserRole(
-                loggedInUserId, role, userId, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate")));
+                        loggedInUserId, role, userId, PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate")), name, statusEnum,
+                fromDate, toDate);
 
         return ResponseEntity.ok(clients);
     }
 
 
-
+//getting all clients under a team member
     @GetMapping("/team-member/{memberId}/clients")
     public ResponseEntity<PaginatedResponse<ClientRest>> getClientsOfTeamMember(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -401,8 +422,9 @@ public class ClientController {
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/statistics")
-    public ResponseEntity<OverallSystemDto> getClientStats(@RequestParam(defaultValue = "week") String duration) {
-        OverallSystemDto stats = clientService.getClientStats(duration);
+    public ResponseEntity<OverallSystemDto> getClientStats(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+        OverallSystemDto stats = clientService.getClientStats(fromDate, toDate);
         return ResponseEntity.ok(stats);
     }
 
@@ -424,27 +446,46 @@ public class ClientController {
     //getting overdue clients under a user
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD', 'ROLE_TEAM_MEMBER')")
     @GetMapping("/user/{userId}/overdueClients")
-    public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(@PathVariable String userId, @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
-        @AuthenticationPrincipal UserPrincipal authentication) {
+    public ResponseEntity<PaginatedResponse<ClientRest>> getOverdueClients(@PathVariable String userId, @RequestParam(required = false, defaultValue = "0") int page,
+                                                                           @RequestParam(required = false, defaultValue = "10") int limit,
+                                                                           @RequestParam(required = false) String name, @RequestParam(required = false) String status,
+                                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+                                                                           @AuthenticationPrincipal UserPrincipal authentication) {
 
-    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
-    String loggedInUserId =  authentication.getId();
-    String role = authentication.getAuthorities().iterator().next().getAuthority();
+        Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
+        String loggedInUserId =  authentication.getId();
+        String role = authentication.getAuthorities().iterator().next().getAuthority();
 
-    PaginatedResponse<ClientRest> overdueClients = clientService.getOverdueClientsForUserRole(
-            loggedInUserId, role, userId, pageable);
+        Statuses statusEnum = null;
+        if (status != null && !status.trim().isEmpty()) {
+            statusEnum = Statuses.fromString(status);
+        }
 
-    return ResponseEntity.ok(overdueClients);
-   }
+        PaginatedResponse<ClientRest> overdueClients = clientService.getOverdueClientsForUserRole(
+                loggedInUserId, role, userId, pageable, name, statusEnum, fromDate, toDate);
+
+        return ResponseEntity.ok(overdueClients);
+    }
 
 
-   //my statistics
-   @GetMapping("/my-statistics")
-   public ResponseEntity<?> getMyStats(@RequestParam(defaultValue = "week") String duration) {
-       return ResponseEntity.ok(clientService.getClientStatsForLoggedInUser(duration));
-   }
+    //my statistics
+    @GetMapping("/my-statistics")
+    public ResponseEntity<?> getMyStats(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+        return ResponseEntity.ok(clientService.getClientStatsForLoggedInUser(fromDate, toDate));
+    }
 
+
+    //deactivating client
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
+    @PatchMapping("/{clientId}/deactivate")
+    public ResponseEntity<?> deactivateClient(@PathVariable String clientId) {
+        clientService.deactivateClient(clientId);
+        return ResponseEntity.ok(Map.of(
+                "message", "Client successfully deactivated"
+        ));
+    }
 
 }
 

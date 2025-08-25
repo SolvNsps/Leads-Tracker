@@ -8,6 +8,7 @@ public class TeamTargetOverviewDto {
     private int totalTargetValue;
     private LocalDate dueDate;
     private LocalDate dateAssigned;
+    private String progressAchieve;
     private int progressPercentage;
 //    private int progressRemaining;
 //    private int progressValue;
@@ -42,12 +43,12 @@ public class TeamTargetOverviewDto {
         this.dateAssigned = dateAssigned;
     }
 
-    public int getProgressPercentage() {
-        return progressPercentage;
+    public String getProgressAchieve() {
+        return progressAchieve;
     }
 
-    public void setProgressPercentage(int progressPercentage) {
-        this.progressPercentage = progressPercentage;
+    public void setProgressAchieve(String progressAchieve) {
+        this.progressAchieve = progressAchieve;
     }
 
     public List<UserTargetResponseDto> getMemberDistributions() {
@@ -56,5 +57,13 @@ public class TeamTargetOverviewDto {
 
     public void setMemberDistributions(List<UserTargetResponseDto> memberDistributions) {
         this.memberDistributions = memberDistributions;
+    }
+
+    public int getProgressPercentage() {
+        return progressPercentage;
+    }
+
+    public void setProgressPercentage(int progressPercentage) {
+        this.progressPercentage = progressPercentage;
     }
 }

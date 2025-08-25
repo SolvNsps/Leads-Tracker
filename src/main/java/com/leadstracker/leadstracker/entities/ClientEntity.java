@@ -53,6 +53,9 @@ public class ClientEntity implements Serializable {
     @Enumerated(EnumType.STRING)
     private Statuses clientStatus = Statuses.PENDING;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     public long getId() {
         return id;
     }
@@ -93,12 +96,10 @@ public class ClientEntity implements Serializable {
         this.phoneNumber = phoneNumber;
     }
 
-//    @JsonProperty("gpslocation")
     public String getGpsLocation() {
         return gpsLocation;
     }
 
-//    @JsonProperty("gpslocation")
     public void setGpsLocation(String GPSLocation) {
         this.gpsLocation = GPSLocation;
     }
@@ -141,6 +142,14 @@ public class ClientEntity implements Serializable {
 
     public void setTeamLead(UserEntity teamLead) {
         this.teamLead = teamLead;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     @PrePersist

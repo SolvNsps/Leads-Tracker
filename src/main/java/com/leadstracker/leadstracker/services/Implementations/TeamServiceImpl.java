@@ -11,9 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,112 +33,126 @@ public class TeamServiceImpl implements TeamService {
     @Autowired
     UserTargetRepository userTargetRepository;
     /**
-     * @param search
-     * @param duration
+     * @param name
+     * @param startDate
+     * @param endDate
      * @return
      */
     @Override
-    public List<TeamPerformanceDto> getTeamsOverview(String search, String duration) {
+    public List<TeamPerformanceDto> getTeamsOverview(String name, LocalDate startDate, LocalDate endDate) {
         List<TeamsEntity> teams = teamRepository.findAllByActiveTrue();
 
-        if (search != null && !search.isBlank()) {
-            teams = teamRepository.findByNameContainingIgnoreCaseAndActiveTrue(search);
+        if (name != null && !name.isBlank()) {
+            teams = teamRepository.findByNameContainingIgnoreCaseAndActiveTrue(name);
         }
 
-        //Calculating date range
-        Date[] dateRange = calculateDateRange(duration);
+        // Flexible date range (default last 5 days, min 5 days)
+        Date[] dateRange = calculateDateRange(startDate, endDate);
 
         return teams.stream()
                 .map(team -> {
                     UserEntity teamLead = team.getTeamLead();
 
-                    List<UserEntity> teamMembers = userRepository.findByTeam(team);
-                    //including team lead
-                    if (teamLead != null && !teamMembers.contains(teamLead)) {
-                        teamMembers.add(teamLead);
-                    }
+                    //Getting members assigned to this lead
+                    List<UserEntity> membersOnly = (teamLead != null)
+                            ? userRepository.findByTeamLead(teamLead)
+                            : new ArrayList<>();
 
+                    // Building participants = members + (lead if present)
+                    List<UserEntity> participants = new ArrayList<>(membersOnly);
+                    if (teamLead != null) {
+                        participants.add(teamLead);
+                    }
+                    participants = participants.stream()
+                            .collect(Collectors.collectingAndThen(
+                                    Collectors.toCollection(java.util.LinkedHashSet::new),
+                                    ArrayList::new
+                            ));
+
+                    //All clients created by lead + members
                     List<ClientEntity> teamClients = clientRepository.findByCreatedByInAndCreatedDateBetween(
-                            teamMembers, dateRange[0], dateRange[1]);
+                            participants, dateRange[0], dateRange[1]);
 
                     TeamPerformanceDto dto = new TeamPerformanceDto();
                     dto.setTeamId(team.getId());
                     dto.setTeamName(team.getName());
-                    dto.setTeamLeadName(
-                            teamLead != null
-                                    ? teamLead.getFirstName() + " " + teamLead.getLastName()
-                                    : null
-                    );
-                    dto.setNumberOfTeamMembers(teamMembers.size());
+
+                    // Lead fields
+                    dto.setTeamLeadUserId(teamLead != null ? teamLead.getUserId() : null);
+                    dto.setTeamLeadName(teamLead != null ? (teamLead.getFirstName() + " " + teamLead.getLastName()) : null);
+                    dto.setEmail(teamLead != null ? teamLead.getEmail() : null);
+
+                    // Number of members = team lead + team members
+                    dto.setNumberOfTeamMembers(participants.size());
+
+                    //Total clients = team lead’s clients + team members’ clients
                     dto.setTotalClientsAdded(teamClients.size());
 
-                    // Fetch active team target from DB
-                    Optional<TeamTargetEntity> activeTargetOpt = teamTargetRepository
-                            .findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(team.getId(), LocalDate.now());
-
-                    int teamTarget = 0;
-                    if (activeTargetOpt.isPresent()) {
-                        teamTarget = activeTargetOpt.get().getTargetValue();
-                    }
-
+                    // Active team target
+                    int teamTarget = teamTargetRepository
+                            .findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(team.getId(), LocalDate.now())
+                            .map(TeamTargetEntity::getTargetValue)
+                            .orElse(0);
                     dto.setTeamTarget(teamTarget);
 
-                    // Calculate progress
-                    int numberOfClientsAdded = teamClients.size();
-                    double progress = Math.ceil((teamTarget > 0) ? ((double) numberOfClientsAdded / teamTarget) * 100 : 0);
+                    //Setting Progress
+                    int added = teamClients.size();
+                    double progress = (teamTarget > 0) ? Math.ceil((added * 100.0) / teamTarget) : 0.0;
                     dto.setProgressPercentage(progress);
-                    dto.setProgressFraction(numberOfClientsAdded + "/" + teamTarget);
+                    dto.setProgressFraction(added + "/" + teamTarget);
 
-                    // Client status breakdown
+                    // Team-level client status breakdown
                     dto.setClientStatus(
                             teamClients.stream()
                                     .collect(Collectors.groupingBy(
-                                            ClientEntity::getClientStatus,
+                                            c -> c.getClientStatus().getDisplayName(),
                                             Collectors.summingInt(c -> 1)
                                     ))
                     );
 
-                    // Team member stats
+                    // Per-participant stats (lead + members)
                     dto.setTeamMembers(
-                            teamMembers.stream()
-                                    .map(member -> teamMemberStats(member, dateRange[0], dateRange[1]))
+                            participants.stream()
+                                    .map(p -> teamMemberStats(p, dateRange[0], dateRange[1]))
                                     .collect(Collectors.toList())
                     );
 
                     return dto;
-                }).collect(Collectors.toList());
+                })
+                .collect(Collectors.toList());
     }
 
+    //Team member stats
     private TeamMemberPerformanceDto teamMemberStats(UserEntity member, Date start, Date end) {
-        List<ClientEntity> memberClients = clientRepository.findByCreatedByAndCreatedDateBetween(
-                member, start, end);
+        List<ClientEntity> memberClients = clientRepository.findByCreatedByAndCreatedDateBetween(member, start, end);
 
-        // Fetching the latest target assigned by team lead
+        // Latest target for this user
         UserTargetEntity latestTarget = userTargetRepository.findTopByUserOrderByAssignedDateDesc(member);
-        int target = 0;
-        if (latestTarget != null) {
-            target = latestTarget.getTargetValue();
-        }
+        int target = (latestTarget != null) ? latestTarget.getTargetValue() : 0;
 
+        int submitted = memberClients.size();
+        double progressPercentage = (target > 0) ? Math.ceil((submitted * 100.0) / target) : 0.0;
 
         TeamMemberPerformanceDto dto = new TeamMemberPerformanceDto();
         dto.setMemberId(member.getUserId());
         dto.setMemberName(member.getFirstName() + " " + member.getLastName());
-        dto.setTotalClientsSubmitted(memberClients.size());
-        dto.setTarget(target);
-        //  Calculating progress
-        double progressPercentage = 0;
-        if (target > 0) {
-            progressPercentage = Math.ceil((memberClients.size() * 100.0) / target);
-        }
+        dto.setEmail(member.getEmail());
+        dto.setTeamName(member.getTeam() != null ? member.getTeam().getName() : null);
+        dto.setTeamLeadName(member.getTeamLead() != null
+                ? (member.getTeamLead().getFirstName() + " " + member.getTeamLead().getLastName())
+                : (member.getTeam() != null && member.getTeam().getTeamLead() != null
+                ? member.getTeam().getTeamLead().getFirstName() + " " + member.getTeam().getTeamLead().getLastName()
+                : null));
 
+        dto.setTotalClientsSubmitted(submitted);
+        dto.setTarget(target);
         dto.setProgressPercentage(progressPercentage);
-        dto.setProgressFraction(memberClients.size() + "/" + target);
+        dto.setProgressFraction(submitted + "/" + target);
 
         dto.setClientStatus(
                 memberClients.stream()
                         .collect(Collectors.groupingBy(
-                                ClientEntity::getClientStatus,
+                                c -> c.getClientStatus().getDisplayName(),
                                 Collectors.summingInt(c -> 1)
                         ))
         );
@@ -147,10 +160,29 @@ public class TeamServiceImpl implements TeamService {
         return dto;
     }
 
-    private Date[] calculateDateRange(String duration) {
-        LocalDate endDate = LocalDate.now();
-        LocalDate startDate = duration.equalsIgnoreCase("month") ?
-                endDate.minusMonths(1) : endDate.minusWeeks(1);
+    //date range method
+    private Date[] calculateDateRange(LocalDate startDate, LocalDate endDate) {
+        LocalDate today = LocalDate.now();
+
+        // If no dates provided, use last 5 days as default
+        if (startDate == null && endDate == null) {
+            endDate = today;
+            startDate = today.minusDays(4);
+        }
+        //  If only startDate is provided
+        else if (startDate != null && endDate == null) {
+            endDate = today;
+        }
+        //  If only endDate is provided
+        else if (startDate == null && endDate != null) {
+            startDate = endDate.minusDays(4);
+        }
+
+        // Ensuring at least 5 days
+        long daysBetween = ChronoUnit.DAYS.between(startDate, endDate);
+        if (daysBetween < 4) {
+            startDate = endDate.minusDays(4);
+        }
 
         return new Date[]{
                 Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()),

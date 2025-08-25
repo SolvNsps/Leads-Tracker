@@ -128,7 +128,7 @@ void testCreateClient() throws Exception {
         performanceDto.setTeamLeadName("Jane Doe");
         performanceDto.setTotalClientsAdded(5);
 
-        when(clientService.getTeamPerformance("user123","week")).thenReturn(performanceDto);
+//        when(clientService.getTeamPerformance("user123","week")).thenReturn(performanceDto);
 
         mockMvc.perform(get("/api/v1/clients/team-performance")
                         .param("duration", "week"))

@@ -67,4 +67,5 @@ public class SimpleClientDto {
     public void setCreatedDate(LocalDateTime createdDate) {
         this.createdDate = createdDate;
     }
+
 }

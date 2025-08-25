@@ -8,7 +8,6 @@ import com.leadstracker.leadstracker.response.PaginatedResponse;
 import com.leadstracker.leadstracker.response.Statuses;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
-import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,8 +83,8 @@ public class ClientServiceImpl implements ClientService {
         clientEntity.setClientId(utils.generateUserId(30));
         clientEntity.setFirstName(clientDto.getFirstName());
         clientEntity.setLastName(clientDto.getLastName());
-//        clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
         clientEntity.setGpsLocation(clientDto.getGpsLocation());
+        clientEntity.setActive(true);
         Statuses statusEnum = null;
         try {
             statusEnum = Statuses.fromString(clientDto.getClientStatus());
@@ -122,10 +121,11 @@ public class ClientServiceImpl implements ClientService {
     }
 
     /**
-     * @param duration
+     * @param startDate
+     * @param endDate
      * @return
      */
-    public TeamPerformanceDto getTeamPerformance(String userId, String duration) {
+    public TeamPerformanceDto getTeamPerformance(String userId, LocalDate startDate, LocalDate endDate) {
         //Getting team lead and members
         UserEntity teamLead = userRepository.findByUserId(userId);
         TeamsEntity team = teamLead.getTeam();
@@ -142,8 +142,7 @@ public class ClientServiceImpl implements ClientService {
             emptyResponse.setTeamTarget(0);
             emptyResponse.setProgressPercentage(0);
             emptyResponse.setProgressFraction("0/0");
-//            emptyResponse.setClientStatus(Collections.emptyMap());
-//            emptyResponse.setTeamMembers(Collections.emptyList());
+
             return emptyResponse;
         }
 
@@ -155,9 +154,9 @@ public class ClientServiceImpl implements ClientService {
         }
 
         //Calculating date range
-        Date[] dateRange = calculateDateRange(duration);
+        Date[] dateRange = calculateDateRange(startDate, endDate);
 
-        //Fetching all the clients of a team
+        // Fetching all the clients of the team within the range
         List<ClientEntity> clients = clientRepository.findByCreatedByInAndCreatedDateBetween(
                 teamMembers, dateRange[0], dateRange[1]
         );
@@ -170,15 +169,12 @@ public class ClientServiceImpl implements ClientService {
         response.setEmail(teamLead.getEmail());
         response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
         response.setTotalClientsAdded(clients.size());
-//        response.setTeamTarget(response.getNumberOfClients());
-//        response.setProgressPercentage(( (double) clients.size() / (response.getNumberOfClients())));
-//        response.setNumberOfTeamMembers(teamMembers.size());
         // members only (excluding lead) for display
         response.setNumberOfTeamMembers((int) teamMembers.stream()
-                .filter(ent -> !ent.getUserId().equals(teamLead.getUserId()))
+                .filter(entity -> !entity.getUserId().equals(teamLead.getUserId()))
                 .count());
 
-        //Fetching active target
+        //Fetching active team target
         Optional<TeamTargetEntity> activeTargetOpt = teamTargetRepository
                 .findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(team.getId(), LocalDate.now());
 
@@ -200,17 +196,11 @@ public class ClientServiceImpl implements ClientService {
         response.setClientStatus(
                 clients.stream()
                         .collect(Collectors.groupingBy(
-                                        ClientEntity::getClientStatus,
-                                        Collectors.summingInt(c -> 1)
+                                c -> (c.getClientStatus().getDisplayName()),
+                                Collectors.summingInt(c -> 1)
                                 )
                         ));
 
-        // Building team member stats
-//        response.setTeamMembers(
-//                teamMembers.stream()
-//                        .map(member -> teamMemberStats(member, dateRange[0], dateRange[1]))
-//                        .collect(Collectors.toList())
-//        );
 
         // Member stats (excluding lead)
         response.setTeamMembers(
@@ -224,14 +214,32 @@ public class ClientServiceImpl implements ClientService {
         return response;
     }
 
-    private Date[] calculateDateRange(String duration) {
-        LocalDate endDate = LocalDate.now();
-        LocalDate startDate = duration.equals("month") ?
-                endDate.minusMonths(1) : endDate.minusWeeks(1);
+
+    private Date[] calculateDateRange(LocalDate startDate, LocalDate endDate) {
+        LocalDate today = LocalDate.now();
+
+        // If no dates provided, use last 5 days as default
+        if (startDate == null && endDate == null) {
+            endDate = today;
+            startDate = today.minusDays(4); // 5 days total
+        }
+        // If only startDate is provided
+        else if (startDate != null && endDate == null) {
+            endDate = today;
+        }
+        // If only endDate is provided
+        else if (startDate == null && endDate != null) {
+            startDate = endDate.minusDays(4);
+        }
+
+        // Ensuring at least 5 days
+        long daysBetween = ChronoUnit.DAYS.between(startDate, endDate);
+        if (daysBetween < 4) {
+            startDate = endDate.minusDays(4);
+        }
 
         return new Date[]{
                 Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()),
-//                Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
                 Date.from(endDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
         };
     }
@@ -282,19 +290,20 @@ public class ClientServiceImpl implements ClientService {
         dto.setClientStatus(
                 memberClients.stream()
                         .collect(Collectors.groupingBy(
-                                        ClientEntity::getClientStatus,
-                                        Collectors.summingInt(c -> 1)
-                                )
-                        ));
+                                c -> (c.getClientStatus().getDisplayName()),
+                                Collectors.summingInt(c -> 1)
+                        ))
+        );
+
 
         return dto;
     }
 
 
     @Override
-    public TeamMemberPerformanceDto getMemberPerformance(String memberId, String duration) {
+    public TeamMemberPerformanceDto getMemberPerformance(String memberId, LocalDate startDate, LocalDate endDate) {
         UserEntity member = userRepository.findByUserId(memberId);
-        Date[] dateRange = calculateDateRange(duration);
+        Date[] dateRange = calculateDateRange(startDate, endDate);
 
         return teamMemberStats(member, dateRange[0], dateRange[1]);
 
@@ -388,10 +397,20 @@ public class ClientServiceImpl implements ClientService {
         return clientPage.map(clientEntity -> {
             ClientDto dto = modelMapper.map(clientEntity, ClientDto.class);
 
+            if (clientEntity.getCreatedBy() != null) {
+                UserDto createdByDto = modelMapper.map(clientEntity.getCreatedBy(), UserDto.class);
+                if (clientEntity.getCreatedBy().getTeam() != null) {
+                    createdByDto.setTeamName(clientEntity.getCreatedBy().getTeam().getName());
+                }
+                dto.setCreatedBy(createdByDto);
+            }
+
             if (clientEntity.getTeamLead() != null) {
                 UserDto teamLeadDto = modelMapper.map(clientEntity.getTeamLead(), UserDto.class);
                 dto.setAssignedTo(teamLeadDto);
             }
+
+            dto.setClientStatus(clientEntity.getClientStatus().getDisplayName());
 
             return dto;
         });
@@ -577,7 +596,7 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public OverallSystemDto getClientStats(String duration) {
+    public OverallSystemDto getClientStats(LocalDate fromDate, LocalDate toDate) {
         // Getting total statistics in the system
         long totalClients = clientRepository.count();
         List<ClientStatusCountDto> overallStats = clientRepository.countClientsByStatus();
@@ -588,7 +607,7 @@ public class ClientServiceImpl implements ClientService {
         }
 
         // Calculating date range based on duration
-        Date[] dateRange = calculateDateRange(duration);
+        Date[] dateRange = calculateDateRange(fromDate, toDate);
         Date startDate = dateRange[0];
         Date endDate = dateRange[1];
 
@@ -617,48 +636,66 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public Page<ClientDto> getOverdueClients(int page, int limit) {
+    public Page<ClientDto> getOverdueClients(int page, int limit, LocalDate startDate, LocalDate endDate, String name) {
+        Pageable pageableRequest = PageRequest.of(page, limit);
 
-        Pageable pageableRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
-        Page<ClientEntity> allClients = clientRepository.findAll(pageableRequest);
+        List<Statuses> allowedStatuses = List.of(
+                Statuses.PENDING,
+                Statuses.INTERESTED,
+                Statuses.AWAITING_DOCUMENTATION
+        );
 
-        List<ClientDto> overdueClients = new ArrayList<>();
+        Page<ClientEntity> overdueClients = clientRepository.findOverdueClients(allowedStatuses, pageableRequest);
 
-        for (ClientEntity client : allClients) {
-            if (client.getLastUpdated() == null) {
-                continue;
-            }
+        // Filtering in-memory
+        List<ClientDto> filtered = overdueClients
+                .stream()
+                .filter(client -> {
+                    if (startDate == null && endDate == null) return true;
+                    LocalDate createdDate = client.getCreatedDate().toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
 
-            long daysPending = ChronoUnit.DAYS.between(
-                    client.getLastUpdated().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-                    LocalDate.now()
-            );
-
-            if (daysPending > 5 &&
-                    EnumSet.of(Statuses.PENDING, Statuses.INTERESTED, Statuses.AWAITING_DOCUMENTATION)
-                            .contains(client.getClientStatus().getDisplayName())) {
-
-                ClientDto dto = modelMapper.map(client, ClientDto.class);
-
-                if (client.getCreatedBy() != null) {
-                    dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
-
-                    // Assign the team lead of the creator
-                    if (client.getCreatedBy().getTeamLead() != null) {
-                        dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
+                    if (startDate != null && endDate != null) {
+                        return (createdDate.isEqual(startDate) || createdDate.isAfter(startDate)) &&
+                                (createdDate.isEqual(endDate) || createdDate.isBefore(endDate));
+                    } else if (startDate != null) {
+                        return createdDate.isEqual(startDate) || createdDate.isAfter(startDate);
+                    } else {
+                        return createdDate.isEqual(endDate) || createdDate.isBefore(endDate);
                     }
-                }
-                dto.setClientStatus(client.getClientStatus().getDisplayName());
-                overdueClients.add(dto);
-            }
-        }
+                })
+                .filter(client -> {
+                    if (name == null || name.isBlank()) return true;
+                    String fullName = (client.getFirstName() + " " + client.getLastName()).toLowerCase();
+                    return fullName.contains(name.toLowerCase());
+                })
+                .map(client -> {
+                    ClientDto dto = modelMapper.map(client, ClientDto.class);
 
-        return new PageImpl<>(overdueClients, pageableRequest, overdueClients.size());
-//        return allClients.map(clientEntity -> {
-//            ClientDto dto = modelMapper.map(clientEntity, ClientDto.class);
-//            return dto;
-//        });
+                    if (client.getCreatedBy() != null) {
+                        UserDto createdByDto = modelMapper.map(client.getCreatedBy(), UserDto.class);
+                        if (client.getCreatedBy().getTeam() != null) {
+                            createdByDto.setTeamName(client.getCreatedBy().getTeam().getName());
+                        }
+                        dto.setCreatedBy(createdByDto);
+
+                        if (client.getCreatedBy().getTeamLead() != null) {
+                            dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
+                        } else {
+                            dto.setAssignedTo(modelMapper.map(client.getCreatedBy(), UserDto.class));
+                        }
+                    }
+
+                    dto.setClientStatus(client.getClientStatus().getDisplayName());
+                    return dto;
+                })
+                .toList();
+
+        // Wrapping the filtered list back into a Page
+        return new PageImpl<>(filtered, pageableRequest, filtered.size());
     }
+
 
 
     /**
@@ -697,14 +734,14 @@ public class ClientServiceImpl implements ClientService {
     /**
      * @param email
      * @param page
-     * @param size
+     * @param limit
      * @return
      */
     @Override
-    public Page<ClientDto> getClients(String email, Integer page, Integer size) {
+    public Page<ClientDto> getClients(String email, Integer page, Integer limit) {
         UserEntity user = userRepository.findByEmail(email);
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, limit);
         Page<ClientEntity> clientsPage;
 
         if (user.getRole().getName().equals("ROLE_ADMIN")) {
@@ -730,9 +767,16 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public PaginatedResponse<ClientRest> getOverdueClientsForUserRole(
-            String loggedInUserId, String role, String targetUserId, Pageable pageable) {
+            String loggedInUserId, String role, String targetUserId, Pageable pageable,
+            String name, Statuses status, LocalDate fromDate, LocalDate toDate) {
 
         Page<ClientEntity> clientsPage;
+
+        EnumSet<Statuses> allowedStatuses = EnumSet.of(
+                Statuses.PENDING,
+                Statuses.INTERESTED,
+                Statuses.AWAITING_DOCUMENTATION
+        );
 
         switch (role) {
             case "ROLE_ADMIN" -> {
@@ -783,20 +827,55 @@ public class ClientServiceImpl implements ClientService {
                             LocalDate.now()
                     );
                     return daysPending > 5 &&
-                            EnumSet.of(Statuses.PENDING, Statuses.INTERESTED, Statuses.AWAITING_DOCUMENTATION)
-                                    .contains(client.getClientStatus());
+                            allowedStatuses.contains(client.getClientStatus());
+                })
+
+                // name search
+                .filter(client -> {
+                    if (name == null || name.isBlank()) return true;
+                    String fullName = (client.getFirstName() + " " + client.getLastName()).toLowerCase();
+                    return fullName.contains(name.toLowerCase());
+                })
+
+                // status filter
+                .filter(client -> {
+                    if (status == null) return true;
+                    return client.getClientStatus() == status;
+                })
+
+                // date range filter
+                .filter(client -> {
+                    if (fromDate == null && toDate == null) return true;
+                    LocalDate createdDate = client.getCreatedDate().toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+
+                    if (fromDate != null && toDate != null) {
+                        return (createdDate.isEqual(fromDate) || createdDate.isAfter(fromDate)) &&
+                                (createdDate.isEqual(toDate) || createdDate.isBefore(toDate));
+                    } else if (fromDate != null) {
+                        return createdDate.isEqual(fromDate) || createdDate.isAfter(fromDate);
+                    } else {
+                        return createdDate.isEqual(toDate) || createdDate.isBefore(toDate);
+                    }
                 })
                 .map(client -> {
                     ClientDto dto = modelMapper.map(client, ClientDto.class);
 
                     if (client.getCreatedBy() != null) {
                         dto.setCreatedBy(modelMapper.map(client.getCreatedBy(), UserDto.class));
+
                         if (client.getCreatedBy().getTeamLead() != null) {
                             dto.setAssignedTo(modelMapper.map(client.getCreatedBy().getTeamLead(), UserDto.class));
                         }
+                        else {
+                            // Creator is a team lead → assign to themselves
+                            dto.setAssignedTo(modelMapper.map(client.getCreatedBy(), UserDto.class));
+                        }
                     }
 
-                    dto.setClientStatus(client.getClientStatus().name());
+
+                    dto.setClientStatus(client.getClientStatus().getDisplayName());
                     return dto;
                 })
                 .toList();
@@ -831,6 +910,7 @@ public class ClientServiceImpl implements ClientService {
                 rest.setAssignedTo(dto.getAssignedTo().getFirstName() + " " + dto.getAssignedTo().getLastName());
             }
 
+
             return rest;
         }).toList();
 
@@ -847,66 +927,82 @@ public class ClientServiceImpl implements ClientService {
         return response;
     }
 
-    /**
-     * @param loggedInUserId
-     * @param role
-     * @param userId
-     * @param pageable
-     * @return
-     */
     @Override
-    public PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable) {
-        Page<ClientEntity> clientsPage;
+    public void deactivateClient(String clientId) {
+        ClientEntity clientEntity = clientRepository.findByClientId(clientId);
+
+        if (!clientEntity.isActive()) {
+            throw new RuntimeException("Client is already inactive");
+        }
+
+        clientEntity.setActive(false);
+        clientRepository.save(clientEntity);
+    }
+
+
+
+    @Override
+    public PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId,
+            Pageable pageable, String name, Statuses status, LocalDate fromDate, LocalDate toDate) {
+
+        List<String> allowedUserIds = new ArrayList<>();
 
         switch (role) {
             case "ROLE_ADMIN" -> {
-                // Admin can get clients of any user (lead/member)
                 UserEntity targetUser = userRepository.findByUserId(userId);
 
                 if (targetUser.getRole().getName().equals("ROLE_TEAM_LEAD")) {
-                    // Lead + members
-                    List<String> userIds = new ArrayList<>();
-                    userIds.add(userId);
-                    userIds.addAll(userRepository.findByTeamLead_UserId(userId)
+                    allowedUserIds.add(userId);
+                    allowedUserIds.addAll(userRepository.findByTeamLead_UserId(userId)
                             .stream()
                             .map(UserEntity::getUserId)
                             .toList());
-                    clientsPage = clientRepository.findByCreatedBy_UserIdIn(userIds, pageable);
                 } else {
-                    // Just that user's clients
-                    clientsPage = clientRepository.findByCreatedBy_UserId(userId, pageable);
+                    allowedUserIds.add(userId);
                 }
             }
             case "ROLE_TEAM_LEAD" -> {
                 if (loggedInUserId.equals(userId)) {
-                    // Lead fetching own + members
-                    List<String> userIds = new ArrayList<>();
-                    userIds.add(loggedInUserId);
-                    userIds.addAll(userRepository.findByTeamLead_UserId(loggedInUserId)
+                    allowedUserIds.add(loggedInUserId);
+                    allowedUserIds.addAll(userRepository.findByTeamLead_UserId(loggedInUserId)
                             .stream()
                             .map(UserEntity::getUserId)
                             .toList());
-                    clientsPage = clientRepository.findByCreatedBy_UserIdIn(userIds, pageable);
                 } else {
-                    // Lead fetching a member's clients
                     boolean isMember = userRepository.existsByUserIdAndTeamLead_UserId(userId, loggedInUserId);
-                    if (!isMember) throw new AccessDeniedException("You can only view your own or your team members' clients");
-                    clientsPage = clientRepository.findByCreatedBy_UserId(userId, pageable);
+                    if (!isMember) {
+                        throw new AccessDeniedException("You can only view your own or your team members' clients");
+                    }
+                    allowedUserIds.add(userId);
                 }
             }
             case "ROLE_TEAM_MEMBER" -> {
-                if (!loggedInUserId.equals(userId))
+                if (!loggedInUserId.equals(userId)) {
                     throw new AccessDeniedException("You can only view your own clients");
-                clientsPage = clientRepository.findByCreatedBy_UserId(loggedInUserId, pageable);
+                }
+                allowedUserIds.add(loggedInUserId);
             }
             default -> throw new AccessDeniedException("Invalid role");
         }
+
+        // Converting date filters
+        Date startDateTime = (fromDate != null)
+                ? Date.from(fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+                : null;
+
+        Date endDateTime = (toDate != null)
+                ? Date.from(toDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
+                : null;
+
+        // Calling repository search method
+        Page<ClientEntity> clientsPage = clientRepository.searchClientsWithUserIds(allowedUserIds, (name != null && !name.trim().isEmpty()) ? name.trim() : null,
+                status, startDateTime, endDateTime, pageable
+        );
 
         List<ClientRest> dtoList = clientsPage.stream()
                 .map(client -> {
                     ClientRest dto = modelMapper.map(client, ClientRest.class);
 
-                    // createdBy display name
                     if (client.getCreatedBy() != null) {
                         dto.setCreatedBy(client.getCreatedBy().getFirstName() + " " + client.getCreatedBy().getLastName());
                     } else {
@@ -920,18 +1016,10 @@ public class ClientServiceImpl implements ClientService {
                                     .toLocalDateTime();
                             dto.setCreatedAt(ldt);
                         } else {
-                            dto.setCreatedAt(LocalDateTime.of(1970, 1, 1, 0, 0)); // default epoch time
+                            dto.setCreatedAt(LocalDateTime.of(1970, 1, 1, 0, 0));
                         }
                     }
 
-//                    if (dto.getLastAction() == null) {
-//                        if (client.getLastUpdated() != null) {
-//                            LocalDateTime ldt = client.getLastUpdated().toInstant()
-//                                    .atZone(ZoneId.systemDefault())
-//                                    .toLocalDateTime();
-//                            dto.setLastAction(String.valueOf(ldt));
-//                        }
-//                    }
                     if (client.getLastUpdated() != null) {
                         dto.setLastUpdated(client.getLastUpdated().toInstant()
                                 .atZone(ZoneId.systemDefault()).toLocalDateTime());
@@ -940,7 +1028,6 @@ public class ClientServiceImpl implements ClientService {
                         Duration duration = Duration.between(lastUpdatedInstant, Instant.now());
                         dto.setLastAction(utils.getExactDuration(duration));
                     }
-
 
                     if (dto.getAssignedTo() == null) {
                         if (client.getTeamLead() != null) {
@@ -954,7 +1041,7 @@ public class ClientServiceImpl implements ClientService {
                 })
                 .toList();
 
-        // Building paginated response
+        // Paginated response
         PaginatedResponse<ClientRest> response = new PaginatedResponse<>();
         response.setData(dtoList);
         response.setCurrentPage(clientsPage.getNumber());
@@ -968,9 +1055,10 @@ public class ClientServiceImpl implements ClientService {
     }
 
 
+
     @Override
-    public Object getClientStatsForLoggedInUser(String duration) {
-        // Get the logged-in user
+    public Object getClientStatsForLoggedInUser(LocalDate fromDate, LocalDate toDate) {
+        // Getting the logged-in user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
 
@@ -978,14 +1066,14 @@ public class ClientServiceImpl implements ClientService {
         UserEntity loggedInUser = userRepository.findByEmail(email);
 
         //  Date range
-        Date[] dateRange = calculateDateRange(duration);
+        Date[] dateRange = calculateDateRange(fromDate, toDate);
         Date startDate = dateRange[0];
         Date endDate = dateRange[1];
 
         // Role-based stats
         if (loggedInUser.getRole().getName().equals("ROLE_ADMIN")) {
             // Admin → full system stats
-            return getClientStats(duration);
+            return getClientStats(fromDate, toDate);
         }
         else if (loggedInUser.getRole().getName().equals("ROLE_TEAM_LEAD")) {
             // Team Lead → stats for their team

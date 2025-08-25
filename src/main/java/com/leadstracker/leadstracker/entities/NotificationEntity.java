@@ -20,7 +20,7 @@ public class NotificationEntity implements Serializable {
 
     private LocalDateTime lastUpdated;
 
-    private String type; // e.g. FORWARDED_CLIENT, OVERDUE_FOLLOWUP
+    private String type = "GENERAL"; // e.g. FORWARDED_CLIENT, OVERDUE_FOLLOWUP
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "admin_id")

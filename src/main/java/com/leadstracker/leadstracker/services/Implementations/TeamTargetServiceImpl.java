@@ -6,7 +6,6 @@ import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.entities.UserTargetEntity;
 import com.leadstracker.leadstracker.repositories.*;
-import com.leadstracker.leadstracker.request.TargetDistributionRequest;
 import com.leadstracker.leadstracker.request.TeamTargetRequestDto;
 import com.leadstracker.leadstracker.response.MyTargetResponse;
 import com.leadstracker.leadstracker.response.TeamTargetOverviewDto;
@@ -18,13 +17,13 @@ import com.leadstracker.leadstracker.services.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.*;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -86,7 +85,7 @@ public class TeamTargetServiceImpl implements TeamTargetService {
                 ? teamLead.getFirstName() + " " + teamLead.getLastName()
                 : null;
 
-        // Create new target entity
+        // Creating a new instance of TeamTargetEntity
         TeamTargetEntity newTarget = new TeamTargetEntity();
         newTarget.setTeam(team);
         newTarget.setTargetValue(dto.getTargetValue());
@@ -163,18 +162,17 @@ public class TeamTargetServiceImpl implements TeamTargetService {
         TeamTargetEntity teamTarget = teamTargetRepository.findById(teamTargetId)
                 .orElseThrow(() -> new RuntimeException("Team Target not found."));
 
-        // Validation: Check ownership
+        // Validation: Checking ownership
         if (!teamTarget.getTeam().getId().equals(team.getId())) {
             throw new RuntimeException("You are not authorized to distribute this target.");
         }
 
-        // Validate total target
+        // Validating total target
         int totalDistributed = memberTargets.values().stream().mapToInt(Integer::intValue).sum();
         if (totalDistributed > teamTarget.getTargetValue()) {
             throw new RuntimeException("Total distributed target exceeds the team target value.");
         }
 
-        // Save or update assignments
         for (Map.Entry<String, Integer> entry : memberTargets.entrySet()) {
             String memberId = entry.getKey();
             Integer value = entry.getValue();
@@ -230,11 +228,15 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             }
 
 
+
     private TeamTargetOverviewDto mapToTeamTargetOverviewDto(TeamTargetEntity teamTarget, List<UserTargetEntity> userTargets) {
         TeamTargetOverviewDto dto = new TeamTargetOverviewDto();
         dto.setTotalTargetValue(teamTarget.getTargetValue());
         dto.setDueDate(teamTarget.getDueDate());
         dto.setDateAssigned(teamTarget.getAssignedDate());
+
+        // Calculating total achieved across all members
+        final int[] totalAchieved = {0};
 
         List<UserTargetResponseDto> memberDistributions = userTargets.stream().map(userTarget -> {
             UserTargetResponseDto memberDto = new UserTargetResponseDto();
@@ -246,38 +248,40 @@ public class TeamTargetServiceImpl implements TeamTargetService {
                 memberDto.setFullName(member.getFirstName() + " " + member.getLastName());
             }
 
-            // Assigned target value for this member
+            // Assigned target value for member
             memberDto.setAssignedTargetValue(userTarget.getTargetValue());
             memberDto.setDueDate(userTarget.getDueDate());
             memberDto.setDateAssigned(userTarget.getAssignedDate());
 
-            // Calculate progress: total clients submitted / target
-            int totalClients = Math.toIntExact(clientRepository.countByCreatedBy(member));
-            memberDto.setProgressAchieved(totalClients + "/" + userTarget.getTargetValue());
+            // Calculating member progress: total clients submitted / target
+            int memberClients = Math.toIntExact(clientRepository.countByCreatedBy(member));
+            memberDto.setProgressAchieved(memberClients + "/" + userTarget.getTargetValue());
+
+            // Adding to total
+            totalAchieved[0] = totalAchieved[0] + memberClients;
 
             return memberDto;
         }).collect(Collectors.toList());
 
-        dto.setMemberDistributions(memberDistributions);
+        // Setting team progress
+        dto.setProgressAchieve(totalAchieved[0] + "/" + teamTarget.getTargetValue());
+        if (teamTarget.getTargetValue() > 0) {
+            double percentage = ((double) totalAchieved[0] / teamTarget.getTargetValue()) * 100;
+            dto.setProgressPercentage((int) Math.round(percentage));
+        } else {
+            dto.setProgressPercentage(0);
+        }
 
-        // Optional: Calculate overall progressPercentage for the team
-//        int totalClientsAll = memberDistributions.stream()
-//                .mapToInt(md -> {
-//                    int fraction = md.getProgressAchieved();
-//                    return Integer.parseInt(fraction[1]);
-//                }).sum();
-//
-//        dto.setProgressPercentage(teamTarget.getTargetValue() > 0
-//                ? (int) Math.ceil((totalClientsAll * 100.0) / teamTarget.getTargetValue())
-//                : 0);
+        dto.setMemberDistributions(memberDistributions);
 
         return dto;
     }
 
 
+
     @Override
     public MyTargetResponse getMyTarget(String teamMemberEmail) {
-        //  Get the logged-in Team Member
+        //  Getting the logged-in Team Member
         UserEntity teamMember = userRepository.findByEmail(teamMemberEmail);
         if (teamMember == null) {
             throw new RuntimeException("Team Member not found.");
@@ -289,11 +293,15 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             throw new RuntimeException("No target has been assigned to you yet.");
         }
 
-        //Calculating the progress made
+        // Calculating the progress made
         int assignedValue = userTarget.getTargetValue();
-        int currentProgress = userTarget.getProgress(); // assumes this is updated periodically
+        int currentProgress = userTarget.getProgress();
         int progressRemaining = Math.max(assignedValue - currentProgress, 0);
         int progressPercentage = (int) (double) ((currentProgress / assignedValue) * 100);
+
+        final int[] totalAchieved = {0};
+
+        int memberClients = Math.toIntExact(clientRepository.countByCreatedBy(teamMember));
 
         //Building response
         MyTargetResponse response = new MyTargetResponse();
@@ -301,9 +309,8 @@ public class TeamTargetServiceImpl implements TeamTargetService {
         response.setDueDate(userTarget.getDueDate());
         response.setAssignedDate(userTarget.getAssignedDate());
         response.setProgressRemaining(progressRemaining);
-        response.setProgressPercentage(progressPercentage);
-        response.setProgressValue(currentProgress);
-
+        response.setProgressValue(totalAchieved[0] + memberClients);
+        response.setProgressPercentage(((totalAchieved[0] + memberClients)  * 100) / assignedValue);
 
         return response;
     }

@@ -1,15 +1,11 @@
 package com.leadstracker.leadstracker.services;
 
 import com.leadstracker.leadstracker.DTO.*;
-import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.response.ClientRest;
 import com.leadstracker.leadstracker.response.PaginatedResponse;
 import com.leadstracker.leadstracker.response.Statuses;
-import com.leadstracker.leadstracker.security.UserPrincipal;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,9 +15,9 @@ import java.util.List;
 public interface ClientService {
     ClientDto createClient(ClientDto clientDto);
 
-    TeamPerformanceDto getTeamPerformance(String userId, String duration);
+    TeamPerformanceDto getTeamPerformance(String userId, LocalDate startDate, LocalDate endDate);
 
-    TeamMemberPerformanceDto getMemberPerformance(String memberId, String duration);
+    TeamMemberPerformanceDto getMemberPerformance(String memberId, LocalDate startDate, LocalDate endDate);
 
     void deleteClient(String userId);
 
@@ -33,7 +29,7 @@ public interface ClientService {
 
     List<ClientDto> getClientsUnderUser(String userId, int page, int limit);
 
-    Page<ClientDto> getOverdueClients(int page, int limit);
+    Page<ClientDto> getOverdueClients(int page, int limit, LocalDate startDate, LocalDate endDate, String name);
 
     List<ClientDto> getAllClientsUnderUser(String userId);
 
@@ -45,15 +41,17 @@ public interface ClientService {
 
     List<ClientDto> getAllClientsByTeamMember(String userId);
 
-    OverallSystemDto getClientStats(String duration);
+    OverallSystemDto getClientStats(LocalDate fromDate, LocalDate toDate);
 
     List<ClientSearchDto> searchClients(String name, Statuses status, LocalDate date);
 
     Page<ClientDto> getClients(String email, Integer page, Integer size);
 
-    PaginatedResponse<ClientRest> getOverdueClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable);
+    PaginatedResponse<ClientRest> getOverdueClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable, String name, Statuses status, LocalDate fromDate, LocalDate toDate);
 
-    PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable);
+    PaginatedResponse<ClientRest> getMyClientsForUserRole(String loggedInUserId, String role, String userId, Pageable pageable, String name, Statuses status, LocalDate fromDate, LocalDate toDate);
 
-    Object getClientStatsForLoggedInUser(String duration);
+   Object getClientStatsForLoggedInUser(LocalDate fromDate, LocalDate toDate);
+
+    void deactivateClient(String clientId);
 }
