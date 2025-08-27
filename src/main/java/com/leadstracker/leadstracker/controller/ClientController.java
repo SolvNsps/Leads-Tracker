@@ -3,6 +3,7 @@ package com.leadstracker.leadstracker.controller;
 import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.NotificationEntity;
+import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.request.UserDetails;
 import com.leadstracker.leadstracker.response.ClientRest;
@@ -114,9 +115,11 @@ public class ClientController {
     @GetMapping("/team-performance")
     public ResponseEntity<TeamPerformanceDto> getTeamOverview(String userId,
                                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-                                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+                                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+                                                              @RequestParam(required = false) String name,
+                                                              @RequestParam(required = false) String team
     ) {
-        return ResponseEntity.ok(clientService.getTeamPerformance(userId, startDate, endDate));
+        return ResponseEntity.ok(clientService.getTeamPerformance(userId, startDate, endDate, name, team));
     }
 
 
@@ -202,7 +205,7 @@ public class ClientController {
 
 
     //Get a client
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
+//    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping(path = "/{id}")
 
     public ClientRest getClient(@PathVariable String id) {
@@ -261,9 +264,17 @@ public class ClientController {
     @GetMapping("/all-clients")
     public ResponseEntity<PaginatedResponse<ClientRest>> getAllClients(
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "limit", defaultValue = "10") int limit) {
+            @RequestParam(value = "limit", defaultValue = "10") int limit,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String team) {
 
-        Page<ClientDto> pagedClients = clientService.getAllClients(page, limit);
+        Statuses statusEnum = null;
+        if (status != null && !status.trim().isEmpty()) {
+            statusEnum = Statuses.fromString(status);
+        }
+
+        Page<ClientDto> pagedClients = clientService.getAllClients(page, limit, name, statusEnum, team);
 
         List<ClientRest> clientRestList = pagedClients.getContent().stream().map(dto -> {
             ClientRest rest = modelMapper.map(dto, ClientRest.class);
@@ -424,7 +435,8 @@ public class ClientController {
     @GetMapping("/statistics")
     public ResponseEntity<OverallSystemDto> getClientStats(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
                                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
-        OverallSystemDto stats = clientService.getClientStats(fromDate, toDate);
+        OverallSystemDto stats = clientService.
+                getClientStats(fromDate, toDate);
         return ResponseEntity.ok(stats);
     }
 

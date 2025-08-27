@@ -60,7 +60,7 @@ public class AppConfig {
         // UserDetails -> UserDto mapping
         mapper.typeMap(UserDetails.class, UserDto.class)
                 .addMappings(map -> {
-                    map.map(UserDetails::getTeamLeadUserId, UserDto::setTeamLeadUserId);
+//                    map.map(UserDetails::getTeamLeadUserId, UserDto::setTeamLeadUserId);
                     map.map(UserDetails::getRole, UserDto::setRole);
                     map.map(UserDetails::getStaffId, UserDto::setStaffId);
                 });
@@ -74,7 +74,7 @@ public class AppConfig {
                 });
 
         mapper.typeMap(TeamDetails.class, TeamDto.class).addMappings(m -> {
-            m.map(TeamDetails::getTeamLeadUserId, TeamDto::setTeamLeadId);
+//            m.map(TeamDetails::getTeamLeadUserId, TeamDto::setTeamLeadId);
         });
 
 

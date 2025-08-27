@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 
 @Entity
@@ -19,8 +20,8 @@ public class TeamsEntity implements Serializable {
     @Column(unique = true)
     private String name;
 
-    @OneToMany(mappedBy = "team")
-    private Collection<UserEntity> users;
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Collection<UserEntity> users = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "team_lead_id")

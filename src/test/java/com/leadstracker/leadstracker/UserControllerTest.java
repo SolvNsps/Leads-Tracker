@@ -380,7 +380,7 @@ public class UserControllerTest {
         // Prepare request body
         TeamDetails teamDetails = new TeamDetails();
         teamDetails.setName("Updated Team Name");
-        teamDetails.setTeamLeadUserId("lead001");
+//        teamDetails.setTeamLeadUserId("lead001");
 
         // Mock DTO mapping
         TeamDto inputDto = new TeamDto();
