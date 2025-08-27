@@ -407,8 +407,7 @@ public class UserController {
 
     //getting a team
     @GetMapping(value = "/team/{teamId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getTeam(
-            @PathVariable String teamId,
+    public ResponseEntity<?> getTeam(@PathVariable String teamId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) throws Exception {

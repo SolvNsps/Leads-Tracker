@@ -896,7 +896,6 @@ public class UserServiceImpl implements UserService {
         UserEntity teamLead = team.getTeamLead();
         List<UserEntity> participants = new ArrayList<>(team.getUsers());
 
-        // Deduplicate
         participants = participants.stream()
                 .collect(Collectors.collectingAndThen(
                         Collectors.toCollection(LinkedHashSet::new),
@@ -943,6 +942,9 @@ public class UserServiceImpl implements UserService {
         dto.setTeamLeadName(member.getTeam() != null && member.getTeam().getTeamLead() != null
                 ? member.getTeam().getTeamLead().getFirstName() + " " + member.getTeam().getTeamLead().getLastName()
                 : null);
+        dto.setCreatedDate(member.getCreatedDate());
+        dto.setStaffId(member.getStaffId());
+        dto.setPhoneNumber(member.getPhoneNumber());
 
         dto.setTotalClientsSubmitted(submitted);
         dto.setTarget(target);
