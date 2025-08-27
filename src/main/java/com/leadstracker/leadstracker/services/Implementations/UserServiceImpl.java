@@ -1,18 +1,9 @@
 package com.leadstracker.leadstracker.services.Implementations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.leadstracker.leadstracker.DTO.AmazonSES;
-import com.leadstracker.leadstracker.DTO.TeamDto;
-import com.leadstracker.leadstracker.DTO.UserDto;
-import com.leadstracker.leadstracker.DTO.Utils;
-import com.leadstracker.leadstracker.entities.RoleEntity;
-import com.leadstracker.leadstracker.entities.TeamsEntity;
-import com.leadstracker.leadstracker.entities.UserEntity;
-import com.leadstracker.leadstracker.entities.UserTargetEntity;
-import com.leadstracker.leadstracker.repositories.RoleRepository;
-import com.leadstracker.leadstracker.repositories.TeamsRepository;
-import com.leadstracker.leadstracker.repositories.UserRepository;
-import com.leadstracker.leadstracker.repositories.UserTargetRepository;
+import com.leadstracker.leadstracker.DTO.*;
+import com.leadstracker.leadstracker.entities.*;
+import com.leadstracker.leadstracker.repositories.*;
 import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.UserService;
@@ -40,6 +31,8 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,6 +65,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     UserTargetRepository userTargetRepository;
+
+    @Autowired
+    ClientRepository clientRepository;
 
 
     @Value("${OTP_Default_Value:}")
@@ -526,7 +522,6 @@ public class UserServiceImpl implements UserService {
                     return dto;
                 })
                 .toList();
-
     }
 
 
@@ -582,8 +577,7 @@ public class UserServiceImpl implements UserService {
             teamMemberPage = userRepository.findTeamMembersByFilters(
                     (name != null && !name.trim().isEmpty()) ? name : null,
                     (team != null && !team.trim().isEmpty()) ? team : null,
-                    pageable
-            );
+                    pageable);
         } else {
             // Using simple pagination if no filters
             teamMemberPage = userRepository.findByRole(role, pageable);
@@ -591,25 +585,7 @@ public class UserServiceImpl implements UserService {
 
         // Converting to DTO page
         return teamMemberPage.map(member -> modelMapper.map(member, UserDto.class));
-//        List<UserEntity> teamMembers = userRepository.findByRoleName("ROLE_TEAM_MEMBER");
-//
-//        return teamMembers.stream().map(user -> {
-//            UserDto dto = modelMapper.map(user, UserDto.class);
-//
-//            // Fetching latest user target
-//            UserTargetEntity latestTarget = userTargetRepository.findTopByUserOrderByAssignedDateDesc(user);
-//
-//            int target = (latestTarget != null) ? latestTarget.getTargetValue() : 0;
-//            int progress = (latestTarget != null) ? latestTarget.getProgress() : 0;
-//            double percentage = (target > 0) ? ((double) progress / target) * 100 : 0;
-//
-//            dto.setTargetValue(target);
-//            dto.setProgress(progress);
-//            dto.setProgressPercentage(percentage);
-//            dto.setProgressFraction(progress + "/" + target);
-//
-//            return dto;
-//        }).toList();
+
     }
 
 
@@ -909,6 +885,110 @@ public class UserServiceImpl implements UserService {
         }).toList();
     }
 
+
+    public TeamDto getTeamWithMembers(String teamId, LocalDate startDate, LocalDate endDate) {
+        TeamsEntity team = (TeamsEntity) teamsRepository.findByIdAndActiveTrue(Long.valueOf(teamId))
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+
+        // date range (same logic as overview)
+        Date[] dateRange = calculateDateRange(startDate, endDate);
+
+        UserEntity teamLead = team.getTeamLead();
+        List<UserEntity> participants = new ArrayList<>(team.getUsers());
+
+        // Deduplicate
+        participants = participants.stream()
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toCollection(LinkedHashSet::new),
+                        ArrayList::new
+                ));
+
+        // map to TeamDto
+        TeamDto dto = new TeamDto();
+        dto.setId(team.getId());
+        dto.setName(team.getName());
+        dto.setTeamLeadId(teamLead != null ? teamLead.getUserId() : null);
+        dto.setTeamLeadName(teamLead != null ? teamLead.getFirstName() + " " + teamLead.getLastName() : null);
+        dto.setTeamLeadEmail(teamLead != null ? teamLead.getEmail() : null);
+        dto.setLeadPhoneNumber(teamLead != null ? teamLead.getPhoneNumber() : null);
+        dto.setLeadStaffId(teamLead != null ? teamLead.getStaffId() : null);
+        dto.setCreatedDate(teamLead != null ? teamLead.getCreatedDate() : null);
+
+        // map team members
+        dto.setTeamMembers(
+                participants.stream()
+                        .map(p -> teamMemberStats(p, dateRange[0], dateRange[1]))
+                        .collect(Collectors.toList())
+        );
+
+        return dto;
+    }
+
+    // Team member stats
+    private TeamMemberPerformanceDto teamMemberStats(UserEntity member, Date start, Date end) {
+        List<ClientEntity> memberClients = clientRepository.findByCreatedByAndCreatedDateBetween(member, start, end);
+
+        // Latest target for this user
+        UserTargetEntity latestTarget = userTargetRepository.findTopByUserOrderByAssignedDateDesc(member);
+        int target = (latestTarget != null) ? latestTarget.getTargetValue() : 0;
+
+        int submitted = memberClients.size();
+        double progressPercentage = (target > 0) ? Math.ceil((submitted * 100.0) / target) : 0.0;
+
+        TeamMemberPerformanceDto dto = new TeamMemberPerformanceDto();
+        dto.setMemberId(member.getUserId());
+        dto.setMemberName(member.getFirstName() + " " + member.getLastName());
+        dto.setEmail(member.getEmail());
+        dto.setTeamName(member.getTeam() != null ? member.getTeam().getName() : null);
+        dto.setTeamLeadName(member.getTeam() != null && member.getTeam().getTeamLead() != null
+                ? member.getTeam().getTeamLead().getFirstName() + " " + member.getTeam().getTeamLead().getLastName()
+                : null);
+
+        dto.setTotalClientsSubmitted(submitted);
+        dto.setTarget(target);
+        dto.setProgressPercentage(progressPercentage);
+        dto.setProgressFraction(submitted + "/" + target);
+
+        dto.setClientStatus(
+                memberClients.stream()
+                        .collect(Collectors.groupingBy(
+                                c -> c.getClientStatus().getDisplayName(),
+                                Collectors.summingInt(c -> 1)
+                        ))
+        );
+
+        return dto;
+    }
+
+    // Date range method
+    private Date[] calculateDateRange(LocalDate startDate, LocalDate endDate) {
+        LocalDate today = LocalDate.now();
+
+        // using last 5 days as default if no dates are provided
+        if (startDate == null && endDate == null) {
+            endDate = today;
+            startDate = today.minusDays(4);
+        }
+        //  If only startDate is provided
+        else if (startDate != null && endDate == null) {
+            endDate = today;
+        }
+        //  If only endDate is provided
+        else if (startDate == null && endDate != null) {
+            startDate = endDate.minusDays(4);
+        }
+
+        // Ensuring at least 5 days
+        long daysBetween = ChronoUnit.DAYS.between(startDate, endDate);
+        if (daysBetween < 4) {
+            startDate = endDate.minusDays(4);
+        }
+
+        return new Date[]{
+                Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()),
+                Date.from(endDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
+        };
+    }
 
 }
 

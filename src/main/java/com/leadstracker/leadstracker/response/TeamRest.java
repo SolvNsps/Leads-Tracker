@@ -1,6 +1,9 @@
 package com.leadstracker.leadstracker.response;
 
+import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class TeamRest {
     private Long teamId;
@@ -11,6 +14,7 @@ public class TeamRest {
     private String leadPhoneNumber;
     private String leadStaffId;
     private LocalDateTime createdDate;
+    private List<TeamMemberPerformanceDto> teamMembers;
 
     public Long getTeamId() {
         return teamId;
@@ -74,5 +78,13 @@ public class TeamRest {
 
     public void setTeamLeadName(String teamLeadName) {
         this.teamLeadName = teamLeadName;
+    }
+
+    public List<TeamMemberPerformanceDto> getTeamMembers() {
+        return teamMembers;
+    }
+
+    public void setTeamMembers(List<TeamMemberPerformanceDto> teamMembers) {
+        this.teamMembers = teamMembers;
     }
 }

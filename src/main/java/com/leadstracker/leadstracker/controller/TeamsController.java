@@ -22,6 +22,7 @@ public class TeamsController {
 
     @Autowired
     private TeamService teamService;
+    @Autowired
     private ClientService clientService;
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")

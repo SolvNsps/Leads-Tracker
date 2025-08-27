@@ -6,6 +6,7 @@ import com.leadstracker.leadstracker.entities.UserEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -61,4 +62,6 @@ public interface UserService extends UserDetailsService {
     List<TeamDto> searchTeamByName(String name);
 
     void reactivateTeam(String teamId, String newTeamLeadId);
+
+    TeamDto getTeamWithMembers(String teamId, LocalDate startDate, LocalDate endDate);
 }

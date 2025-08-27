@@ -60,10 +60,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
             "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :name, '%'))) " +
             "AND (:team IS NULL OR (u.team IS NOT NULL AND LOWER(u.team.name) LIKE LOWER(CONCAT('%', :team, '%'))))")
     Page<UserEntity> findTeamMembersByFilters(
-            @Param("name") String name,
-            @Param("team") String team,
-            Pageable pageable
-    );
+            @Param("name") String name, @Param("team") String team, Pageable pageable);
 
     RoleEntity role(RoleEntity role);
 

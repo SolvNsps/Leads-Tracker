@@ -407,9 +407,13 @@ public class UserController {
 
     //getting a team
     @GetMapping(value = "/team/{teamId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getTeam(@PathVariable String teamId) throws Exception {
+    public ResponseEntity<?> getTeam(
+            @PathVariable String teamId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) throws Exception {
 
-        TeamDto teamDto = userService.getTeamById(teamId);
+        TeamDto teamDto = userService.getTeamWithMembers(teamId, startDate, endDate);
 
         TeamRest teamRest = modelMapper.map(teamDto, TeamRest.class);
         teamRest.setTeamId(teamDto.getId());
@@ -419,11 +423,31 @@ public class UserController {
         teamRest.setLeadPhoneNumber(teamDto.getLeadPhoneNumber());
         teamRest.setLeadStaffId(teamDto.getLeadStaffId());
         teamRest.setCreatedDate(teamDto.getCreatedDate());
+        teamRest.setTeamMembers(teamDto.getTeamMembers());
 
         return ResponseEntity.ok(Map.of(
                 "team", teamRest,
                 "message", "Team retrieved successfully"));
     }
+
+//    @GetMapping(value = "/team/{teamId}", produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<?> getTeam(@PathVariable String teamId) throws Exception {
+//
+//        TeamDto teamDto = userService.getTeamById(teamId);
+//
+//        TeamRest teamRest = modelMapper.map(teamDto, TeamRest.class);
+//        teamRest.setTeamId(teamDto.getId());
+//        teamRest.setTeamLeadUserId(teamDto.getTeamLeadId());
+//        teamRest.setTeamLeadName(teamDto.getTeamLeadName());
+//        teamRest.setTeamLeadEmail(teamDto.getTeamLeadEmail());
+//        teamRest.setLeadPhoneNumber(teamDto.getLeadPhoneNumber());
+//        teamRest.setLeadStaffId(teamDto.getLeadStaffId());
+//        teamRest.setCreatedDate(teamDto.getCreatedDate());
+//
+//        return ResponseEntity.ok(Map.of(
+//                "team", teamRest,
+//                "message", "Team retrieved successfully"));
+//    }
 
 
 
