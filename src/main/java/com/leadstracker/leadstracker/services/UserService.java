@@ -36,15 +36,15 @@ public interface UserService extends UserDetailsService {
 
     UserDto createUser(UserDto userDto);
 
-    List<UserDto> getMembersUnderLead(String id);
+    List<UserDto> getMembersUnderLead(String id, String name);
 
     UserDto getMemberUnderLead(String userId, String memberId);
 
     UserDto getUserByEmail(String loggedInEmail);
 
-    List<UserDto> getAllTeamMembers();
+    Page<UserDto> getAllTeamMembers(String name, String team, int page, int limit);
 
-    List<UserDto> getAllTeamLeads();
+    Page<UserDto> getAllTeamLeads(String name, String team, int page, int limit);
 
     TeamDto createTeam(TeamDto teamDto);
 

@@ -15,7 +15,7 @@ import java.util.List;
 public interface ClientService {
     ClientDto createClient(ClientDto clientDto);
 
-    TeamPerformanceDto getTeamPerformance(String userId, LocalDate startDate, LocalDate endDate);
+    TeamPerformanceDto getTeamPerformance(String userId, LocalDate startDate, LocalDate endDate, String name, String team);
 
     TeamMemberPerformanceDto getMemberPerformance(String memberId, LocalDate startDate, LocalDate endDate);
 
@@ -23,7 +23,7 @@ public interface ClientService {
 
     ClientDto updateClient(String id, ClientDto clientDto);
 
-     Page<ClientDto> getAllClients(int limit, int page);
+     Page<ClientDto> getAllClients(int limit, int page, String name, Statuses status, String team);
 
     ClientDto getClientByClientId(String clientId);
 

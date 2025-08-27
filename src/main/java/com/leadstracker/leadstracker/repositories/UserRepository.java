@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +39,31 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     List<UserEntity> findByTeamLead(UserEntity teamLead);
 
-    List<UserEntity> findByRole(RoleEntity role);
+    Page<UserEntity> findByRole(RoleEntity role, Pageable pageable);
+
+    // New method for filtered search with pagination(Team lead)
+    @Query("SELECT u FROM users u JOIN u.role r WHERE r.name = 'ROLE_TEAM_LEAD' " +
+            "AND (:name IS NULL OR LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :name, '%')) " +
+            "OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
+            "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+            "AND (:team IS NULL OR (u.team IS NOT NULL AND LOWER(u.team.name) LIKE LOWER(CONCAT('%', :team, '%'))))")
+    Page<UserEntity> findTeamLeadsByFilters(
+            @Param("name") String name,
+            @Param("team") String team,
+            Pageable pageable
+    );
+
+    // New method for filtered search with pagination(Team member)
+    @Query("SELECT u FROM users u JOIN u.role r WHERE r.name = 'ROLE_TEAM_MEMBER' " +
+            "AND (:name IS NULL OR LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :name, '%')) " +
+            "OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
+            "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+            "AND (:team IS NULL OR (u.team IS NOT NULL AND LOWER(u.team.name) LIKE LOWER(CONCAT('%', :team, '%'))))")
+    Page<UserEntity> findTeamMembersByFilters(
+            @Param("name") String name,
+            @Param("team") String team,
+            Pageable pageable
+    );
 
     RoleEntity role(RoleEntity role);
 
@@ -62,6 +87,17 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     List<UserEntity> findByEmailContainingIgnoreCase(String keyword);
 
     boolean existsByUserIdAndTeamLead_UserId(String targetUserId, String loggedInUserId);
+
+    @Query("SELECT u FROM users u " +
+            "WHERE (:name IS NULL OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
+            "   OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+            "AND (:team IS NULL OR LOWER(u.team.name) LIKE LOWER(CONCAT('%', :team, '%')))")
+    List<UserEntity> searchAllUsersByFirstNameAndLastNameAndTeamName(@Param("name")String name, String team);
+
+    List<UserEntity> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String trim, String trim1);
+
+    Collection<UserEntity> findByTeamAndRole_Name(TeamsEntity team, String roleName);
+
 
 //    UserEntity findByUsername(String username);
 }

@@ -96,15 +96,19 @@ public class ClientServiceImpl implements ClientService {
         // Setting the team lead
         if (creatorRole.equals("ROLE_TEAM_LEAD")) {
             clientEntity.setTeamLead(creatorEntity); // Team Lead created the client
+            clientEntity.setTeam(creatorEntity.getTeam()); // setting the team of the team lead who created the client
         } else {
-            if (creatorEntity.getTeamLead() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Team Member must be assigned to a Team Lead.");
+//            if (creatorEntity.getTeamLead() == null) {
+//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Team Member must be assigned to a Team Lead.");
+//            }
+            if (creatorEntity.getTeam() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User must belong to a team to add a client.");
             }
 
             clientEntity.setTeamLead(creatorEntity.getTeamLead()); // Team member created the client
+            clientEntity.setTeam(creatorEntity.getTeam()); // setting the team of the team member who created the client
         }
         System.out.println("gpsLocation being saved: '" + clientEntity.getGpsLocation() + "'");
-
 
         ClientEntity saved = clientRepository.save(clientEntity);
 
@@ -115,9 +119,6 @@ public class ClientServiceImpl implements ClientService {
         result.setAssignedTo(assignedToDto);
 
         return result;
-
-
-//        return modelMapper.map(saved, ClientDto.class);
     }
 
     /**
@@ -125,12 +126,15 @@ public class ClientServiceImpl implements ClientService {
      * @param endDate
      * @return
      */
-    public TeamPerformanceDto getTeamPerformance(String userId, LocalDate startDate, LocalDate endDate) {
+    public TeamPerformanceDto getTeamPerformance(String userId, LocalDate startDate, LocalDate endDate, String name, String team) {
         //Getting team lead and members
         UserEntity teamLead = userRepository.findByUserId(userId);
-        TeamsEntity team = teamLead.getTeam();
+        TeamsEntity teams = teamLead.getTeam();
 
-        if (team == null) {
+        List<UserEntity> userEntities = userRepository.searchAllUsersByFirstNameAndLastNameAndTeamName(
+                        (name != null && !name.trim().isEmpty()) ? name.trim() : null, team);
+
+        if (teams == null) {
             TeamPerformanceDto emptyResponse = new TeamPerformanceDto();
             emptyResponse.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
             emptyResponse.setTeamId(null);
@@ -163,8 +167,8 @@ public class ClientServiceImpl implements ClientService {
 
         //response
         TeamPerformanceDto response = new TeamPerformanceDto();
-        response.setTeamId(team.getId());
-        response.setTeamName(team.getName());
+        response.setTeamId(teams.getId());
+        response.setTeamName(teams.getName());
         response.setTeamLeadUserId(teamLead.getUserId());
         response.setEmail(teamLead.getEmail());
         response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
@@ -176,7 +180,7 @@ public class ClientServiceImpl implements ClientService {
 
         //Fetching active team target
         Optional<TeamTargetEntity> activeTargetOpt = teamTargetRepository
-                .findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(team.getId(), LocalDate.now());
+                .findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(teams.getId(), LocalDate.now());
 
         int teamTarget = activeTargetOpt.map(TeamTargetEntity::getTargetValue).orElse(0);
         response.setTeamTarget(teamTarget);
@@ -386,13 +390,15 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public Page<ClientDto> getAllClients(int page, int limit) {
+    public Page<ClientDto> getAllClients(int page, int limit, String name, Statuses status, String team) {
         if (page > 0) {
             page -= 1;
         }
 
         Pageable pageableRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
-        Page<ClientEntity> clientPage = clientRepository.findAll(pageableRequest);
+        Page<ClientEntity> clientPage = clientRepository.searchAllClientsByFirstNameAndLastNameAndClientStatusAndTeamName
+                (pageableRequest,
+                (name != null && !name.trim().isEmpty()) ? name.trim() : null, status, team);
 
         return clientPage.map(clientEntity -> {
             ClientDto dto = modelMapper.map(clientEntity, ClientDto.class);
@@ -597,21 +603,22 @@ public class ClientServiceImpl implements ClientService {
      */
     @Override
     public OverallSystemDto getClientStats(LocalDate fromDate, LocalDate toDate) {
-        // Getting total statistics in the system
-        long totalClients = clientRepository.count();
-        List<ClientStatusCountDto> overallStats = clientRepository.countClientsByStatus();
-
-        Map<String, Long> overallStatusCounts = new HashMap<>();
-        for (ClientStatusCountDto stat : overallStats) {
-            overallStatusCounts.put(stat.getStatus().toString(), stat.getCount());
-        }
-
         // Calculating date range based on duration
         Date[] dateRange = calculateDateRange(fromDate, toDate);
         Date startDate = dateRange[0];
         Date endDate = dateRange[1];
 
-        // Get all teams
+        // Overall stats (filtered by date range)
+        long totalClients = clientRepository.countByCreatedDateBetween(startDate, endDate);
+        List<ClientEntity> overallClients = clientRepository.findByCreatedDateBetween(startDate, endDate);
+
+        Map<String, Long> overallStatusCounts = overallClients.stream()
+                .collect(Collectors.groupingBy(
+                        c -> c.getClientStatus().toString(),
+                        Collectors.counting()
+                ));
+
+        // Per-team stats
         List<TeamsEntity> teams = teamsRepository.findAll();
         List<ClientStatsDto> teamStatsList = new ArrayList<>();
 
@@ -619,18 +626,25 @@ public class ClientServiceImpl implements ClientService {
             List<UserEntity> members = userRepository.findByTeam(team);
 
             // Fetching clients created by team members within date range
-            List<ClientEntity> teamClients = clientRepository.findByCreatedByInAndCreatedDateBetween(members, startDate, endDate);
+            List<ClientEntity> teamClients =
+                    clientRepository.findByCreatedByInAndCreatedDateBetween(members, startDate, endDate);
 
             Map<String, Long> teamStatusCounts = teamClients.stream()
                     .collect(Collectors.groupingBy(
                             c -> c.getClientStatus().toString(),
-                            Collectors.counting()));
+                            Collectors.counting()
+                    ));
 
-            teamStatsList.add(new ClientStatsDto(team.getName(), teamClients.size(), teamStatusCounts));
+            teamStatsList.add(new ClientStatsDto(
+                    team.getName(),
+                    teamClients.size(),
+                    teamStatusCounts
+            ));
         }
 
         return new OverallSystemDto(totalClients, overallStatusCounts, teamStatsList);
     }
+
 
     /**
      * @return
@@ -1072,11 +1086,11 @@ public class ClientServiceImpl implements ClientService {
 
         // Role-based stats
         if (loggedInUser.getRole().getName().equals("ROLE_ADMIN")) {
-            // Admin → full system stats
+            // Admin full system stats
             return getClientStats(fromDate, toDate);
         }
         else if (loggedInUser.getRole().getName().equals("ROLE_TEAM_LEAD")) {
-            // Team Lead → stats for their team
+            // Team Lead stats for their team
             List<UserEntity> members = userRepository.findByTeam(loggedInUser.getTeam());
             List<ClientEntity> teamClients = clientRepository
                     .findByCreatedByInAndCreatedDateBetween(members, startDate, endDate);

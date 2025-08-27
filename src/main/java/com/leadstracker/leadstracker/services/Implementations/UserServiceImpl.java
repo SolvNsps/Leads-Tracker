@@ -440,21 +440,35 @@ public class UserServiceImpl implements UserService {
 
         userEntity.setCreatedDate(LocalDateTime.now());
 
-        // Handling the team member case
-        if (userDto.getRole().replace("ROLE_", "").equalsIgnoreCase("TEAM_MEMBER")) {
-            if (userDto.getTeamLeadUserId() == null || userDto.getTeamLeadUserId().trim().isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Team Lead ID is required for Team Members");
-            }
+        //Team handling
+        TeamsEntity team = teamsRepository.findByName(userDto.getTeamName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Team not found: " + userDto.getTeamName()));
 
-            UserEntity teamLead = userRepository.findByUserId(userDto.getTeamLeadUserId());
-            if (teamLead == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Assigned Team Lead not found");
-            }
-            userEntity.setTeamLead(teamLead);
 
+        userEntity.setTeam(team);
+        team.getUsers().add(userEntity);
+
+        // setting the team lead
+        if (roleName.equalsIgnoreCase("ROLE_TEAM_LEAD")) {
+            team.setTeamLead(userEntity);
         }
+
+        // Handling the team member case
+//        if (userDto.getRole().replace("ROLE_", "").equalsIgnoreCase("TEAM_MEMBER")) {
+//            if (userDto.getTeamLeadUserId() == null || userDto.getTeamLeadUserId().trim().isEmpty()) {
+//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+//                        "Team Lead ID is required for Team Members");
+//            }
+//
+//            UserEntity teamLead = userRepository.findByUserId(userDto.getTeamLeadUserId());
+//            if (teamLead == null) {
+//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+//                        "Assigned Team Lead not found");
+//            }
+//            userEntity.setTeamLead(teamLead);
+//
+//        }
 
         // Setting password and other defaults
         String rawPassword = utils.generateDefaultPassword();
@@ -462,13 +476,23 @@ public class UserServiceImpl implements UserService {
         userEntity.setEmailVerificationStatus(true);
         userEntity.setDefaultPassword(true);
         userEntity.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
+//        userEntity.setTeam(userDto.getTeamName());
 
-        UserEntity savedUser = userRepository.save(userEntity);
-        UserDto responseDto = modelMapper.map(savedUser, UserDto.class);
-        responseDto.setRole(savedUser.getRole().getName().replace("ROLE_", ""));
+        userRepository.save(userEntity);
 
-       amazonSES.sendOnboardingEmail(responseDto.getEmail(), responseDto.getFirstName(), rawPassword);
+        UserDto responseDto = modelMapper.map(userEntity, UserDto.class);
+        responseDto.setRole(userEntity.getRole().getName().replace("ROLE_", ""));
+
+        amazonSES.sendOnboardingEmail(responseDto.getEmail(), responseDto.getFirstName(), rawPassword);
+
         return responseDto;
+
+//        UserEntity savedUser = userRepository.save(userEntity);
+//        UserDto responseDto = modelMapper.map(savedUser, UserDto.class);
+//        responseDto.setRole(savedUser.getRole().getName().replace("ROLE_", ""));
+//
+//       amazonSES.sendOnboardingEmail(responseDto.getEmail(), responseDto.getFirstName(), rawPassword);
+//        return responseDto;
     }
 
     /**
@@ -476,11 +500,12 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public List<UserDto> getMembersUnderLead(String id) {
+    public List<UserDto> getMembersUnderLead(String id, String name) {
 
         List<UserEntity> teamMembers = userRepository.findByTeamLead_UserId(id);
 
         return teamMembers.stream()
+
                 .map(user -> {
                     UserDto dto = modelMapper.map(user, UserDto.class);
 
@@ -541,26 +566,50 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public List<UserDto> getAllTeamMembers() {
-        List<UserEntity> teamMembers = userRepository.findByRoleName("ROLE_TEAM_MEMBER");
+    public Page<UserDto> getAllTeamMembers(String name, String team, int page, int limit) {
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
 
-        return teamMembers.stream().map(user -> {
-            UserDto dto = modelMapper.map(user, UserDto.class);
+        RoleEntity role = roleRepository.findByName("ROLE_TEAM_MEMBER");
+        if (role == null) {
+            role = new RoleEntity("ROLE_TEAM_MEMBER");
+            roleRepository.save(role);
+        }
 
-            // Fetching latest user target
-            UserTargetEntity latestTarget = userTargetRepository.findTopByUserOrderByAssignedDateDesc(user);
+        Page<UserEntity> teamMemberPage;
 
-            int target = (latestTarget != null) ? latestTarget.getTargetValue() : 0;
-            int progress = (latestTarget != null) ? latestTarget.getProgress() : 0;
-            double percentage = (target > 0) ? ((double) progress / target) * 100 : 0;
+        // Using filtered search if filters are provided
+        if ((name != null && !name.trim().isEmpty()) || (team != null && !team.trim().isEmpty())) {
+            teamMemberPage = userRepository.findTeamMembersByFilters(
+                    (name != null && !name.trim().isEmpty()) ? name : null,
+                    (team != null && !team.trim().isEmpty()) ? team : null,
+                    pageable
+            );
+        } else {
+            // Using simple pagination if no filters
+            teamMemberPage = userRepository.findByRole(role, pageable);
+        }
 
-            dto.setTargetValue(target);
-            dto.setProgress(progress);
-            dto.setProgressPercentage(percentage);
-            dto.setProgressFraction(progress + "/" + target);
-
-            return dto;
-        }).toList();
+        // Converting to DTO page
+        return teamMemberPage.map(member -> modelMapper.map(member, UserDto.class));
+//        List<UserEntity> teamMembers = userRepository.findByRoleName("ROLE_TEAM_MEMBER");
+//
+//        return teamMembers.stream().map(user -> {
+//            UserDto dto = modelMapper.map(user, UserDto.class);
+//
+//            // Fetching latest user target
+//            UserTargetEntity latestTarget = userTargetRepository.findTopByUserOrderByAssignedDateDesc(user);
+//
+//            int target = (latestTarget != null) ? latestTarget.getTargetValue() : 0;
+//            int progress = (latestTarget != null) ? latestTarget.getProgress() : 0;
+//            double percentage = (target > 0) ? ((double) progress / target) * 100 : 0;
+//
+//            dto.setTargetValue(target);
+//            dto.setProgress(progress);
+//            dto.setProgressPercentage(percentage);
+//            dto.setProgressFraction(progress + "/" + target);
+//
+//            return dto;
+//        }).toList();
     }
 
 
@@ -569,7 +618,8 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public List<UserDto> getAllTeamLeads() {
+    public Page<UserDto> getAllTeamLeads(String name, String team, int page, int limit) {
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
 
         RoleEntity role = roleRepository.findByName("ROLE_TEAM_LEAD");
         if (role == null) {
@@ -577,10 +627,62 @@ public class UserServiceImpl implements UserService {
             roleRepository.save(role);
         }
 
-        List<UserEntity> teamLeadEntities = userRepository.findByRole(role);
-        return  teamLeadEntities.stream().map(teamLead -> modelMapper.map(teamLead, UserDto.class))
-                .toList();
+        Page<UserEntity> teamLeadPage;
+
+        // Using filtered search if filters are provided
+        if ((name != null && !name.trim().isEmpty()) || (team != null && !team.trim().isEmpty())) {
+            teamLeadPage = userRepository.findTeamLeadsByFilters(
+                    (name != null && !name.trim().isEmpty()) ? name : null,
+                    (team != null && !team.trim().isEmpty()) ? team : null,
+                    pageable
+            );
+        } else {
+            // Using simple pagination if no filters
+            teamLeadPage = userRepository.findByRole(role, pageable);
+        }
+
+        // Converting to DTO page
+        return teamLeadPage.map(lead -> modelMapper.map(lead, UserDto.class));
     }
+//    @Override
+//    public Page<UserDto> getAllTeamLeads(String name, String team, int page, int limit) {
+//
+//        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
+//        RoleEntity role = roleRepository.findByName("ROLE_TEAM_LEAD");
+//        if (role == null) {
+//            role = new RoleEntity("ROLE_TEAM_LEAD");
+//            roleRepository.save(role);
+//        }
+//
+//        List<UserEntity> teamLeadEntities = userRepository.findByRole(role, pageable);
+//
+//        // Applying filters
+//        return teamLeadEntities.stream()
+//                .filter(lead -> {
+//                    boolean nameMatch = true;
+//                    boolean teamMatch = true;
+//
+//                    // Filtering by name (first name, last name, or full name)
+//                    if (name != null && !name.trim().isEmpty()) {
+//                        String searchName = name.trim().toLowerCase();
+//                        String fullName = (lead.getFirstName() + " " + lead.getLastName()).toLowerCase();
+//                        nameMatch = fullName.contains(searchName) ||
+//                                lead.getFirstName().toLowerCase().contains(searchName) ||
+//                                lead.getLastName().toLowerCase().contains(searchName);
+//                    }
+//
+//                    // Filtering by team name
+//                    if (team != null && !team.trim().isEmpty()) {
+//                        String searchTeam = team.trim().toLowerCase();
+//                        teamMatch = lead.getTeam() != null &&
+//                                lead.getTeam().getName().toLowerCase().contains(searchTeam);
+//                    }
+//
+//                    return nameMatch && teamMatch;
+//                })
+//                .map(lead -> modelMapper.map(lead, UserDto.class))
+//                .collect(Collectors.toList());
+//    }
 
     /**
      * @param teamDto
@@ -594,30 +696,30 @@ public class UserServiceImpl implements UserService {
         }
 
         // Check that teamLeadId is provided
-        if (teamDto.getTeamLeadId() == null) {
-            throw new RuntimeException("Team Lead is required");
-        }
+//        if (teamDto.getTeamLeadId() == null) {
+//            throw new RuntimeException("Team Lead is required");
+//        }
 
         UserEntity teamLead = userRepository.findByUserId(teamDto.getTeamLeadId());
 
         // Check if already assigned to a team
-        if (teamLead.getTeam() != null) {
-            throw new RuntimeException("This Team Lead is already assigned to a team");
-        }
+//        if (teamLead.getTeam() != null) {
+//            throw new RuntimeException("This Team Lead is already assigned to a team");
+//        }
 
         TeamsEntity teamEntity = modelMapper.map(teamDto, TeamsEntity.class);
-        teamEntity.setTeamLead(teamLead);
+//        teamEntity.setTeamLead(teamLead);
 
         // Saving the team entity
         TeamsEntity savedTeam = teamsRepository.save(teamEntity);
 
         // Setting the team of the team lead
-        teamLead.setTeam(savedTeam);
-        userRepository.save(teamLead);
+//        teamLead.setTeam(savedTeam);
+//        userRepository.save(teamLead);
 
         TeamDto responseDto = modelMapper.map(savedTeam, TeamDto.class);
-        responseDto.setTeamLeadId(teamLead.getUserId());
-        responseDto.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
+//        responseDto.setTeamLeadId(teamLead.getUserId());
+//        responseDto.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
 
         return responseDto;
 

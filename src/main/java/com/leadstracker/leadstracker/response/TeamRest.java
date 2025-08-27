@@ -10,7 +10,7 @@ public class TeamRest {
     private String teamLeadEmail;
     private String leadPhoneNumber;
     private String leadStaffId;
-    private LocalDateTime  createdDate;
+    private LocalDateTime createdDate;
 
     public Long getTeamId() {
         return teamId;
@@ -26,22 +26,6 @@ public class TeamRest {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getTeamLeadUserId() {
-        return teamLeadUserId;
-    }
-
-    public void setTeamLeadUserId(String teamLeadUserId) {
-        this.teamLeadUserId = teamLeadUserId;
-    }
-
-    public String getTeamLeadName() {
-        return teamLeadName;
-    }
-
-    public void setTeamLeadName(String teamLeadName) {
-        this.teamLeadName = teamLeadName;
     }
 
     public String getTeamLeadEmail() {
@@ -74,5 +58,21 @@ public class TeamRest {
 
     public void setCreatedDate(LocalDateTime createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public String getTeamLeadUserId() {
+        return teamLeadUserId;
+    }
+
+    public void setTeamLeadUserId(String teamLeadUserId) {
+        this.teamLeadUserId = teamLeadUserId;
+    }
+
+    public String getTeamLeadName() {
+        return teamLeadName;
+    }
+
+    public void setTeamLeadName(String teamLeadName) {
+        this.teamLeadName = teamLeadName;
     }
 }

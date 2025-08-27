@@ -1,7 +1,9 @@
 package com.leadstracker.leadstracker.repositories;
 
 import com.leadstracker.leadstracker.DTO.ClientStatusCountDto;
+import com.leadstracker.leadstracker.DTO.TeamDto;
 import com.leadstracker.leadstracker.entities.ClientEntity;
+import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.response.Statuses;
 import org.springframework.data.domain.Page;
@@ -11,7 +13,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -90,4 +91,18 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
             "AND c.clientStatus IN :statuses")
     Page<ClientEntity> findOverdueClients(@Param("statuses") List<Statuses> statuses, Pageable pageable);
 
+    @Query("SELECT c FROM clients c " +
+            "WHERE (:name IS NULL OR LOWER(c.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
+            "   OR LOWER(c.lastName) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+            "AND (:status IS NULL OR c.clientStatus = :status) " +
+            "AND (:team IS NULL OR LOWER(c.createdBy.team.name) LIKE LOWER(CONCAT('%', :team, '%')))")
+    Page<ClientEntity> searchAllClientsByFirstNameAndLastNameAndClientStatusAndTeamName(
+            Pageable pageable,
+            @Param("name") String name,
+            @Param("status") Statuses status,
+            @Param("team") String team);
+
+    long countByCreatedDateBetween(Date startDate, Date endDate);
+
+    List<ClientEntity> findByCreatedDateBetween(Date startDate, Date endDate);
 }

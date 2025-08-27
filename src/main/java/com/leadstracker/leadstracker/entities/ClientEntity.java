@@ -36,14 +36,17 @@ public class ClientEntity implements Serializable {
     private String gpsLocation;
 
     @ManyToOne
+    @JoinColumn(name = "team")
+    private TeamsEntity team;
+
+    @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
     private UserEntity createdBy;
 
     @ManyToOne
     @JoinColumn(name = "team_lead_id", nullable = false)
-    private UserEntity teamLead; // points to the team lead responsible for the client
-
-
+    private UserEntity teamLead; // the team lead responsible for the client
+    
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdDate;
 
@@ -150,6 +153,14 @@ public class ClientEntity implements Serializable {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public TeamsEntity getTeam() {
+        return team;
+    }
+
+    public void setTeam(TeamsEntity team) {
+        this.team = team;
     }
 
     @PrePersist

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TeamsRepository extends JpaRepository<TeamsEntity, Long> {
@@ -16,5 +17,5 @@ public interface TeamsRepository extends JpaRepository<TeamsEntity, Long> {
 
     List<TeamsEntity> findByNameContainingIgnoreCase(String name);
 
-//    TeamsEntity findByTeamId(String team);
+    Optional<TeamsEntity> findByName(String name);
 }

@@ -87,16 +87,33 @@ public class UserController {
 
     //Viewing all team leads
     @GetMapping("/team-leads")
-    public ResponseEntity<List<TeamPerformanceDto>> getAllTeamLeads(
+    public ResponseEntity<PaginatedResponse<TeamPerformanceDto>> getAllTeamLeads(
+            @RequestParam(required = false) String userId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String team,
+            @RequestParam(required = false, value = "page", defaultValue = "0") int page,
+            @RequestParam(required = false, value = "limit", defaultValue = "10") int limit
     ) {
-        List<UserDto> teamLeads = userService.getAllTeamLeads();
+        Page<UserDto> teamLeads = userService.getAllTeamLeads(name, team, page, limit);
 
         List<TeamPerformanceDto> result = teamLeads.stream()
-                .map(userDto -> clientService.getTeamPerformance(userDto.getUserId(), startDate, endDate)).toList();
+                .map(userDto -> clientService.getTeamPerformance(userDto.getUserId(), startDate, endDate, name, team))
+                .toList();
 
-        return ResponseEntity.ok(result);
+        PaginatedResponse<TeamPerformanceDto> rest = new PaginatedResponse<>();
+        rest.setData(result);
+        rest.setCurrentPage(teamLeads.getNumber());
+        rest.setTotalPages(teamLeads.getTotalPages());
+        rest.setTotalItems(teamLeads.getTotalElements());
+        rest.setPageSize(teamLeads.getSize());
+        rest.setHasNext(teamLeads.hasNext());
+        rest.setHasPrevious(teamLeads.hasPrevious());
+
+        return ResponseEntity.ok(rest);
+
+//        return ResponseEntity.ok(result);
     }
 
 
@@ -104,11 +121,13 @@ public class UserController {
     @GetMapping(path = "/team-leads/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PerfRest> getUser(@PathVariable String userId,
                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) throws Exception {
+                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+                                            @RequestParam(required = false) String name,
+                                            @RequestParam(required = false) String team) throws Exception {
 
         UserDto userDto = userService.getUserByUserId(userId);
         // Get team performance
-        TeamPerformanceDto performance = clientService.getTeamPerformance(userId, startDate, endDate);
+        TeamPerformanceDto performance = clientService.getTeamPerformance(userId, startDate, endDate, name, team);
 
         PerfRest perfRest = modelMapper.map(userDto, PerfRest.class);
         perfRest.setTeamPerformance(performance);
@@ -118,16 +137,32 @@ public class UserController {
 
     //Viewing and managing the data of all team members
     @GetMapping(path = "/team-members", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<TeamMemberPerformanceDto>> getAllTeamMembers(
+    public ResponseEntity<PaginatedResponse<TeamMemberPerformanceDto>> getAllTeamMembers(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String team,
+            @RequestParam(required = false, value = "page", defaultValue = "0") int page,
+            @RequestParam(required = false, value = "limit", defaultValue = "10") int limit
     ) {
-        List<UserDto> teamMembers = userService.getAllTeamMembers();
+        Page<UserDto> teamMembers = userService.getAllTeamMembers(name, team, page, limit);
 
         List<TeamMemberPerformanceDto> response = teamMembers.stream()
-                .map(userDto -> clientService.getMemberPerformance(userDto.getUserId(), startDate, endDate)).toList();
+                .map(userDto -> clientService.getMemberPerformance(userDto.getUserId(), startDate, endDate))
+                .toList();
 
-        return ResponseEntity.ok(response);
+        PaginatedResponse<TeamMemberPerformanceDto> rest = new PaginatedResponse<>();
+        rest.setData(response);
+        rest.setCurrentPage(teamMembers.getNumber());
+        rest.setTotalPages(teamMembers.getTotalPages());
+        rest.setTotalItems(teamMembers.getTotalElements());
+        rest.setPageSize(teamMembers.getSize());
+        rest.setHasNext(teamMembers.hasNext());
+        rest.setHasPrevious(teamMembers.hasPrevious());
+
+        return ResponseEntity.ok(rest);
+
+//        return ResponseEntity.ok(response);
     }
 
 
@@ -135,8 +170,9 @@ public class UserController {
     @GetMapping(path = "/team-leads/{id}/members", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<PerfRest>> getTeamMembers(@PathVariable String id,
                                                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-                                                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        List<UserDto> teamMembers = userService.getMembersUnderLead(id);
+                                                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+                                                         @RequestParam(required = false) String name) {
+        List<UserDto> teamMembers = userService.getMembersUnderLead(id, name);
 
         List<PerfRest> response = teamMembers.stream()
                 .map(dto -> {
@@ -360,8 +396,8 @@ public class UserController {
 
         TeamDto createdTeam = userService.createTeam(teamDto);
         TeamRest teamRest = modelMapper.map(createdTeam, TeamRest.class);
-        teamRest.setTeamLeadUserId(createdTeam.getTeamLeadId());
-        teamRest.setTeamLeadName(createdTeam.getTeamLeadName());
+//        teamRest.setTeamLeadUserId(createdTeam.getTeamLeadId());
+//        teamRest.setTeamLeadName(createdTeam.getTeamLeadName());
 
         return ResponseEntity.ok(Map.of(
                 "teamName", teamRest,
