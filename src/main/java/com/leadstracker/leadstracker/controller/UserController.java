@@ -406,9 +406,14 @@ public class UserController {
 
     //getting a team
     @GetMapping(value = "/team/{teamId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getTeam(@PathVariable String teamId) throws Exception {
+    public ResponseEntity<?> getTeam(@PathVariable String teamId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false, value = "page", defaultValue = "0") int page,
+            @RequestParam(required = false, value = "limit", defaultValue = "10") int limit
+    ) throws Exception {
 
-        TeamDto teamDto = userService.getTeamById(teamId);
+        TeamDto teamDto = userService.getTeamWithMembers(teamId, startDate, endDate, page, limit);
 
         TeamRest teamRest = modelMapper.map(teamDto, TeamRest.class);
         teamRest.setTeamId(teamDto.getId());
@@ -418,12 +423,12 @@ public class UserController {
         teamRest.setLeadPhoneNumber(teamDto.getLeadPhoneNumber());
         teamRest.setLeadStaffId(teamDto.getLeadStaffId());
         teamRest.setCreatedDate(teamDto.getCreatedDate());
+        teamRest.setTeamMembers(teamDto.getTeamMembers());
 
         return ResponseEntity.ok(Map.of(
                 "team", teamRest,
                 "message", "Team retrieved successfully"));
     }
-
 
 
     //Viewing and managing the data of all team members under a team lead

@@ -18,4 +18,6 @@ public interface TeamsRepository extends JpaRepository<TeamsEntity, Long> {
     List<TeamsEntity> findByNameContainingIgnoreCase(String name);
 
     Optional<TeamsEntity> findByName(String name);
+
+    Optional<Object> findByIdAndActiveTrue(Long teamId);
 }
