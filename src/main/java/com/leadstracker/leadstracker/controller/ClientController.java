@@ -58,6 +58,7 @@ public class ClientController {
     @Autowired
     NotificationService notificationService;
 
+
     @Autowired
     Utils utils;
 
@@ -210,6 +211,7 @@ public class ClientController {
 
     public ClientRest getClient(@PathVariable String id) {
         ClientRest returnClient = new ClientRest();
+        UserDto creator = new UserDto();
 
         ClientDto clientDto = clientService.getClientByClientId(id);
         BeanUtils.copyProperties(clientDto, returnClient);

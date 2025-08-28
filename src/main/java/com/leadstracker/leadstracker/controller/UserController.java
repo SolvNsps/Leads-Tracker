@@ -87,6 +87,38 @@ public class UserController {
     }
 
     //Viewing all team leads
+//    @GetMapping("/team-leads")
+//    public ResponseEntity<PaginatedResponse<TeamPerformanceDto>> getAllTeamLeads(
+//            @RequestParam(required = false) String userId,
+//            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+//            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+//            @RequestParam(required = false) String name,
+//            @RequestParam(required = false) String team,
+//            @RequestParam(required = false, value = "page", defaultValue = "1") int page,
+//            @RequestParam(required = false, value = "limit", defaultValue = "10") int limit
+//    ) {
+//        // Convert to 0-based for service
+//        int zeroBasedPage = page - 1;
+//        if (zeroBasedPage < 0) zeroBasedPage = 0;
+//
+//        Page<UserDto> teamLeads = userService.getAllTeamLeads(name, team, zeroBasedPage, limit);
+//
+//        List<TeamPerformanceDto> result = teamLeads.stream()
+//                .map(userDto -> clientService.getTeamPerformance(userDto.getUserId(), startDate, endDate, name, team))
+//                .toList();
+//
+//        PaginatedResponse<TeamPerformanceDto> rest = new PaginatedResponse<>();
+//        rest.setData(result);
+//        rest.setCurrentPage(page); // return 1-based page
+//        rest.setTotalPages(teamLeads.getTotalPages());
+//        rest.setTotalItems(teamLeads.getTotalElements());
+//        rest.setPageSize(teamLeads.getSize());
+//        rest.setHasNext(page < teamLeads.getTotalPages());
+//        rest.setHasPrevious(page > 1);
+//
+//        return ResponseEntity.ok(rest);
+//    }
+
     @GetMapping("/team-leads")
     public ResponseEntity<PaginatedResponse<TeamPerformanceDto>> getAllTeamLeads(
             @RequestParam(required = false) String userId,
@@ -97,6 +129,7 @@ public class UserController {
             @RequestParam(required = false, value = "page", defaultValue = "0") int page,
             @RequestParam(required = false, value = "limit", defaultValue = "10") int limit
     ) {
+
         Page<UserDto> teamLeads = userService.getAllTeamLeads(name, team, page, limit);
 
         List<TeamPerformanceDto> result = teamLeads.stream()
@@ -483,8 +516,6 @@ public class UserController {
     }
 
 
-
-
     // Viewing the profile of all users (Admin, Team lead, Team member)
     @GetMapping("/profile")
     public ResponseEntity<UserProfileResponseDto> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
@@ -699,5 +730,16 @@ public class UserController {
         return ResponseEntity.ok(updatedTarget);
     }
 
+
+    // Viewing and managing data of a single team member
+    @GetMapping(path = "/team-members/{memberId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TeamMemberPerformanceDto> getTeamMemberWithPerformance(
+            @PathVariable String memberId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        TeamMemberPerformanceDto memberPerformance = clientService.getMemberPerformance(memberId, startDate, endDate);
+        return ResponseEntity.ok(memberPerformance);
+    }
 
 }

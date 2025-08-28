@@ -595,8 +595,8 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public Page<UserDto> getAllTeamLeads(String name, String team, int page, int limit) {
-        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
+    public Page<UserDto> getAllTeamLeads(String name, String team, int zeroBasedPage, int limit) {
+        Pageable pageable = PageRequest.of(zeroBasedPage, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
 
         RoleEntity role = roleRepository.findByName("ROLE_TEAM_LEAD");
         if (role == null) {
