@@ -29,6 +29,9 @@ public class TeamTargetEntity implements Serializable {
     @Column(nullable = false)
     private LocalDate assignedDate;
 
+    @Column(nullable = false)
+    private boolean active = false;
+
 
     public TeamTargetEntity() {
     }
@@ -71,13 +74,21 @@ public class TeamTargetEntity implements Serializable {
     }
 
     public void setAssignedDate(LocalDate assignedDate) {
-        this.assignedDate = LocalDate.now();
+        this.assignedDate = assignedDate;
     }
 
-    @PrePersist
-    public void prePersist() {
-        if (assignedDate == null) {
-            assignedDate = LocalDate.now();
-        }
+//    @PrePersist
+//    public void prePersist() {
+//        if (assignedDate == null) {
+//            assignedDate = LocalDate.now();
+//        }
+//    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }

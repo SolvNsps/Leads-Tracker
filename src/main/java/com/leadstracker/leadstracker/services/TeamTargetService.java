@@ -1,5 +1,6 @@
 package com.leadstracker.leadstracker.services;
 
+import com.leadstracker.leadstracker.DTO.TeamTargetUpdateRequestDto;
 import com.leadstracker.leadstracker.request.TeamTargetRequestDto;
 import com.leadstracker.leadstracker.response.MyTargetResponse;
 import com.leadstracker.leadstracker.response.TeamTargetOverviewDto;
@@ -11,7 +12,7 @@ import java.util.Map;
 
 public interface TeamTargetService {
 
-    TeamTargetResponseDto assignTargetToTeam(TeamTargetRequestDto dto);
+    TeamTargetResponseDto createTarget(TeamTargetRequestDto dto);
 
     List<TeamTargetResponseDto> getAllTargets();
 
@@ -26,4 +27,10 @@ public interface TeamTargetService {
     TeamTargetResponseDto getMyTeamTarget(String email);
 
     void editMemberTarget(Long teamTargetId, String memberId, Integer newTargetValue, String teamLeadEmail);
+
+    TeamTargetResponseDto activateTarget(Long targetId);
+
+    TeamTargetUpdateRequestDto updateTarget(Long targetId,TeamTargetUpdateRequestDto requestDto);
+
 }
+
