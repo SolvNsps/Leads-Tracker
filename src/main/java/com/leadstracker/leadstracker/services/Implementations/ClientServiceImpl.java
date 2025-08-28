@@ -436,6 +436,15 @@ public class ClientServiceImpl implements ClientService {
             throw new UsernameNotFoundException("User with ID: " + clientId + "not found");
         }
         BeanUtils.copyProperties(clientEntity, returnClient);
+        returnClient.setCreatedBy(modelMapper.map(clientEntity.getCreatedBy(), UserDto.class));
+        returnClient.setAssignedTo(modelMapper.map(clientEntity.getTeamLead(), UserDto.class));
+//        returnClient.setTeamName(clientEntity.getTeam().getName());
+        returnClient.setClientStatus(clientEntity.getClientStatus().getDisplayName());
+        returnClient.setGpsLocation(clientEntity.getGpsLocation());
+        returnClient.setPhoneNumber(clientEntity.getPhoneNumber());
+        returnClient.setCreatedDate(clientEntity.getCreatedDate());
+        returnClient.setLastUpdated(clientEntity.getLastUpdated());
+
         return returnClient;
     }
 

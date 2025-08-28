@@ -1,4 +1,4 @@
-package com.leadstracker.leadstracker.request;
+package com.leadstracker.leadstracker.DTO;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
@@ -6,11 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 
-public class TeamTargetRequestDto {
-
-    @NotNull(message = "Team ID is required")
-    private Long teamId;
-
+public class TeamTargetUpdateRequestDto {
     @Min(value = 1, message = "Target must be greater than zero")
     private Integer targetValue;
 
@@ -21,19 +17,11 @@ public class TeamTargetRequestDto {
     @NotNull(message = "Start date is required")
     private LocalDate startDate;
 
-    public Long getTeamId() {
-        return teamId;
-    }
-
-    public void setTeamId(Long teamId) {
-        this.teamId = teamId;
-    }
-
     public Integer getTargetValue() {
         return targetValue;
     }
 
-    public void setTargetValue(int targetValue) {
+    public void setTargetValue(Integer targetValue) {
         this.targetValue = targetValue;
     }
 

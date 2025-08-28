@@ -262,7 +262,7 @@ public class UserControllerTest {
         responseDto.setDueDate(LocalDate.of(2025,7, 21));
 
 
-        when(teamTargetService.assignTargetToTeam(any(TeamTargetRequestDto.class))).thenReturn(responseDto);
+        when(teamTargetService.createTarget(any(TeamTargetRequestDto.class))).thenReturn(responseDto);
 
         mockMvc.perform(post("/api/v1/leads/assign/team-target")
                         .with(csrf())

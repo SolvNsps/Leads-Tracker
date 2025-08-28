@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.services.Implementations;
 
 import com.leadstracker.leadstracker.DTO.AmazonSES;
+import com.leadstracker.leadstracker.DTO.TeamTargetUpdateRequestDto;
 import com.leadstracker.leadstracker.entities.TeamTargetEntity;
 import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
@@ -14,6 +15,8 @@ import com.leadstracker.leadstracker.response.UserTargetResponseDto;
 import com.leadstracker.leadstracker.services.NotificationService;
 import com.leadstracker.leadstracker.services.TeamTargetService;
 import com.leadstracker.leadstracker.services.UserService;
+import jakarta.transaction.Transactional;
+import org.apache.coyote.BadRequestException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -58,48 +61,53 @@ public class TeamTargetServiceImpl implements TeamTargetService {
 
 
     @Override
-    public TeamTargetResponseDto assignTargetToTeam(TeamTargetRequestDto dto) {
+    public TeamTargetResponseDto createTarget(TeamTargetRequestDto dto) {
+        // Validate team exists
         TeamsEntity team = teamsRepository.findById(dto.getTeamId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Team not found"));
 
-        if (dto.getTargetValue() <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Target must be greater than zero.");
+        // Validate target value
+        if (dto.getTargetValue() == null || dto.getTargetValue() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Target value must be greater than zero.");
         }
 
-        // Validate due date
+        //  Validate due date
         if (dto.getDueDate() == null || !dto.getDueDate().isAfter(LocalDate.now())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Due date must be a future date.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Due date must be in the future.");
         }
 
-        // Checking for active target
-        boolean hasUnexpiredTarget = !teamTargetRepository
-                .findByTeamIdAndDueDateGreaterThanEqual(team.getId(), LocalDate.now())
-                .isEmpty();
-
-        if (hasUnexpiredTarget) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "An active target already exists for this team.");
+        // Validate start date
+        if (dto.getStartDate() == null || dto.getStartDate().isBefore(LocalDate.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Start date must be today or in the future.");
         }
 
-        UserEntity teamLead = team.getTeamLead();
-        String teamLeadFullName = teamLead != null
-                ? teamLead.getFirstName() + " " + teamLead.getLastName()
-                : null;
 
-        // Creating a new instance of TeamTargetEntity
+        // Create new target (inactive by default)
         TeamTargetEntity newTarget = new TeamTargetEntity();
         newTarget.setTeam(team);
         newTarget.setTargetValue(dto.getTargetValue());
         newTarget.setDueDate(dto.getDueDate());
+        newTarget.setAssignedDate(dto.getStartDate());
+        newTarget.setActive(false); // mark as inactive
 
         TeamTargetEntity savedTarget = teamTargetRepository.save(newTarget);
 
-        return new TeamTargetResponseDto(
-                savedTarget.getId(),
-                savedTarget.getTeam().getName(),
-                savedTarget.getTargetValue(),
-                savedTarget.getDueDate()
-        );
+        // response DTO
+        String teamLeadFullName = (team.getTeamLead() != null)
+                ? team.getTeamLead().getFirstName() + " " + team.getTeamLead().getLastName()
+                : null;
+
+        TeamTargetResponseDto response = new TeamTargetResponseDto();
+        response.setId(savedTarget.getId());
+        response.setTeamName(team.getName());
+        response.setTeamLeadFullName(teamLeadFullName);
+        response.setTargetValue(savedTarget.getTargetValue());
+        response.setStartDate(savedTarget.getAssignedDate());
+        response.setDueDate(savedTarget.getDueDate());
+
+        return response;
     }
+
 
     @Override
     public List<TeamTargetResponseDto> getAllTargets() {
@@ -118,6 +126,7 @@ public class TeamTargetServiceImpl implements TeamTargetService {
                 entity.getId(),
                 entity.getTeam().getName(),
                 entity.getTargetValue(),
+                entity.getAssignedDate(),
                 entity.getDueDate()
         );
     }
@@ -409,5 +418,68 @@ public class TeamTargetServiceImpl implements TeamTargetService {
         userTarget.setTargetValue(newTargetValue);
         userTargetRepository.save(userTarget);
     }
+
+    @Override
+    @Transactional
+    public TeamTargetResponseDto activateTarget(Long targetId) {
+        // Find target to activate
+        TeamTargetEntity target = teamTargetRepository.findById(targetId)
+                .orElseThrow(() -> new RuntimeException("No target found with ID: " + targetId));
+
+        TeamsEntity team = target.getTeam();
+
+        // Deactivate all other targets for this team
+        List<TeamTargetEntity> teamTargets = teamTargetRepository.findByTeamIdAndDueDateGreaterThanEqual(
+                team.getId(), LocalDate.now()
+        );
+
+        for (TeamTargetEntity t : teamTargets) {
+            if (!t.getId().equals(targetId) && t.isActive()) {
+                t.setActive(false);
+                teamTargetRepository.save(t);
+            }
+        }
+
+        //  Activate the selected target
+        target.setActive(true);
+        teamTargetRepository.save(target);
+
+        // Build and return response
+        TeamTargetResponseDto response = new TeamTargetResponseDto();
+        response.setId(target.getId());
+        response.setTeamName(team.getName());
+        response.setTargetValue(target.getTargetValue());
+        response.setDueDate(target.getDueDate());
+        response.setStartDate(target.getAssignedDate());
+
+        return response;
+    }
+
+    @Override
+    public TeamTargetUpdateRequestDto updateTarget(Long targetId, TeamTargetUpdateRequestDto requestDto) {
+        // Fetch the existing target
+        TeamTargetEntity target = teamTargetRepository.findById(targetId)
+                .orElseThrow(() -> new IllegalArgumentException("Target not found with ID: " + targetId));
+
+        // Update allowed fields
+        if (requestDto.getTargetValue() != null && requestDto.getTargetValue() > 0) {
+            target.setTargetValue(requestDto.getTargetValue());
+        }
+        if (requestDto.getDueDate() != null && requestDto.getDueDate().isAfter(LocalDate.now())) {
+            target.setDueDate(requestDto.getDueDate());
+        }
+
+        // Save updated entity
+        TeamTargetEntity updatedTarget = teamTargetRepository.save(target);
+
+        // Map and return response
+        TeamTargetUpdateRequestDto response = new TeamTargetUpdateRequestDto();
+        response.setTargetValue(updatedTarget.getTargetValue());
+        response.setDueDate(updatedTarget.getDueDate());
+        response.setStartDate(updatedTarget.getAssignedDate());
+
+        return response;
+    }
+
 
 }

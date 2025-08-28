@@ -8,16 +8,18 @@ public class TeamTargetResponseDto {
     private String teamName;
     private String teamLeadFullName;
     private int targetValue;
+    private LocalDate startDate;
     private LocalDate dueDate;
 
     public TeamTargetResponseDto(){
     }
 
-    public TeamTargetResponseDto(Long id, String teamName, int targetValue, LocalDate dueDate) {
+    public TeamTargetResponseDto(Long id, String teamName, int targetValue, LocalDate dueDate, LocalDate startDate) {
         this.id = id;
         this.teamName = teamName;
         this.targetValue = targetValue;
         this.dueDate = dueDate;
+        this.startDate = startDate;
     }
 
     public Long getId() {
@@ -60,4 +62,11 @@ public class TeamTargetResponseDto {
         this.dueDate = dueDate;
     }
 
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
 }

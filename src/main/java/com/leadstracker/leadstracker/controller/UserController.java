@@ -452,10 +452,30 @@ public class UserController {
     //Admin setting targets for teams
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/assign/team-target")
-    public ResponseEntity<TeamTargetResponseDto> assignTarget(@RequestBody TeamTargetRequestDto dto) {
-        TeamTargetResponseDto response = teamTargetService.assignTargetToTeam(dto);
+    public ResponseEntity<TeamTargetResponseDto> createTarget(@RequestBody TeamTargetRequestDto dto) {
+        TeamTargetResponseDto response = teamTargetService.createTarget(dto);
+        dto.setStartDate(dto.getStartDate());
         return ResponseEntity.ok(response);
     }
+
+    // Admin activating a specific target for a team
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PutMapping("/targets/{targetId}/activate")
+    public ResponseEntity<TeamTargetResponseDto> activateTarget(@PathVariable Long targetId) {
+        TeamTargetResponseDto response = teamTargetService.activateTarget(targetId);
+        return ResponseEntity.ok(response);
+    }
+
+    // Admin updates a target
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PutMapping("/update/{targetId}")
+    public ResponseEntity<TeamTargetUpdateRequestDto> updateTarget(
+            @PathVariable Long targetId,
+            @RequestBody @Valid TeamTargetUpdateRequestDto requestDto) {
+        TeamTargetUpdateRequestDto response = teamTargetService.updateTarget(targetId, requestDto);
+        return ResponseEntity.ok(response);
+    }
+
 
     //Admin viewing the targets set
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")

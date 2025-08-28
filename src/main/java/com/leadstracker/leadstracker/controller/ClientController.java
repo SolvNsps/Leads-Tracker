@@ -210,10 +210,27 @@ public class ClientController {
 
     public ClientRest getClient(@PathVariable String id) {
         ClientRest returnClient = new ClientRest();
+        UserDto userDto = new UserDto();
 
         ClientDto clientDto = clientService.getClientByClientId(id);
         BeanUtils.copyProperties(clientDto, returnClient);
+//        BeanUtils.copyProperties(clientDto.getCreatedBy(), userDto);
+        returnClient.setCreatedBy(userDto.getFirstName() + " " + userDto.getLastName());
+//        BeanUtils.copyProperties(clientDto.getAssignedTo(), userDto);
+        returnClient.setAssignedTo(userDto.getFirstName() + " " + userDto.getLastName());
+        if (clientDto.getCreatedDate() != null) {
+            returnClient.setCreatedAt(clientDto.getCreatedDate().toInstant()
+                    .atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
+        if (clientDto.getLastUpdated() != null) {
+            returnClient.setLastUpdated(clientDto.getLastUpdated().toInstant()
+                    .atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
 
+        returnClient.setClientStatus(clientDto.getClientStatus());
+        returnClient.setCreatedBy(clientDto.getCreatedBy().getFirstName() + " " + clientDto.getCreatedBy().getLastName());
+//        returnClient.setAssignedTo(clientDto.getAssignedTo().getFirstName() + " " + clientDto.getAssignedTo().getLastName());
+//        returnClient.setTeamName(clientDto.getTeamName());
         return returnClient;
     }
 
