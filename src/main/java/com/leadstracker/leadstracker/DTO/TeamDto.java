@@ -1,5 +1,7 @@
 package com.leadstracker.leadstracker.DTO;
 
+import com.leadstracker.leadstracker.response.PaginatedResponse;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -17,7 +19,7 @@ public class TeamDto implements Serializable {
     private String leadPhoneNumber;
     private String leadStaffId;
     private java.time.LocalDateTime createdDate;
-    private List<TeamMemberPerformanceDto> teamMembers;
+    private PaginatedResponse<TeamMemberPerformanceDto> teamMembers;
 
     public Long getId() {
         return id;
@@ -83,11 +85,11 @@ public class TeamDto implements Serializable {
         this.createdDate = createdDate;
     }
 
-    public List<TeamMemberPerformanceDto> getTeamMembers() {
+    public PaginatedResponse<TeamMemberPerformanceDto> getTeamMembers() {
         return teamMembers;
     }
 
-    public void setTeamMembers(List<TeamMemberPerformanceDto> teamMembers) {
+    public void setTeamMembers(PaginatedResponse<TeamMemberPerformanceDto> teamMembers) {
         this.teamMembers = teamMembers;
     }
 }

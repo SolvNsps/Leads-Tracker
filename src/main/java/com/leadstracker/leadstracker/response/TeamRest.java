@@ -14,7 +14,7 @@ public class TeamRest {
     private String leadPhoneNumber;
     private String leadStaffId;
     private LocalDateTime createdDate;
-    private List<TeamMemberPerformanceDto> teamMembers;
+    private PaginatedResponse<TeamMemberPerformanceDto> teamMembers;
 
     public Long getTeamId() {
         return teamId;
@@ -80,11 +80,11 @@ public class TeamRest {
         this.teamLeadName = teamLeadName;
     }
 
-    public List<TeamMemberPerformanceDto> getTeamMembers() {
+    public PaginatedResponse<TeamMemberPerformanceDto> getTeamMembers() {
         return teamMembers;
     }
 
-    public void setTeamMembers(List<TeamMemberPerformanceDto> teamMembers) {
+    public void setTeamMembers(PaginatedResponse<TeamMemberPerformanceDto> teamMembers) {
         this.teamMembers = teamMembers;
     }
 }

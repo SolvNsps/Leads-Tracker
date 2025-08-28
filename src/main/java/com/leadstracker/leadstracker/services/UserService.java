@@ -63,5 +63,5 @@ public interface UserService extends UserDetailsService {
 
     void reactivateTeam(String teamId, String newTeamLeadId);
 
-    TeamDto getTeamWithMembers(String teamId, LocalDate startDate, LocalDate endDate);
+    TeamDto getTeamWithMembers(String teamId, LocalDate startDate, LocalDate endDate, int page, int limit);
 }

@@ -356,7 +356,7 @@ public class UserControllerTest {
         teamRest.setTeamLeadUserId("lead456");
         teamRest.setTeamLeadName("John Doe");
 
-        when(userService.getTeamWithMembers(eq(teamId), any(), any())).thenReturn(teamDto);
+        when(userService.getTeamWithMembers(eq(teamId), any(), any(), anyInt(), anyInt())).thenReturn(teamDto);
         when(modelMapper.map(eq(teamDto), eq(TeamRest.class))).thenReturn(teamRest);
 
         // Act & Assert
@@ -367,7 +367,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.team.teamLeadName").value("John Doe"))
                 .andExpect(jsonPath("$.message").value("Team retrieved successfully"));
 
-        verify(userService, times(1)).getTeamWithMembers(eq(teamId), any(), any());
+        verify(userService, times(1)).getTeamWithMembers(eq(teamId), any(), any(), anyInt(), anyInt());
     }
 
 

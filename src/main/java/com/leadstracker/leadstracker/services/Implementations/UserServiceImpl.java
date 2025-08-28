@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.entities.*;
 import com.leadstracker.leadstracker.repositories.*;
+import com.leadstracker.leadstracker.response.PaginatedResponse;
 import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.UserService;
@@ -886,11 +887,11 @@ public class UserServiceImpl implements UserService {
     }
 
 
-    public TeamDto getTeamWithMembers(String teamId, LocalDate startDate, LocalDate endDate) {
+    public TeamDto getTeamWithMembers(String teamId, LocalDate startDate, LocalDate endDate, int page, int limit) {
         TeamsEntity team = (TeamsEntity) teamsRepository.findByIdAndActiveTrue(Long.valueOf(teamId))
                 .orElseThrow(() -> new RuntimeException("Team not found"));
 
-        // date range (same logic as overview)
+        // date range
         Date[] dateRange = calculateDateRange(startDate, endDate);
 
         UserEntity teamLead = team.getTeamLead();
@@ -901,6 +902,33 @@ public class UserServiceImpl implements UserService {
                         Collectors.toCollection(LinkedHashSet::new),
                         ArrayList::new
                 ));
+
+        //setting up pagination
+        int totalItems = participants.size();
+        int totalPages = (int) Math.ceil((double) totalItems / limit);
+
+        int fromIndex = page * limit;
+        int toIndex = Math.min(fromIndex + limit, totalItems);
+
+        List<UserEntity> paginatedParticipants = new ArrayList<>();
+        if (fromIndex < totalItems) {
+            paginatedParticipants = participants.subList(fromIndex, toIndex);
+        }
+
+        // mapping paginated members
+        List<TeamMemberPerformanceDto> memberDtos = paginatedParticipants.stream()
+                .map(p -> teamMemberStats(p, dateRange[0], dateRange[1]))
+                .toList();
+
+        // building paginated response
+        PaginatedResponse<TeamMemberPerformanceDto> paginatedResponse = new PaginatedResponse<>();
+        paginatedResponse.setData(memberDtos);
+        paginatedResponse.setCurrentPage(page);
+        paginatedResponse.setTotalPages(totalPages);
+        paginatedResponse.setTotalItems(totalItems);
+        paginatedResponse.setPageSize(limit);
+        paginatedResponse.setHasNext(page < totalPages - 1);
+        paginatedResponse.setHasPrevious(page > 0);
 
         // map to TeamDto
         TeamDto dto = new TeamDto();
@@ -914,11 +942,12 @@ public class UserServiceImpl implements UserService {
         dto.setCreatedDate(teamLead != null ? teamLead.getCreatedDate() : null);
 
         // map team members
-        dto.setTeamMembers(
-                participants.stream()
-                        .map(p -> teamMemberStats(p, dateRange[0], dateRange[1]))
-                        .collect(Collectors.toList())
-        );
+        dto.setTeamMembers(paginatedResponse);
+//        dto.setTeamMembers(
+//                participants.stream()
+//                        .map(p -> teamMemberStats(p, dateRange[0], dateRange[1]))
+//                        .collect(Collectors.toList())
+//        );
 
         return dto;
     }
