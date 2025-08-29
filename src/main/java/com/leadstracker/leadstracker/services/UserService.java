@@ -45,7 +45,7 @@ public interface UserService extends UserDetailsService {
 
     Page<UserDto> getAllTeamMembers(String name, String team, int page, int limit);
 
-    Page<UserDto> getAllTeamLeads(String name, String team, int zeroBasedPage, int limit);
+    Page<UserDto> getAllTeamLeads(String name, String team, int page, int limit);
 
     TeamDto createTeam(TeamDto teamDto);
 

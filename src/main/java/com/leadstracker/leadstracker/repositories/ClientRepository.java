@@ -96,7 +96,7 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
             "   OR LOWER(c.lastName) LIKE LOWER(CONCAT('%', :name, '%'))) " +
             "AND (:status IS NULL OR c.clientStatus = :status) " +
             "AND (:team IS NULL OR LOWER(c.createdBy.team.name) LIKE LOWER(CONCAT('%', :team, '%')))")
-    Page<ClientEntity> searchAllClientsByFirstNameAndLastNameAndClientStatusAndTeamName(
+    Page<ClientEntity> searchAllClientsByFirstNameAndLastNameAndClientStatusAndTeamNameAndActiveTrue(
             Pageable pageable,
             @Param("name") String name,
             @Param("status") Statuses status,

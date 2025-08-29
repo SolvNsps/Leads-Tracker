@@ -421,7 +421,7 @@ public class ClientServiceImpl implements ClientService {
         }
 
         Pageable pageableRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
-        Page<ClientEntity> clientPage = clientRepository.searchAllClientsByFirstNameAndLastNameAndClientStatusAndTeamName
+        Page<ClientEntity> clientPage = clientRepository.searchAllClientsByFirstNameAndLastNameAndClientStatusAndTeamNameAndActiveTrue
                 (pageableRequest,
                 (name != null && !name.trim().isEmpty()) ? name.trim() : null, status, team);
 

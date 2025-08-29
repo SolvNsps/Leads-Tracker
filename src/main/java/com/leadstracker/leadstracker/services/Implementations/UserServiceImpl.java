@@ -563,6 +563,9 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public Page<UserDto> getAllTeamMembers(String name, String team, int page, int limit) {
+        if (page > 0) {
+            page -= 1;
+        }
         Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
 
         RoleEntity role = roleRepository.findByName("ROLE_TEAM_MEMBER");
@@ -595,8 +598,12 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public Page<UserDto> getAllTeamLeads(String name, String team, int zeroBasedPage, int limit) {
-        Pageable pageable = PageRequest.of(zeroBasedPage, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
+    public Page<UserDto> getAllTeamLeads(String name, String team, int page, int limit) {
+
+        if (page > 0) {
+            page -= 1;
+        }
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
 
         RoleEntity role = roleRepository.findByName("ROLE_TEAM_LEAD");
         if (role == null) {
