@@ -895,6 +895,9 @@ public class UserServiceImpl implements UserService {
 
 
     public TeamDto getTeamWithMembers(String teamId, LocalDate startDate, LocalDate endDate, int page, int limit) {
+        if(page > 0) {
+            page--;
+        }
         TeamsEntity team = (TeamsEntity) teamsRepository.findByIdAndActiveTrue(Long.valueOf(teamId))
                 .orElseThrow(() -> new RuntimeException("Team not found"));
 
@@ -907,8 +910,7 @@ public class UserServiceImpl implements UserService {
         participants = participants.stream()
                 .collect(Collectors.collectingAndThen(
                         Collectors.toCollection(LinkedHashSet::new),
-                        ArrayList::new
-                ));
+                        ArrayList::new));
 
         //setting up pagination
         int totalItems = participants.size();

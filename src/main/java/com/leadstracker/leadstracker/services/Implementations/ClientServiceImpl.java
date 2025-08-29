@@ -105,7 +105,8 @@ public class ClientServiceImpl implements ClientService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User must belong to a team to add a client.");
             }
 
-            clientEntity.setTeamLead(creatorEntity.getTeamLead()); // Team member created the client
+//            clientEntity.setTeamLead(creatorEntity.getTeamLead()); // Team member created the client
+            clientEntity.setTeamLead(creatorEntity.getTeam().getTeamLead());
             clientEntity.setTeam(creatorEntity.getTeam()); // setting the team of the team member who created the client
         }
         System.out.println("gpsLocation being saved: '" + clientEntity.getGpsLocation() + "'");
