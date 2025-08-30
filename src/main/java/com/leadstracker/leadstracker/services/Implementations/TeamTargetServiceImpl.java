@@ -111,15 +111,24 @@ public class TeamTargetServiceImpl implements TeamTargetService {
 
     @Override
     public List<TeamTargetResponseDto> getAllTargets() {
-        List<TeamTargetEntity> targetList = teamTargetRepository.findAll();
+        List<TeamTargetEntity> targetList = teamTargetRepository.findByActiveTrue();
 
-        List<TeamTargetResponseDto> dtoList = new ArrayList<>();
-        for (TeamTargetEntity target : targetList) {
-            dtoList.add(mapToResponseDto(target));
-        }
-
-        return dtoList;
+        return targetList.stream()
+                .map(this::mapToResponseDto)
+                .toList();
     }
+
+//    @Override
+//    public List<TeamTargetResponseDto> getAllTargets() {
+//        List<TeamTargetEntity> targetList = teamTargetRepository.findAll();
+//
+//        List<TeamTargetResponseDto> dtoList = new ArrayList<>();
+//        for (TeamTargetEntity target : targetList) {
+//            dtoList.add(mapToResponseDto(target));
+//        }
+//
+//        return dtoList;
+//    }
 
     private TeamTargetResponseDto mapToResponseDto(TeamTargetEntity entity) {
         return new TeamTargetResponseDto(
