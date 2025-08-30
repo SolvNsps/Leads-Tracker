@@ -23,5 +23,4 @@ public interface TeamTargetRepository extends JpaRepository<TeamTargetEntity, Lo
 //    Optional<Object> findByTeam(TeamsEntity team);
 Optional<TeamTargetEntity> findByTeam(TeamsEntity team);
 
-    List<TeamTargetEntity> findByActiveTrue();
 }
