@@ -6,6 +6,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 public class ClientDto implements Serializable {
 
@@ -28,6 +29,7 @@ public class ClientDto implements Serializable {
     private String clientStatus;
     private UserDto assignedTo;
     private TeamDto teamName;
+    private List<ClientStatusHistoryDto> statusHistory;
 
     public long getId() {
         return id;
@@ -133,18 +135,32 @@ public class ClientDto implements Serializable {
         this.teamName = teamName;
     }
 
+    public List<ClientStatusHistoryDto> getStatusHistory() {
+        return statusHistory;
+    }
+
+    public void setStatusHistory(List<ClientStatusHistoryDto> statusHistory) {
+        this.statusHistory = statusHistory;
+    }
+
+
     @Override
     public String toString() {
         return "ClientDto{" +
                 "id=" + id +
+                ", clientId='" + clientId + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
-                ", GPSLocation='" + gpsLocation + '\'' +
+                ", gpsLocation='" + gpsLocation + '\'' +
                 ", createdBy=" + createdBy +
+                ", teamLeadId='" + teamLeadId + '\'' +
                 ", createdDate=" + createdDate +
                 ", lastUpdated=" + lastUpdated +
-                ", clientStatus=" + clientStatus +
+                ", clientStatus='" + clientStatus + '\'' +
+                ", assignedTo=" + assignedTo +
+                ", teamName=" + teamName +
+                ", statusHistory=" + statusHistory +
                 '}';
     }
 }

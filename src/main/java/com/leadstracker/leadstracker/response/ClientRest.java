@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.response;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ClientRest {
     private String clientId;
@@ -15,6 +16,8 @@ public class ClientRest {
     private String assignedTo;
     private String gpsLocation;
     private String teamName;
+
+    private List<ClientStatusHistoryRest> statusHistory;
 
     public String getClientId() {
         return clientId;
@@ -110,5 +113,32 @@ public class ClientRest {
 
     public void setTeamName(String teamName) {
         this.teamName = teamName;
+    }
+
+    public List<ClientStatusHistoryRest> getStatusHistory() {
+        return statusHistory;
+    }
+
+    @Override
+    public String toString() {
+        return "ClientRest{" +
+                "clientId='" + clientId + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", clientStatus='" + clientStatus + '\'' +
+                ", lastUpdated=" + lastUpdated +
+                ", createdAt=" + createdAt +
+                ", lastAction='" + lastAction + '\'' +
+                ", createdBy='" + createdBy + '\'' +
+                ", assignedTo='" + assignedTo + '\'' +
+                ", gpsLocation='" + gpsLocation + '\'' +
+                ", teamName='" + teamName + '\'' +
+                ", statusHistory=" + statusHistory +
+                '}';
+    }
+
+    public void setStatusHistory(List<ClientStatusHistoryRest> statusHistory) {
+        this.statusHistory = statusHistory;
     }
 }

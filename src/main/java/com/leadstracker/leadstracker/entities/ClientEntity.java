@@ -6,7 +6,9 @@ import jakarta.persistence.*;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity(name = "clients")
 @Table(name = "clients")
@@ -54,10 +56,14 @@ public class ClientEntity implements Serializable {
     private Date lastUpdated;
 
     @Enumerated(EnumType.STRING)
-    private Statuses clientStatus = Statuses.PENDING;
+    @Column(name = "client_status", length = 50)
+    private Statuses clientStatus;
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ClientStatusHistoryEntity> statusHistory = new ArrayList<>();
 
     public long getId() {
         return id;
