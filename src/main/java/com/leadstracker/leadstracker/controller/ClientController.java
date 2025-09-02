@@ -56,6 +56,7 @@ public class ClientController {
     @Autowired
     NotificationService notificationService;
 
+
     @Autowired
     Utils utils;
 
@@ -206,7 +207,9 @@ public class ClientController {
 //    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
     @GetMapping("/{id}")
     public ClientRest getClient(@PathVariable String id) {
+
         // Fetch main client details
+
         ClientDto clientDto = clientService.getClientByClientId(id);
         System.out.println("client dto "+ clientDto);
 

@@ -116,7 +116,8 @@ public class ClientServiceImpl implements ClientService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User must belong to a team to add a client.");
             }
 
-            clientEntity.setTeamLead(creatorEntity.getTeamLead()); // Team member created the client
+//            clientEntity.setTeamLead(creatorEntity.getTeamLead()); // Team member created the client
+            clientEntity.setTeamLead(creatorEntity.getTeam().getTeamLead());
             clientEntity.setTeam(creatorEntity.getTeam()); // setting the team of the team member who created the client
         }
         System.out.println("gpsLocation being saved: '" + clientEntity.getGpsLocation() + "'");
@@ -173,8 +174,7 @@ public class ClientServiceImpl implements ClientService {
 
         // Fetching all the clients of the team within the range
         List<ClientEntity> clients = clientRepository.findByCreatedByInAndCreatedDateBetween(
-                teamMembers, dateRange[0], dateRange[1]
-        );
+                teamMembers, dateRange[0], dateRange[1]);
 
         //response
         TeamPerformanceDto response = new TeamPerformanceDto();
@@ -320,7 +320,33 @@ public class ClientServiceImpl implements ClientService {
         UserEntity member = userRepository.findByUserId(memberId);
         Date[] dateRange = calculateDateRange(startDate, endDate);
 
-        return teamMemberStats(member, dateRange[0], dateRange[1]);
+//        return teamMemberStats(member, dateRange[0], dateRange[1]);
+        // Build stats
+        TeamMemberPerformanceDto dto = teamMemberStats(member, dateRange[0], dateRange[1]);
+
+        // Add member basic info
+        dto.setMemberId(member.getUserId());
+        dto.setMemberName(member.getFirstName() + " " + member.getLastName());
+        dto.setEmail(member.getEmail());
+        dto.setPhoneNumber(member.getPhoneNumber());
+        dto.setStaffId(member.getStaffId());
+        dto.setCreatedDate(member.getCreatedDate());
+
+        // Handle team name safely
+        if (member.getTeam() != null) {
+            dto.setTeamName(member.getTeam().getName());
+        } else {
+            dto.setTeamName("Unassigned");
+        }
+
+        // Handle team lead safely
+        if (member.getTeamLead() != null) {
+            dto.setTeamLeadName(member.getTeamLead().getFirstName() + " " + member.getTeamLead().getLastName());
+        } else {
+            dto.setTeamLeadName("No Lead");
+        }
+
+        return dto;
 
     }
 
@@ -447,7 +473,7 @@ public class ClientServiceImpl implements ClientService {
         }
 
         Pageable pageableRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
-        Page<ClientEntity> clientPage = clientRepository.searchAllClientsByFirstNameAndLastNameAndClientStatusAndTeamName
+        Page<ClientEntity> clientPage = clientRepository.searchAllClientsByFirstNameAndLastNameAndClientStatusAndTeamNameAndActiveTrue
                 (pageableRequest,
                 (name != null && !name.trim().isEmpty()) ? name.trim() : null, status, team);
 

@@ -563,6 +563,9 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public Page<UserDto> getAllTeamMembers(String name, String team, int page, int limit) {
+        if (page > 0) {
+            page -= 1;
+        }
         Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
 
         RoleEntity role = roleRepository.findByName("ROLE_TEAM_MEMBER");
@@ -596,6 +599,10 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public Page<UserDto> getAllTeamLeads(String name, String team, int page, int limit) {
+
+        if (page > 0) {
+            page -= 1;
+        }
         Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
 
         RoleEntity role = roleRepository.findByName("ROLE_TEAM_LEAD");
@@ -888,6 +895,9 @@ public class UserServiceImpl implements UserService {
 
 
     public TeamDto getTeamWithMembers(String teamId, LocalDate startDate, LocalDate endDate, int page, int limit) {
+        if(page > 0) {
+            page--;
+        }
         TeamsEntity team = (TeamsEntity) teamsRepository.findByIdAndActiveTrue(Long.valueOf(teamId))
                 .orElseThrow(() -> new RuntimeException("Team not found"));
 
@@ -900,8 +910,7 @@ public class UserServiceImpl implements UserService {
         participants = participants.stream()
                 .collect(Collectors.collectingAndThen(
                         Collectors.toCollection(LinkedHashSet::new),
-                        ArrayList::new
-                ));
+                        ArrayList::new));
 
         //setting up pagination
         int totalItems = participants.size();
