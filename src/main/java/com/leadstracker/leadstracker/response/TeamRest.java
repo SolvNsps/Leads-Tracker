@@ -4,6 +4,7 @@ import com.leadstracker.leadstracker.DTO.TeamMemberPerformanceDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public class TeamRest {
     private Long teamId;
@@ -14,6 +15,10 @@ public class TeamRest {
     private String leadPhoneNumber;
     private String leadStaffId;
     private LocalDateTime createdDate;
+    private int totalClientsSubmitted;
+    private int totalTarget;
+    private double progressPercentage;
+    private Map<String, Integer> teamClientStatus;
     private PaginatedResponse<TeamMemberPerformanceDto> teamMembers;
 
     public Long getTeamId() {
@@ -86,5 +91,37 @@ public class TeamRest {
 
     public void setTeamMembers(PaginatedResponse<TeamMemberPerformanceDto> teamMembers) {
         this.teamMembers = teamMembers;
+    }
+
+    public int getTotalClientsSubmitted() {
+        return totalClientsSubmitted;
+    }
+
+    public void setTotalClientsSubmitted(int totalClientsSubmitted) {
+        this.totalClientsSubmitted = totalClientsSubmitted;
+    }
+
+    public int getTotalTarget() {
+        return totalTarget;
+    }
+
+    public void setTotalTarget(int totalTarget) {
+        this.totalTarget = totalTarget;
+    }
+
+    public double getProgressPercentage() {
+        return progressPercentage;
+    }
+
+    public void setProgressPercentage(double progressPercentage) {
+        this.progressPercentage = progressPercentage;
+    }
+
+    public Map<String, Integer> getTeamClientStatus() {
+        return teamClientStatus;
+    }
+
+    public void setTeamClientStatus(Map<String, Integer> teamClientStatus) {
+        this.teamClientStatus = teamClientStatus;
     }
 }

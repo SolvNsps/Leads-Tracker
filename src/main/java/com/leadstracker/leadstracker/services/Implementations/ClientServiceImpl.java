@@ -8,6 +8,7 @@ import com.leadstracker.leadstracker.response.PaginatedResponse;
 import com.leadstracker.leadstracker.response.Statuses;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
+import io.micrometer.common.KeyValues;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,96 +128,399 @@ public class ClientServiceImpl implements ClientService {
      * @param endDate
      * @return
      */
-    public TeamPerformanceDto getTeamPerformance(String userId, LocalDate startDate, LocalDate endDate, String name, String team) {
-        //Getting team lead and members
+
+    @Override
+    public TeamPerformanceDto getTeamPerformance(String userId, LocalDate startDate, LocalDate endDate, String name, String teams) {
         UserEntity teamLead = userRepository.findByUserId(userId);
-        TeamsEntity teams = teamLead.getTeam();
+//                .orElseThrow(() -> new RuntimeException("Team Lead not found"));
 
-        List<UserEntity> userEntities = userRepository.searchAllUsersByFirstNameAndLastNameAndTeamName(
-                        (name != null && !name.trim().isEmpty()) ? name.trim() : null, team);
+        TeamsEntity team = teamLead.getTeam();
 
-        if (teams == null) {
-            TeamPerformanceDto emptyResponse = new TeamPerformanceDto();
-            emptyResponse.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
-            emptyResponse.setTeamId(null);
-            emptyResponse.setEmail(teamLead.getEmail());
-            emptyResponse.setTeamLeadUserId(teamLead.getUserId());
-            emptyResponse.setTeamName("No Team Assigned");
-            emptyResponse.setTotalClientsAdded(0);
-            emptyResponse.setNumberOfTeamMembers(0);
-            emptyResponse.setTeamTarget(0);
-            emptyResponse.setProgressPercentage(0);
-            emptyResponse.setProgressFraction("0/0");
+// --- Handle null team safely ---
+        if (team == null) {
+            TeamPerformanceDto response = new TeamPerformanceDto();
+            response.setTeamId(null);
+            response.setTeamName("No Team Assigned");
+            response.setTotalClientsAdded(0);
+            response.setTeamTarget(0);
+            response.setProgressPercentage(0);
+            response.setNumberOfTeamMembers(0);
 
-            return emptyResponse;
+            TeamMemberPerformanceDto leadPerformance = new TeamMemberPerformanceDto();
+            leadPerformance.setMemberId(teamLead.getUserId());
+            leadPerformance.setMemberName(teamLead.getFirstName() + " " + teamLead.getLastName());
+            response.setLeadPerformance(leadPerformance);
+
+            response.setTeamMembers(Collections.emptyList());
+            response.setTeamLeadUserId(teamLead.getUserId());
+            response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
+
+            return response;
         }
 
-        //getting team members under a team lead
-        List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
-        // Adding team lead
-        if (!teamMembers.contains(teamLead)) {
-            teamMembers.add(teamLead);
-        }
+//        if (team == null) {
+//            throw new RuntimeException("Team not found for the given lead");
+//        }
 
-        //Calculating date range
-        Date[] dateRange = calculateDateRange(startDate, endDate);
+        // Handle nulls safely
+        LocalDate effectiveStart = (startDate != null) ? startDate : LocalDate.now().withDayOfMonth(1);
+        LocalDate effectiveEnd   = (endDate   != null) ? endDate   : LocalDate.now();
 
-        // Fetching all the clients of the team within the range
-        List<ClientEntity> clients = clientRepository.findByCreatedByInAndCreatedDateBetween(
-                teamMembers, dateRange[0], dateRange[1]);
+        // --- Get active team target ---
+        TeamTargetEntity activeTeamTarget = teamTargetRepository
+                .findByTeamAndActiveTrue(team)
+                .orElse(null);
 
-        //response
+        int teamTarget = (activeTeamTarget != null) ? activeTeamTarget.getTargetValue() : 0;
+
+        // --- User target allocations (lead + members) ---
+        Map<String, Integer> usersTargets = userTargetRepository.findByUser_Team(team).stream()
+                .collect(Collectors.toMap(
+                        ut -> ut.getUser().getUserId(),
+                        UserTargetEntity::getTargetValue,
+                        (a, b) -> a // keep one if duplicates
+                ));
+
+        // --- Clients in date range ---
+        List<ClientEntity> clients = clientRepository.findByTeamAndCreatedDateBetween(
+                team, effectiveStart.atStartOfDay(),
+                effectiveEnd.atTime(23, 59, 59));
+
+        List<ClientEntity> leadClients = clients.stream()
+                .filter(c -> c.getCreatedBy().getUserId().equals(userId))
+                .toList();
+
+        List<UserEntity> teamMembers = userRepository.findByTeam(team);
+
         TeamPerformanceDto response = new TeamPerformanceDto();
-        response.setTeamId(teams.getId());
-        response.setTeamName(teams.getName());
-        response.setTeamLeadUserId(teamLead.getUserId());
-        response.setEmail(teamLead.getEmail());
-        response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
-        response.setTotalClientsAdded(clients.size());
-        // members only (excluding lead) for display
-        response.setNumberOfTeamMembers((int) teamMembers.stream()
-                .filter(entity -> !entity.getUserId().equals(teamLead.getUserId()))
-                .count());
+        response.setTeamId(team.getId());
+        response.setTeamName(team.getName());
 
-        //Fetching active team target
-        Optional<TeamTargetEntity> activeTargetOpt = teamTargetRepository
-                .findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(teams.getId(), LocalDate.now());
+        // --- Member performances (excluding lead) ---
+        List<TeamMemberPerformanceDto> memberPerformances = teamMembers.stream()
+                .filter(m -> !m.getUserId().equals(userId))
+                .map(member -> {
+                    List<ClientEntity> memberClients = clients.stream()
+                            .filter(c -> c.getCreatedBy().getUserId().equals(member.getUserId()))
+                            .toList();
 
-        int teamTarget = activeTargetOpt.map(TeamTargetEntity::getTargetValue).orElse(0);
+                    int memberTarget = usersTargets.getOrDefault(member.getUserId(), 0);
+                     double memberProgress = memberTarget > 0
+                            ? (memberClients.size() * 100.0) / memberTarget
+                            : 0.0;
+
+                    Map<String, Integer> memberStatusSummary = memberClients.stream()
+                            .collect(Collectors.toMap(
+                                    c -> c.getClientStatus().getDisplayName(),
+                                    c -> 1,
+                                    Integer::sum
+                            ));
+
+                    TeamMemberPerformanceDto dto = new TeamMemberPerformanceDto();
+                    dto.setMemberId(member.getUserId());
+                    dto.setMemberName(member.getFirstName() + " " + member.getLastName());
+                    dto.setTotalClientsSubmitted(memberClients.size());
+                    dto.setTarget(memberTarget);
+                    dto.setProgressPercentage(Math.round(memberProgress));
+                    dto.setClientStatus(memberStatusSummary);
+                    dto.setEmail(member.getEmail());
+
+                    return dto;
+                })
+                .toList();
+
+        response.setTeamMembers(memberPerformances);
+
+        // --- Lead performance (separate) ---
+        int leadTarget = usersTargets.getOrDefault(userId, 0);
+        double leadProgress = leadTarget > 0
+                ? (leadClients.size() * 100.0) / leadTarget
+                : 0.0;
+
+        Map<String, Integer> leadStatusSummary = leadClients.stream()
+                .collect(Collectors.toMap(
+                        c -> c.getClientStatus().getDisplayName(),
+                        c -> 1,
+                        Integer::sum
+                ));
+
+        TeamMemberPerformanceDto leadPerformance = new TeamMemberPerformanceDto();
+        leadPerformance.setMemberId(teamLead.getUserId());
+        leadPerformance.setMemberName(teamLead.getFirstName() + " " + teamLead.getLastName());
+        leadPerformance.setTotalClientsSubmitted(leadClients.size());
+        leadPerformance.setTarget(leadTarget);
+        leadPerformance.setProgressPercentage(Math.round(leadProgress));
+        leadPerformance.setClientStatus(leadStatusSummary);
+        leadPerformance.setEmail(teamLead.getEmail());
+
+        response.setLeadPerformance(leadPerformance);
+
+        // --- Team totals ---
+        int totalClients = clients.size();
+        double teamProgress = teamTarget > 0
+                ? (totalClients * 100.0) / teamTarget
+                : 0.0;
+
+        response.setTotalClientsAdded(totalClients);
         response.setTeamTarget(teamTarget);
-
-        // Setting Progress
-        int numberOfClientsAdded = clients.size();
-        double progress = 0;
-
-        if (teamTarget > 0) {
-            progress = Math.ceil(((double) numberOfClientsAdded / teamTarget) * 100);
-        }
-//      Setting both percentage and fraction
-        response.setProgressPercentage(progress);
-        response.setProgressFraction(numberOfClientsAdded + "/" + teamTarget);
-
-        //Building the status distribution using the enum
-        response.setClientStatus(
-                clients.stream()
-                        .collect(Collectors.groupingBy(
-                                c -> (c.getClientStatus().getDisplayName()),
-                                Collectors.summingInt(c -> 1)
-                                )
-                        ));
-
-
-        // Member stats (excluding lead)
-        response.setTeamMembers(
-                teamMembers.stream()
-                        .filter(m -> !m.getUserId().equals(teamLead.getUserId()))
-                        .map(member -> teamMemberStats(member, dateRange[0], dateRange[1]))
-                        .collect(Collectors.toList())
-        );
-
+        response.setProgressPercentage(Math.round(teamProgress));
+        response.setNumberOfTeamMembers(memberPerformances.size());
+        response.setTeamLeadUserId(teamLead.getUserId());
+        response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
 
         return response;
     }
+
+
+//    public TeamPerformanceDto getTeamPerformance(String userId, LocalDate startDate, LocalDate endDate, String name, String team) {
+//        //Getting team lead and members
+//        UserEntity teamLead = userRepository.findByUserId(userId);
+//        TeamsEntity teams = teamLead.getTeam();
+//
+//        // Suppose you already have the team lead (UserEntity teamLead)
+//        List<UserTargetEntity> userTargets = userTargetRepository.findByUser(teamLead);
+//
+////        List<UserTargetEntity> userTargetEntities = userTargetRepository.findByTeam(teams);
+//        List<UserTargetEntity> userTargetEntities = userTargetRepository.findByUser_Team(teams);
+//
+//        List<TeamTargetEntity> teamTargets = teamTargetRepository.findByTeam_Id(teams.getId());
+//
+//        List<UserEntity> userEntities = userRepository.searchAllUsersByFirstNameAndLastNameAndTeamName(
+//                        (name != null && !name.trim().isEmpty()) ? name.trim() : null, team);
+//
+//        if (teams == null) {
+//            TeamPerformanceDto emptyResponse = new TeamPerformanceDto();
+//            emptyResponse.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
+//            emptyResponse.setTeamId(null);
+//            emptyResponse.setEmail(teamLead.getEmail());
+//            emptyResponse.setTeamLeadUserId(teamLead.getUserId());
+//            emptyResponse.setTeamName("No Team Assigned");
+//            emptyResponse.setTotalClientsAdded(0);
+//            emptyResponse.setNumberOfTeamMembers(0);
+//            emptyResponse.setTeamTarget(0);
+//            emptyResponse.setProgressPercentage(0);
+//            emptyResponse.setProgressFraction("0/0");
+//
+//            return emptyResponse;
+//        }
+//
+//        //getting team members under a team lead
+//        List<UserEntity> teamMembers = userRepository.findByTeamLead(teamLead);
+//        // Adding team lead
+//        if (!teamMembers.contains(teamLead)) {
+//            teamMembers.add(teamLead);
+//        }
+//
+//        //Calculating date range
+//        Date[] dateRange = calculateDateRange(startDate, endDate);
+//
+//        // Fetching all the clients of the team within the range
+//        List<ClientEntity> clients = clientRepository.findByCreatedByInAndCreatedDateBetween(
+//                teamMembers, dateRange[0], dateRange[1]);
+//
+//
+//        // Only lead's own clients
+//        List<ClientEntity> leadClients = clientRepository.findByCreatedByAndCreatedDateBetween(
+//                teamLead, dateRange[0], dateRange[1]);
+//
+//        //response
+////        TeamPerformanceDto response = new TeamPerformanceDto();
+////        response.setTeamId(teams.getId());
+////        response.setTeamName(teams.getName());
+////        response.setTeamLeadUserId(teamLead.getUserId());
+////        response.setEmail(teamLead.getEmail());
+////        response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
+////        response.setTotalClientsAdded(clients.size());
+////        // members only (excluding lead) for display
+////        response.setNumberOfTeamMembers((int) teamMembers.stream()
+////                .filter(entity -> !entity.getUserId().equals(teamLead.getUserId()))
+////                .count());
+////
+////        //Fetching active team target
+////        Optional<TeamTargetEntity> activeTargetOpt = teamTargetRepository
+////                .findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(teams.getId(), LocalDate.now());
+////
+////        int teamTarget = activeTargetOpt.map(TeamTargetEntity::getTargetValue).orElse(0);
+////        response.setTeamTarget(teamTarget);
+////
+////        // Setting Progress
+////        int numberOfClientsAdded = clients.size();
+////        double progress = 0;
+////
+////        if (teamTarget > 0) {
+////            progress = Math.ceil(((double) numberOfClientsAdded / teamTarget) * 100);
+////        }
+//////      Setting both percentage and fraction
+////        response.setProgressPercentage(progress);
+////        response.setProgressFraction(numberOfClientsAdded + "/" + teamTarget);
+////
+////        //Building the status distribution using the enum
+////        response.setClientStatus(
+////                clients.stream()
+////                        .collect(Collectors.groupingBy(
+////                                c -> (c.getClientStatus().getDisplayName()),
+////                                Collectors.summingInt(c -> 1)
+////                                )
+////                        ));
+////
+////
+////        // Member stats (excluding lead)
+////        response.setTeamMembers(
+////                teamMembers.stream()
+////                        .filter(m -> !m.getUserId().equals(teamLead.getUserId()))
+////                        .map(member -> teamMemberStats(member, dateRange[0], dateRange[1]))
+////                        .collect(Collectors.toList())
+////        );
+////
+////        // Build a map of userId -> target value
+////        Map<String, Integer> targetMap = userTargets.stream()
+////                .collect(Collectors.toMap(
+////                        ut -> ut.getUser().getUserId(),
+////                        UserTargetEntity::getTargetValue
+////                ));
+////
+////
+////// Lead’s data
+////        int leadTarget = targetMap.getOrDefault(teamLead.getUserId(), 0);
+////        int numberOfLeadClients = leadClients.size();
+////
+////        double leadProgress = 0;
+////        if (leadTarget > 0) {
+////            leadProgress = Math.ceil(((double) numberOfLeadClients / leadTarget) * 100);
+////        }
+////
+////        Map<String, Integer> leadStatusSummary = leadClients.stream()
+////                .collect(Collectors.groupingBy(
+////                        c -> c.getClientStatus().getDisplayName(),
+////                        Collectors.summingInt(c -> 1)
+////                ));
+////
+////        response.setTeamLeadUserId(teamLead.getUserId());
+////        response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
+////        response.setTeamTarget(leadTarget);
+////        response.setTotalClientsAdded(numberOfLeadClients);
+////        response.setProgressPercentage(leadProgress);
+////        response.setClientStatus(leadStatusSummary);
+////        response.setEmail(teamLead.getEmail());
+//
+//        TeamPerformanceDto response = new TeamPerformanceDto();
+//        response.setTeamId(teams.getId());
+//        response.setTeamName(teams.getName());
+//        response.setTeamLeadUserId(teamLead.getUserId());
+//        response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
+//        response.setEmail(teamLead.getEmail());
+//
+//// --- Team totals (all clients including lead) ---
+//        int totalClients = clients.size();
+//        int teamTarget = teamTargets.stream()
+//                .mapToInt(TeamTargetEntity::getTargetValue)
+//                .sum();
+//
+//        double teamProgress = teamTarget > 0 ? (totalClients * 100.0) / teamTarget : 0.0;
+//
+//        response.setTotalClientsAdded(totalClients);
+//        response.setTeamTarget(teamTarget);
+//        response.setProgressPercentage(teamProgress);
+//        response.setProgressFraction(totalClients + "/" + teamTarget);
+//
+//// Build team client status summary inline
+//        Map<String, Integer> teamStatusSummary = clients.stream()
+//                .collect(Collectors.toMap(
+//                        c -> c.getClientStatus().getDisplayName(),
+//                        c -> 1,
+//                        Integer::sum
+//                ));
+//        response.setClientStatus(teamStatusSummary);
+//
+//// --- Members (excluding lead) ---
+//        List<TeamMemberPerformanceDto> memberPerformances = teamMembers.stream()
+//                .map(member -> {
+//                    List<ClientEntity> memberClients = clients.stream()
+//                            .filter(c -> c.getCreatedBy().getUserId().equals(member.getUserId()))
+//                            .toList();
+//
+//
+//// Convert List<UserTargetEntity> → Map<userId, targetValue>
+//                    // Build the map using String keys
+//                    Map<String, Integer> usersTargets = userTargetEntities.stream()
+//                            .collect(Collectors.toMap(
+//                                    ut -> ut.getUser().getUserId(),   // String userId
+//                                    UserTargetEntity::getTargetValue,
+//                                    Integer::sum
+//                            ));
+//
+//// Then check by String
+//                    int memberTarget = usersTargets.getOrDefault(member.getUserId(), 0);
+//
+//
+//                    double memberProgress = memberTarget > 0
+//                            ? (memberClients.size() * 100.0) / memberTarget
+//                            : 0.0;
+//
+//                    Map<String, Integer> memberStatusSummary = memberClients.stream()
+//                            .collect(Collectors.toMap(
+//                                    c -> c.getClientStatus().getDisplayName(),
+//                                    c -> 1,
+//                                    Integer::sum
+//                            ));
+//
+//                    TeamMemberPerformanceDto dto = new TeamMemberPerformanceDto();
+//                    dto.setMemberId(member.getUserId());
+//                    dto.setMemberName(member.getFirstName() + " " + member.getLastName());
+//                    dto.setTotalClientsSubmitted(memberClients.size());
+//                    dto.setTarget(memberTarget);
+//                    dto.setProgressPercentage(memberProgress);
+//                    dto.setClientStatus(memberStatusSummary);
+//                    dto.setEmail(member.getEmail());
+//
+//                    return dto;
+//                })
+//                .toList();
+//
+//        response.setTeamMembers(memberPerformances);
+//
+//// --- Lead personal performance (separate field) ---
+//        List<ClientEntity> leadsClients = clients.stream()
+//                .filter(c -> c.getCreatedBy().getUserId().equals(teamLead.getUserId()))
+//                .toList();
+//
+//        Map<String, Integer> userTarget = userTargetEntities.stream()
+//                .collect(Collectors.toMap(
+//                        ut -> ut.getUser().getUserId(),   // String userId
+//                        UserTargetEntity::getTargetValue,
+//                        Integer::sum
+//                ));
+//
+//
+//        int leadTarget = userTarget.getOrDefault(teamLead.getUserId(), 0);
+//
+//        double leadProgress = leadTarget > 0
+//                ? (leadsClients.size() * 100.0) / leadTarget
+//                : 0.0;
+//
+//        Map<String, Integer> leadStatusSummary = leadsClients.stream()
+//                .collect(Collectors.toMap(
+//                        c -> c.getClientStatus().getDisplayName(),
+//                        c -> 1,
+//                        Integer::sum
+//                ));
+//
+//        TeamMemberPerformanceDto leadPerformance = new TeamMemberPerformanceDto();
+//        leadPerformance.setMemberId(teamLead.getUserId());
+//        leadPerformance.setMemberName(teamLead.getFirstName() + " " + teamLead.getLastName());
+//        leadPerformance.setTotalClientsSubmitted(leadClients.size());
+//        leadPerformance.setTarget(leadTarget);
+//        leadPerformance.setProgressPercentage(leadProgress);
+//        leadPerformance.setClientStatus(leadStatusSummary);
+//        leadPerformance.setEmail(teamLead.getEmail());
+//
+//// ⚠️ You need to add this field in TeamPerformanceDto first
+//// private TeamMemberPerformanceDto leadPerformance;
+//        response.setLeadPerformance(leadPerformance);
+//
+//
+//        return response;
+//    }
 
 
     private Date[] calculateDateRange(LocalDate startDate, LocalDate endDate) {
@@ -331,6 +635,9 @@ public class ClientServiceImpl implements ClientService {
         // Handle team lead safely
         if (member.getTeamLead() != null) {
             dto.setTeamLeadName(member.getTeamLead().getFirstName() + " " + member.getTeamLead().getLastName());
+        } else if (member.getTeam() != null && member.getTeam().getTeamLead() != null) {
+            UserEntity lead = member.getTeam().getTeamLead();
+            dto.setTeamLeadName(lead.getFirstName() + " " + lead.getLastName());
         } else {
             dto.setTeamLeadName("No Lead");
         }
@@ -654,15 +961,14 @@ public class ClientServiceImpl implements ClientService {
                 ));
 
         // Per-team stats
-        List<TeamsEntity> teams = teamsRepository.findAll();
+        List<TeamsEntity> teams = teamsRepository.findByActiveTrue();
         List<ClientStatsDto> teamStatsList = new ArrayList<>();
 
         for (TeamsEntity team : teams) {
             List<UserEntity> members = userRepository.findByTeam(team);
 
             // Fetching clients created by team members within date range
-            List<ClientEntity> teamClients =
-                    clientRepository.findByCreatedByInAndCreatedDateBetween(members, startDate, endDate);
+            List<ClientEntity> teamClients = clientRepository.findByCreatedByInAndCreatedDateBetween(members, startDate, endDate);
 
             Map<String, Long> teamStatusCounts = teamClients.stream()
                     .collect(Collectors.groupingBy(
@@ -1044,7 +1350,7 @@ public class ClientServiceImpl implements ClientService {
                 : null;
 
         // Calling repository search method
-        Page<ClientEntity> clientsPage = clientRepository.searchClientsWithUserIds(allowedUserIds, (name != null && !name.trim().isEmpty()) ? name.trim() : null,
+        Page<ClientEntity> clientsPage = clientRepository.searchClientsWithUserIdsAndActiveTrue(allowedUserIds, (name != null && !name.trim().isEmpty()) ? name.trim() : null,
                 status, startDateTime, endDateTime, pageable
         );
 
@@ -1125,24 +1431,38 @@ public class ClientServiceImpl implements ClientService {
             return getClientStats(fromDate, toDate);
         }
         else if (loggedInUser.getRole().getName().equals("ROLE_TEAM_LEAD")) {
-            // Team Lead stats for their team
-            List<UserEntity> members = userRepository.findByTeam(loggedInUser.getTeam());
-            List<ClientEntity> teamClients = clientRepository
-                    .findByCreatedByInAndCreatedDateBetween(members, startDate, endDate);
+            // Team Lead stats for themselves
+            List<ClientEntity> leadClients = clientRepository
+                    .findByCreatedByAndCreatedDateBetween(loggedInUser, startDate, endDate);
 
-            Map<String, Long> statusCounts = teamClients.stream()
+            Map<String, Long> statusCounts = leadClients.stream()
                     .collect(Collectors.groupingBy(
                             c -> c.getClientStatus().toString(),
                             Collectors.counting()));
 
-            return new ClientStatsDto(
-                    loggedInUser.getTeam().getName(),
-                    teamClients.size(),
+            return new UserStatsDto(
+                    loggedInUser.getUserId(),
+                    loggedInUser.getFirstName() + " " + loggedInUser.getLastName(),
+                    leadClients.size(),
                     statusCounts
             );
+//            List<UserEntity> members = userRepository.findByTeam(loggedInUser.getTeam());
+//            List<ClientEntity> teamClients = clientRepository
+//                    .findByCreatedByInAndCreatedDateBetween(members, startDate, endDate);
+//
+//            Map<String, Long> statusCounts = teamClients.stream()
+//                    .collect(Collectors.groupingBy(
+//                            c -> c.getClientStatus().toString(),
+//                            Collectors.counting()));
+//
+//            return new ClientStatsDto(
+//                    loggedInUser.getTeam().getName(),
+//                    teamClients.size(),
+//                    statusCounts
+//            );
         }
         else {
-            // Team Member → only their own stats
+            // Team Member getting their own stats
             List<ClientEntity> myClients = clientRepository
                     .findByCreatedByAndCreatedDateBetween(loggedInUser, startDate, endDate);
 

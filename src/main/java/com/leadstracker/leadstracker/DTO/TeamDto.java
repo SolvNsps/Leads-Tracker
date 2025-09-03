@@ -6,6 +6,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public class TeamDto implements Serializable {
     @Serial
@@ -20,6 +21,11 @@ public class TeamDto implements Serializable {
     private String leadStaffId;
     private java.time.LocalDateTime createdDate;
     private PaginatedResponse<TeamMemberPerformanceDto> teamMembers;
+    private int totalClientsSubmitted;
+    private int totalTarget;
+    private double progressPercentage;
+    private Map<String, Integer> teamClientStatus;
+
 
     public Long getId() {
         return id;
@@ -91,5 +97,37 @@ public class TeamDto implements Serializable {
 
     public void setTeamMembers(PaginatedResponse<TeamMemberPerformanceDto> teamMembers) {
         this.teamMembers = teamMembers;
+    }
+
+    public int getTotalClientsSubmitted() {
+        return totalClientsSubmitted;
+    }
+
+    public void setTotalClientsSubmitted(int totalClientsSubmitted) {
+        this.totalClientsSubmitted = totalClientsSubmitted;
+    }
+
+    public int getTotalTarget() {
+        return totalTarget;
+    }
+
+    public void setTotalTarget(int totalTarget) {
+        this.totalTarget = totalTarget;
+    }
+
+    public double getProgressPercentage() {
+        return progressPercentage;
+    }
+
+    public void setProgressPercentage(double progressPercentage) {
+        this.progressPercentage = progressPercentage;
+    }
+
+    public Map<String, Integer> getTeamClientStatus() {
+        return teamClientStatus;
+    }
+
+    public void setTeamClientStatus(Map<String, Integer> teamClientStatus) {
+        this.teamClientStatus = teamClientStatus;
     }
 }

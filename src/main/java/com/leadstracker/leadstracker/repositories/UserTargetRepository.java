@@ -1,6 +1,7 @@
 package com.leadstracker.leadstracker.repositories;
 
 import com.leadstracker.leadstracker.entities.TeamTargetEntity;
+import com.leadstracker.leadstracker.entities.TeamsEntity;
 import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.entities.UserTargetEntity;
 import com.leadstracker.leadstracker.request.TargetDistributionRequest;
@@ -27,4 +28,7 @@ public interface UserTargetRepository extends JpaRepository<UserTargetEntity, Lo
 
     List<UserTargetEntity> findByTeamTarget_Id(Long teamTargetId);
 
+//    List<UserTargetEntity> findByTeam(TeamsEntity teams);
+
+    List<UserTargetEntity> findByUser_Team(TeamsEntity teams);
 }

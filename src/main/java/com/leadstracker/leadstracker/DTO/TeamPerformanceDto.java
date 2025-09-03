@@ -19,6 +19,7 @@ public class TeamPerformanceDto {
     private int numberOfTeamMembers;
     private String progressFraction;
     private String email;
+    private TeamMemberPerformanceDto leadPerformance;
 
     public Long getTeamId() {
         return teamId;
@@ -122,5 +123,13 @@ public class TeamPerformanceDto {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public TeamMemberPerformanceDto getLeadPerformance() {
+        return leadPerformance;
+    }
+
+    public void setLeadPerformance(TeamMemberPerformanceDto leadPerformance) {
+        this.leadPerformance = leadPerformance;
     }
 }

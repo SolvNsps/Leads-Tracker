@@ -20,4 +20,6 @@ public interface TeamsRepository extends JpaRepository<TeamsEntity, Long> {
     Optional<TeamsEntity> findByName(String name);
 
     Optional<Object> findByIdAndActiveTrue(Long teamId);
+
+    List<TeamsEntity> findByActiveTrue();
 }

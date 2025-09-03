@@ -469,10 +469,10 @@ public class UserServiceImpl implements UserService {
 
         // Setting password and other defaults
         String rawPassword = utils.generateDefaultPassword();
-//        userEntity.setPassword(bCryptPasswordEncoder.encode(rawPassword));
         userEntity.setEmailVerificationStatus(true);
         userEntity.setDefaultPassword(true);
-        userEntity.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
+        userEntity.setPassword(bCryptPasswordEncoder.encode(
+                userDto.getPassword() != null ? userDto.getPassword() : rawPassword));
 //        userEntity.setTeam(userDto.getTeamName());
 
         userRepository.save(userEntity);
@@ -894,6 +894,15 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    /**
+     * @param teamId
+     * @param startDate
+     * @param endDate
+     * @param page
+     * @param limit
+     * @return
+     */
+    @Override
     public TeamDto getTeamWithMembers(String teamId, LocalDate startDate, LocalDate endDate, int page, int limit) {
         if(page > 0) {
             page--;
@@ -939,7 +948,7 @@ public class UserServiceImpl implements UserService {
         paginatedResponse.setHasNext(page < totalPages - 1);
         paginatedResponse.setHasPrevious(page > 0);
 
-        // map to TeamDto
+        // mapping to TeamDto
         TeamDto dto = new TeamDto();
         dto.setId(team.getId());
         dto.setName(team.getName());
@@ -949,8 +958,29 @@ public class UserServiceImpl implements UserService {
         dto.setLeadPhoneNumber(teamLead != null ? teamLead.getPhoneNumber() : null);
         dto.setLeadStaffId(teamLead != null ? teamLead.getStaffId() : null);
         dto.setCreatedDate(teamLead != null ? teamLead.getCreatedDate() : null);
+        // team level stats
+        int teamTotalClients = memberDtos.stream().mapToInt(TeamMemberPerformanceDto::getTotalClientsSubmitted).sum();
+        int teamTotalTarget = memberDtos.stream().mapToInt(TeamMemberPerformanceDto::getTarget).sum();
+        double teamProgressPercentage = teamTotalTarget > 0
+                ? Math.ceil((teamTotalClients * 100.0) / teamTotalTarget)
+                : 0.0;
 
-        // map team members
+        // aggregate clientStatus
+        Map<String, Integer> teamClientStatus = new HashMap<>();
+        for (TeamMemberPerformanceDto member : memberDtos) {
+            Map<String, Integer> memberStatus = member.getClientStatus();
+            if (memberStatus != null) {
+                memberStatus.forEach((status, count) ->
+                        teamClientStatus.merge(status, count, Integer::sum)
+                );
+            }
+        }
+
+        dto.setTotalClientsSubmitted(teamTotalClients);
+        dto.setTotalTarget(teamTotalTarget);
+        dto.setProgressPercentage(teamProgressPercentage);
+        dto.setTeamClientStatus(teamClientStatus);
+
         dto.setTeamMembers(paginatedResponse);
 //        dto.setTeamMembers(
 //                participants.stream()

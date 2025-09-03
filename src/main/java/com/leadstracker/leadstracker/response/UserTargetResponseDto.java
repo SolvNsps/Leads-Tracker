@@ -8,8 +8,8 @@ public class UserTargetResponseDto {
     private int assignedTargetValue;
     private LocalDate dueDate;
     private LocalDate dateAssigned;
-    private String progressAchieved; // total value achieved so far
-
+    private String progressAchieved;
+    private int progressPercentage;
 
     public UserTargetResponseDto() {
     }
@@ -62,5 +62,11 @@ public class UserTargetResponseDto {
         this.progressAchieved = progressAchieved;
     }
 
+    public int getProgressPercentage() {
+        return progressPercentage;
+    }
 
+    public void setProgressPercentage(int progressPercentage) {
+        this.progressPercentage = progressPercentage;
+    }
 }

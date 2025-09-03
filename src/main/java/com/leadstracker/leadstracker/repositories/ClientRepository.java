@@ -13,12 +13,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
 @Repository
 public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
-    List<ClientEntity> findByCreatedByAndCreatedDateBetween(UserEntity member, Date start, Date end);
+    List<ClientEntity> findByCreatedByAndCreatedDateBetween(UserEntity createdBy, Date start, Date end);
 
     List<ClientEntity> findByCreatedByInAndCreatedDateBetween(List<UserEntity> teamMembers, Date date, Date date1);
 
@@ -74,12 +75,13 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
     @Query("""
     SELECT c FROM clients c
     WHERE c.createdBy.userId IN :userIds
+    AND c.active = true 
     AND (:name IS NULL OR LOWER(CONCAT(c.firstName, ' ', c.lastName)) LIKE LOWER(CONCAT('%', :name, '%')))
     AND (:status IS NULL OR c.clientStatus = :status)
     AND (:startDate IS NULL OR c.createdDate >= :startDate)
     AND (:endDate IS NULL OR c.createdDate <= :endDate)
 """)
-    Page<ClientEntity> searchClientsWithUserIds(
+    Page<ClientEntity> searchClientsWithUserIdsAndActiveTrue(
             @Param("userIds") List<String> userIds, @Param("name") String name,
             @Param("status") Statuses status, @Param("startDate") Date startDate, @Param("endDate") Date endDate, Pageable pageable);
 
@@ -94,6 +96,7 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
     @Query("SELECT c FROM clients c " +
             "WHERE (:name IS NULL OR LOWER(c.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
             "   OR LOWER(c.lastName) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+            "AND c.active = true " +
             "AND (:status IS NULL OR c.clientStatus = :status) " +
             "AND (:team IS NULL OR LOWER(c.createdBy.team.name) LIKE LOWER(CONCAT('%', :team, '%')))")
     Page<ClientEntity> searchAllClientsByFirstNameAndLastNameAndClientStatusAndTeamNameAndActiveTrue(
@@ -105,4 +108,6 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
     long countByCreatedDateBetween(Date startDate, Date endDate);
 
     List<ClientEntity> findByCreatedDateBetween(Date startDate, Date endDate);
+
+    List<ClientEntity> findByTeamAndCreatedDateBetween(TeamsEntity team, LocalDateTime localDateTime, LocalDateTime localDateTime1);
 }

@@ -109,27 +109,63 @@ public class TeamTargetServiceImpl implements TeamTargetService {
     }
 
 
+//    @Override
+//    public List<TeamTargetResponseDto> getAllTargets() {
+//        List<TeamTargetEntity> targetList = teamTargetRepository.findAll();
+//
+//        List<TeamTargetResponseDto> dtoList = new ArrayList<>();
+//        for (TeamTargetEntity target : targetList) {
+//            dtoList.add(mapToResponseDto(target));
+//        }
+//
+//        return dtoList;
+//    }
+
     @Override
     public List<TeamTargetResponseDto> getAllTargets() {
         List<TeamTargetEntity> targetList = teamTargetRepository.findAll();
 
-        List<TeamTargetResponseDto> dtoList = new ArrayList<>();
-        for (TeamTargetEntity target : targetList) {
-            dtoList.add(mapToResponseDto(target));
-        }
+        List<TeamTargetResponseDto> dtoList = targetList.stream()
+                .map(this::mapToResponseDto)
+                .sorted(Comparator.comparing(TeamTargetResponseDto::getTeamName, Comparator.nullsLast(String::compareTo)))
+                .toList();
 
         return dtoList;
     }
 
     private TeamTargetResponseDto mapToResponseDto(TeamTargetEntity entity) {
+        String teamName = entity.getTeam() != null ? entity.getTeam().getName() : "Unknown Team";
+        String teamLeadFullName = "N/A";
+
+        if (entity.getTeam() != null && entity.getTeam().getTeamLead() != null) {
+            UserEntity lead = entity.getTeam().getTeamLead();
+            teamLeadFullName = lead.getFirstName() + " " + lead.getLastName();
+        }
+
+        LocalDate startDate = entity.getAssignedDate();
+        LocalDate dueDate = entity.getDueDate();
+
+        // Calculate total clients added by this team
+        int totalClients = 0;
+        if (entity.getTeam() != null) {
+            List<UserEntity> members = userRepository.findByTeam(entity.getTeam());
+            totalClients = Math.toIntExact(clientRepository.countByCreatedByIn(members));
+        }
+
         return new TeamTargetResponseDto(
                 entity.getId(),
-                entity.getTeam().getName(),
+                teamName,
+                teamLeadFullName,
                 entity.getTargetValue(),
-                entity.getAssignedDate(),
-                entity.getDueDate()
+                startDate,
+                dueDate,
+                totalClients
         );
     }
+
+
+
+
 
     @Override
     public TeamTargetOverviewDto getTeamTargetOverview(String teamLeadEmail) {
@@ -148,13 +184,63 @@ public class TeamTargetServiceImpl implements TeamTargetService {
         TeamTargetEntity teamTarget = teamTargetRepository.findByTeamId(team.getId())
                 .orElseThrow(() -> new RuntimeException("No target has been assigned to your team yet."));
 
-        //Get all user targets under this team target
+        //Getting all user targets under this team target
         List<UserTargetEntity> userTargets = userTargetRepository.findByTeamTargetId(teamTarget.getId());
 
         // Map to response DTO
         return mapToTeamTargetOverviewDto(teamTarget, userTargets);
     }
 
+
+//    @Override
+//    public void assignTargetToTeamMembers(Long teamTargetId, Map<String, Integer> memberTargets, String teamLeadEmail) {
+//        // Validation
+//        UserEntity teamLead = userRepository.findByEmail(teamLeadEmail);
+//        if (teamLead == null) {
+//            throw new RuntimeException("Team Lead not found");
+//        }
+//
+//        TeamsEntity team = teamLead.getTeam();
+//        if (team == null) {
+//            throw new RuntimeException("You have not been assigned to any team.");
+//        }
+//        TeamTargetEntity teamTarget = teamTargetRepository.findById(teamTargetId)
+//                .orElseThrow(() -> new RuntimeException("Team Target not found."));
+//
+//        // Validation: Checking ownership
+//        if (!teamTarget.getTeam().getId().equals(team.getId())) {
+//            throw new RuntimeException("You are not authorized to distribute this target.");
+//        }
+//
+//        // Validating total target
+//        int totalDistributed = memberTargets.values().stream().mapToInt(Integer::intValue).sum();
+//        if (totalDistributed > teamTarget.getTargetValue()) {
+//            throw new RuntimeException("Total distributed target exceeds the team target value.");
+//        }
+//
+//        for (Map.Entry<String, Integer> entry : memberTargets.entrySet()) {
+//            String memberId = entry.getKey();
+//            Integer value = entry.getValue();
+//
+//            UserEntity member = userRepository.findByUserId(memberId);
+//
+//            if (!Objects.equals(member.getTeamLead().getId(), teamLead.getId())) {
+//                throw new RuntimeException("User is not your team member.");
+//            }
+//
+//            UserTargetEntity userTarget = userTargetRepository
+//                    .findByTeamTarget_IdAndUser_UserId(teamTargetId, memberId)
+//                    .orElse(new UserTargetEntity());
+//
+//            userTarget.setTeamTarget(teamTarget);
+//            userTarget.setUser(member);
+//            userTarget.setTargetValue(value);
+//            userTarget.setAssignedDate(LocalDate.now());
+//            userTarget.setDueDate(teamTarget.getDueDate());
+//
+//            userTargetRepository.save(userTarget);
+//        }
+//    }
 
     @Override
     public void assignTargetToTeamMembers(Long teamTargetId, Map<String, Integer> memberTargets, String teamLeadEmail) {
@@ -168,10 +254,10 @@ public class TeamTargetServiceImpl implements TeamTargetService {
         if (team == null) {
             throw new RuntimeException("You have not been assigned to any team.");
         }
+
         TeamTargetEntity teamTarget = teamTargetRepository.findById(teamTargetId)
                 .orElseThrow(() -> new RuntimeException("Team Target not found."));
 
-        // Validation: Checking ownership
         if (!teamTarget.getTeam().getId().equals(team.getId())) {
             throw new RuntimeException("You are not authorized to distribute this target.");
         }
@@ -187,11 +273,21 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             Integer value = entry.getValue();
 
             UserEntity member = userRepository.findByUserId(memberId);
-
-            if (!Objects.equals(member.getTeamLead().getId(), teamLead.getId())) {
-                throw new RuntimeException("User is not your team member.");
+            if (member == null) {
+                throw new RuntimeException("User not found: " + memberId);
             }
 
+            // Special case: Team Lead assigning to himself
+            if (Objects.equals(member.getId(), teamLead.getId())) {
+                // allow directly (lead assigning to self)
+            } else {
+                if (member.getTeam() == null || !Objects.equals(member.getTeam().getId(), teamLead.getTeam().getId())) {
+                    throw new RuntimeException("User " + member.getUserId() + " is not in your team.");
+                }
+            }
+
+
+            // Save or update the target
             UserTargetEntity userTarget = userTargetRepository
                     .findByTeamTarget_IdAndUser_UserId(teamTargetId, memberId)
                     .orElse(new UserTargetEntity());
@@ -265,6 +361,7 @@ public class TeamTargetServiceImpl implements TeamTargetService {
             // Calculating member progress: total clients submitted / target
             int memberClients = Math.toIntExact(clientRepository.countByCreatedBy(member));
             memberDto.setProgressAchieved(memberClients + "/" + userTarget.getTargetValue());
+            memberDto.setProgressPercentage(Math.round(memberClients * 100 / userTarget.getTargetValue()));
 
             // Adding to total
             totalAchieved[0] = totalAchieved[0] + memberClients;
@@ -481,5 +578,35 @@ public class TeamTargetServiceImpl implements TeamTargetService {
         return response;
     }
 
+
+    @Override
+    public List<TeamTargetResponseDto> getTargetsByTeam(Long teamId) {
+        TeamsEntity team = teamsRepository.findById(teamId)
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+
+        List<TeamTargetEntity> targetList = teamTargetRepository.findByTeam_Id(team.getId());
+
+        List<TeamTargetResponseDto> dtoList = targetList.stream()
+                .map(entity -> mapToResponseDto(entity))
+                .sorted(Comparator.comparing(TeamTargetResponseDto::getTeamName, Comparator.nullsLast(String::compareTo)))
+                .toList();
+
+        return dtoList;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public List<TeamTargetResponseDto> getAllActiveTargets() {
+        List<TeamTargetEntity> targetList = teamTargetRepository.findByActiveTrue();
+
+        List<TeamTargetResponseDto> activeList = targetList.stream()
+                .map(this::mapToResponseDto)
+                .sorted(Comparator.comparing(TeamTargetResponseDto::getTeamName, Comparator.nullsLast(String::compareTo)))
+                .toList();
+
+        return activeList;
+    }
 
 }

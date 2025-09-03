@@ -97,17 +97,37 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
            AmazonSES emailService = (AmazonSES) SpringApplicationContext.getBean("amazonSES");
            emailService.sendLoginOtpEmail(userDto.getFirstName(), userName, otp);
+
             // Normal login case
+//            response.setContentType("application/json");
+//            new ObjectMapper().writeValue(
+//                    response.getWriter(),
+//                    Map.of(
+//                            "status", "OTP_SENT",
+//                            "email", userName,
+//                            "userId", userEntity.getUserId(),
+//                            "message", "OTP sent to registered email",
+//                            "role", userEntity.getRole().getName()
+//                    )
+//            );
+
+            Map<String, Object> responseMap = new HashMap<>();
+            responseMap.put("status", "OTP_SENT");
+            responseMap.put("email", userName);
+            responseMap.put("userId", userEntity.getUserId());
+            responseMap.put("message", "OTP sent to registered email");
+            responseMap.put("role", userEntity.getRole().getName());
+
+            //setting the team of team leads and team members
+            if ("ROLE_TEAM_LEAD".equals(userEntity.getRole().getName()) ||
+                    "ROLE_TEAM_MEMBER".equals(userEntity.getRole().getName())) {
+                responseMap.put("teamId", userEntity.getTeam().getId());
+            }
+
             response.setContentType("application/json");
             new ObjectMapper().writeValue(
                     response.getWriter(),
-                    Map.of(
-                            "status", "OTP_SENT",
-                            "email", userName,
-                            "userId", userEntity.getUserId(),
-                            "message", "OTP sent to registered email",
-                            "role", userEntity.getRole().getName()
-                    )
+                    responseMap
             );
 
         }

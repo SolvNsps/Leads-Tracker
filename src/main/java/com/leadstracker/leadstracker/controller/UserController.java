@@ -424,6 +424,10 @@ public class UserController {
         teamRest.setLeadPhoneNumber(teamDto.getLeadPhoneNumber());
         teamRest.setLeadStaffId(teamDto.getLeadStaffId());
         teamRest.setCreatedDate(teamDto.getCreatedDate());
+        teamRest.setTotalClientsSubmitted(teamDto.getTotalClientsSubmitted());
+        teamRest.setTotalTarget(teamDto.getTotalTarget());
+        teamRest.setProgressPercentage(teamDto.getProgressPercentage());
+        teamRest.setTeamClientStatus(teamDto.getTeamClientStatus());
         teamRest.setTeamMembers(teamDto.getTeamMembers());
 
         return ResponseEntity.ok(Map.of(
@@ -488,6 +492,15 @@ public class UserController {
     @GetMapping("/team-targets")
     public ResponseEntity<List<TeamTargetResponseDto>> getAllTargets() {
         List<TeamTargetResponseDto> targets = teamTargetService.getAllTargets();
+        return ResponseEntity.ok(targets);
+    }
+
+
+ //Admin viewing the active targets set
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("active/team-targets")
+    public ResponseEntity<List<TeamTargetResponseDto>> getAllActiveTargets() {
+        List<TeamTargetResponseDto> targets = teamTargetService.getAllActiveTargets();
         return ResponseEntity.ok(targets);
     }
 
@@ -727,6 +740,14 @@ public class UserController {
     ) {
         TeamMemberPerformanceDto memberPerformance = clientService.getMemberPerformance(memberId, startDate, endDate);
         return ResponseEntity.ok(memberPerformance);
+    }
+
+    //Admin views target for a team
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/team-targets/{teamId}")
+    public ResponseEntity<List<TeamTargetResponseDto>> getTargetsByTeam(@PathVariable Long teamId) {
+        List<TeamTargetResponseDto> targets = teamTargetService.getTargetsByTeam(teamId);
+        return ResponseEntity.ok(targets);
     }
 
 }

@@ -32,5 +32,8 @@ public interface TeamTargetService {
 
     TeamTargetUpdateRequestDto updateTarget(Long targetId,TeamTargetUpdateRequestDto requestDto);
 
+    List<TeamTargetResponseDto> getTargetsByTeam(Long teamId);
+
+    List<TeamTargetResponseDto> getAllActiveTargets();
 }
 

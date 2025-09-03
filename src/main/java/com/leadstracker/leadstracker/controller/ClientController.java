@@ -354,7 +354,8 @@ public class ClientController {
             @PathVariable String userId,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "10") int limit,
-            @RequestParam(required = false) String name, @RequestParam(required = false) String status,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @AuthenticationPrincipal UserPrincipal authentication) {
@@ -449,13 +450,12 @@ public class ClientController {
         return ResponseEntity.ok(response);
     }
 
-
+    //Admin views system statistics
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/statistics")
     public ResponseEntity<OverallSystemDto> getClientStats(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
                                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
-        OverallSystemDto stats = clientService.
-                getClientStats(fromDate, toDate);
+        OverallSystemDto stats = clientService.getClientStats(fromDate, toDate);
         return ResponseEntity.ok(stats);
     }
 

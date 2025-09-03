@@ -20,7 +20,13 @@ public interface TeamTargetRepository extends JpaRepository<TeamTargetEntity, Lo
 
     Optional<TeamTargetEntity> findTopByTeamIdAndDueDateGreaterThanEqualOrderByDueDateAsc(Long teamId, LocalDate currentDate);
 
-//    Optional<Object> findByTeam(TeamsEntity team);
 Optional<TeamTargetEntity> findByTeam(TeamsEntity team);
 
+//    List<TeamTargetEntity> findByTeam_TeamId(void attr0);
+
+    List<TeamTargetEntity> findByTeam_Id(Long id);
+
+    Optional<TeamTargetEntity> findByTeamAndActiveTrue(TeamsEntity teams);
+
+    List<TeamTargetEntity> findByActiveTrue();
 }
