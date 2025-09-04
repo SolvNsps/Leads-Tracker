@@ -4,12 +4,10 @@ import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.entities.ClientEntity;
 import com.leadstracker.leadstracker.entities.NotificationEntity;
 import com.leadstracker.leadstracker.entities.TeamsEntity;
+import com.leadstracker.leadstracker.entities.UserEntity;
 import com.leadstracker.leadstracker.request.ClientDetails;
 import com.leadstracker.leadstracker.request.UserDetails;
-import com.leadstracker.leadstracker.response.ClientRest;
-import com.leadstracker.leadstracker.response.PaginatedResponse;
-import com.leadstracker.leadstracker.response.Statuses;
-import com.leadstracker.leadstracker.response.UserRest;
+import com.leadstracker.leadstracker.response.*;
 import com.leadstracker.leadstracker.security.AppConfig;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
@@ -207,35 +205,76 @@ public class ClientController {
 
     //Get a client
 //    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEAM_LEAD')")
-    @GetMapping(path = "/{id}")
-
+    @GetMapping("/{id}")
     public ClientRest getClient(@PathVariable String id) {
-        ClientRest returnClient = new ClientRest();
 
-        UserDto userDto = new UserDto();
+        // Fetch main client details
 
         ClientDto clientDto = clientService.getClientByClientId(id);
+        System.out.println("client dto "+ clientDto);
+
+        ClientRest returnClient = new ClientRest();
         BeanUtils.copyProperties(clientDto, returnClient);
-//        BeanUtils.copyProperties(clientDto.getCreatedBy(), userDto);
-        returnClient.setCreatedBy(userDto.getFirstName() + " " + userDto.getLastName());
-//        BeanUtils.copyProperties(clientDto.getAssignedTo(), userDto);
-        returnClient.setAssignedTo(userDto.getFirstName() + " " + userDto.getLastName());
+
+        System.out.println("returnClient dto "+ returnClient);
+
+        // Set created by and assigned to names
+        if (clientDto.getCreatedBy() != null) {
+            returnClient.setCreatedBy(clientDto.getCreatedBy().getFirstName() + " " + clientDto.getCreatedBy().getLastName());
+        }
+
+        if (clientDto.getAssignedTo() != null) {
+            returnClient.setAssignedTo(clientDto.getAssignedTo().getFirstName() + " " + clientDto.getAssignedTo().getLastName());
+        }
+
+        // Convert created and last updated dates to LocalDateTime
         if (clientDto.getCreatedDate() != null) {
             returnClient.setCreatedAt(clientDto.getCreatedDate().toInstant()
                     .atZone(ZoneId.systemDefault()).toLocalDateTime());
         }
+
         if (clientDto.getLastUpdated() != null) {
             returnClient.setLastUpdated(clientDto.getLastUpdated().toInstant()
                     .atZone(ZoneId.systemDefault()).toLocalDateTime());
         }
 
+        // Current status
         returnClient.setClientStatus(clientDto.getClientStatus());
-        returnClient.setCreatedBy(clientDto.getCreatedBy().getFirstName() + " " + clientDto.getCreatedBy().getLastName());
-//        returnClient.setAssignedTo(clientDto.getAssignedTo().getFirstName() + " " + clientDto.getAssignedTo().getLastName());
-//        returnClient.setTeamName(clientDto.getTeamName());
+
+        // Fetch and map status history
+        List<ClientStatusHistoryDto> historyDtos = clientService.getClientStatusHistory(id);
+        System.out.println("history dto "+ historyDtos);
+
+        List<ClientStatusHistoryRest> historyRest = historyDtos.stream()
+                .map(h -> {
+                    ClientStatusHistoryRest rest = new ClientStatusHistoryRest();
+                    rest.setOldStatus(h.getOldStatus());
+                    rest.setNewStatus(h.getNewStatus());
+//                    rest.setChangedBy(h.getChangedBy().getFirstName() + " " + h.getChangedBy().getLastName());
+
+                   if (h.getChangedBy() != null) {
+                       rest.setChangedBy(h.getChangedBy());
+                   }
+
+                    // Null-safe mapping for changedAt
+                    if (h.getChangedAt() != null) {
+                        rest.setChangedAt(
+                                h.getChangedAt()
+                                        .atZone(ZoneId.systemDefault())
+                                        .toLocalDateTime()
+                        );
+                    } else {
+                        // fallback for old records missing changedAt
+                        rest.setChangedAt(LocalDateTime.now());
+                    }
+                    return rest;
+                })
+                .toList();
+
+        returnClient.setStatusHistory(historyRest);
+
         return returnClient;
     }
-
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/notifications/{id}/alert")
@@ -244,8 +283,8 @@ public class ClientController {
         return ResponseEntity.ok(Map.of("message", "Team Lead alerted successfully."));
     }
 
-
-    @PreAuthorize("hasAuthority('ROLE_TEAM_LEAD')")
+    //Updating a client
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEAM_LEAD')")
     @PutMapping(path = "/{id}")
     public ResponseEntity<?> updateClient(@PathVariable String id, @RequestBody ClientDetails clientDetails) throws Exception {
         ClientDto clientDto = modelMapper.map(clientDetails, ClientDto.class);

@@ -8,7 +8,11 @@ import com.leadstracker.leadstracker.response.PaginatedResponse;
 import com.leadstracker.leadstracker.response.Statuses;
 import com.leadstracker.leadstracker.security.UserPrincipal;
 import com.leadstracker.leadstracker.services.ClientService;
+
 import io.micrometer.common.KeyValues;
+
+import jakarta.transaction.Transactional;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +25,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.leadstracker.leadstracker.repositories.ClientStatusHistoryRepository;
+
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -56,6 +65,11 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     TeamsRepository teamsRepository;
+
+    @Autowired
+    ClientStatusHistoryRepository clientStatusHistoryRepository;
+
+    private static final Logger log = LoggerFactory.getLogger(ClientServiceImpl.class);
 
 
     /**
@@ -663,46 +677,87 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ClientDto updateClient(String clientId, ClientDto clientDto) {
-        ClientEntity clientEntity = clientRepository.findByClientId(clientId);
+        try {
+            // Fetch the client entity
+            ClientEntity clientEntity = clientRepository.findByClientId(clientId);
+            if (clientEntity == null) {
+                throw new UsernameNotFoundException("Client with ID: " + clientId + " not found");
+            }
 
-        if (clientEntity == null) {
-            throw new UsernameNotFoundException("User with ID: " + clientId + " not found");
+            // Keep a copy of the old client data for email notification
+            ClientEntity oldClient = new ClientEntity();
+            oldClient.setFirstName(clientEntity.getFirstName());
+            oldClient.setLastName(clientEntity.getLastName());
+            oldClient.setPhoneNumber(clientEntity.getPhoneNumber());
+            oldClient.setClientStatus(clientEntity.getClientStatus());
+            oldClient.setGpsLocation(clientEntity.getGpsLocation());
+
+            // Check for internet availability before update
+            if (!isInternetAvailable()) {
+                throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to update client.");
+            }
+
+            // Get logged-in user
+            String loggedInUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+            UserEntity updatedBy = userRepository.findByEmail(loggedInUsername);
+
+            // Capture old status to compare
+            String oldStatus = clientEntity.getClientStatus().getDisplayName();
+
+            // Update fields
+            clientEntity.setFirstName(clientDto.getFirstName());
+            clientEntity.setLastName(clientDto.getLastName());
+            clientEntity.setGpsLocation(clientDto.getGpsLocation());
+            clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
+            clientEntity.setLastUpdated(Date.from(Instant.now()));
+
+            // Save updated client
+            ClientEntity updatedClient = clientRepository.save(clientEntity);
+
+            // Capture new status after update
+            String newStatus = updatedClient.getClientStatus().getDisplayName();
+
+            // Log status change if there was a change
+            if (!newStatus.equals(oldStatus)) {
+                ClientStatusHistoryEntity history = new ClientStatusHistoryEntity();
+                history.setClient(updatedClient);
+                history.setOldStatus(Statuses.fromString(oldStatus));
+                history.setNewStatus(Statuses.fromString(newStatus));
+                history.setChangedAt(LocalDateTime.now());
+                history.setChangedBy(updatedBy);
+                history.setStatus(Statuses.fromString(newStatus));
+
+                clientStatusHistoryRepository.save(history);
+            }
+
+            // Build the response DTO
+            ClientDto responseDto = modelMapper.map(updatedClient, ClientDto.class);
+
+            // Fetch and map status history
+            List<ClientStatusHistoryEntity> historyList = clientStatusHistoryRepository
+                    .findByClient_ClientIdAndChangedByOrderByChangedAtDesc(updatedClient.getClientId());
+
+
+            List<ClientStatusHistoryDto> historyDtos = historyList.stream()
+                    .map(history -> {
+                        ClientStatusHistoryDto dto = new ClientStatusHistoryDto();
+                        dto.setOldStatus(history.getOldStatus() != null ? history.getOldStatus().getDisplayName() : "N/A");
+                        dto.setNewStatus(history.getNewStatus() != null ? history.getNewStatus().getDisplayName() : "N/A");
+                        dto.setChangedAt(history.getChangedAt());
+//                        dto.setChangedBy(history.getChangedBy() != null ? history.getChangedBy().getFirstName() + " " + history.getChangedBy().getLastName() : "System");
+                        dto.setChangedBy(modelMapper.map(history.getChangedBy(), UserDto.class));
+                        return dto;
+                    }).toList();
+
+            responseDto.setStatusHistory(historyDtos);
+
+            return responseDto;
+
+        } catch (Exception e) {
+            log.error("Error while updating client with ID {}: {}", clientId, e.getMessage(), e);
+            throw e; // rethrow to let GlobalExceptionHandler handle it
         }
-
-        // Saving a copy of the old client for comparison
-        ClientEntity oldClient = new ClientEntity();
-        oldClient.setFirstName(clientEntity.getFirstName());
-        oldClient.setLastName(clientEntity.getLastName());
-        oldClient.setPhoneNumber(clientEntity.getPhoneNumber());
-        oldClient.setClientStatus(clientEntity.getClientStatus());
-        oldClient.setGpsLocation(clientEntity.getGpsLocation());
-
-        if (!isInternetAvailable()) {
-            throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to update client.");
-        }
-
-        clientEntity.setFirstName(clientDto.getFirstName());
-        clientEntity.setLastName(clientDto.getLastName());
-//        clientEntity.setPhoneNumber(clientDto.getPhoneNumber());
-        clientEntity.setGpsLocation(clientDto.getGpsLocation());
-        clientEntity.setClientStatus(Statuses.fromString(clientDto.getClientStatus()));
-        clientEntity.setGpsLocation(clientDto.getGpsLocation());
-        clientEntity.setLastUpdated(Date.from(Instant.now()));
-
-        ClientEntity updatedClient = clientRepository.save(clientEntity);
-
-        // Fetching who updated the client
-        String loggedInUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserEntity updatedBy = userRepository.findByEmail(loggedInUsername);
-
-        // Fetching the team member (recipient of the email)
-        UserEntity teamMember = clientEntity.getCreatedBy();
-
-        amazonSES.sendClientUpdateNotificationEmail(teamMember, updatedClient, oldClient, updatedBy);
-
-        return modelMapper.map(updatedClient, ClientDto.class);
     }
-
 
     public boolean isInternetAvailable() {
         try {
@@ -762,25 +817,90 @@ public class ClientServiceImpl implements ClientService {
      */
     @Override
     public ClientDto getClientByClientId(String clientId) {
-        ClientDto returnClient = new ClientDto();
+        // Find the client
         ClientEntity clientEntity = clientRepository.findByClientId(clientId);
-
         if (clientEntity == null) {
-            throw new UsernameNotFoundException("User with ID: " + clientId + "not found");
+            throw new UsernameNotFoundException("User with ID: " + clientId + " not found");
         }
+
+        // Map base client fields
+        ClientDto returnClient = new ClientDto();
         BeanUtils.copyProperties(clientEntity, returnClient);
         returnClient.setCreatedBy(modelMapper.map(clientEntity.getCreatedBy(), UserDto.class));
         returnClient.setAssignedTo(modelMapper.map(clientEntity.getTeamLead(), UserDto.class));
-//        returnClient.setTeamName(clientEntity.getTeam().getName());
         returnClient.setClientStatus(clientEntity.getClientStatus().getDisplayName());
         returnClient.setGpsLocation(clientEntity.getGpsLocation());
         returnClient.setPhoneNumber(clientEntity.getPhoneNumber());
         returnClient.setCreatedDate(clientEntity.getCreatedDate());
         returnClient.setLastUpdated(clientEntity.getLastUpdated());
 
+        // Fetch and map status history
+        List<ClientStatusHistoryEntity> historyEntities =
+                clientStatusHistoryRepository.findByClient_ClientIdAndChangedByOrderByChangedAtDesc(clientId);
+
+        System.out.println(historyEntities);
+
+        List<ClientStatusHistoryDto> historyDtos = historyEntities.stream()
+                .map(history -> {
+                    ClientStatusHistoryDto dto = new ClientStatusHistoryDto();
+
+                    // Map OLD status
+                    dto.setOldStatus(history.getOldStatus() != null
+                            ? history.getOldStatus().getDisplayName()
+                            : "N/A");
+
+                    // Map NEW status
+                    dto.setNewStatus(history.getNewStatus() != null
+                            ? history.getNewStatus().getDisplayName()
+                            : "System");
+
+                    // Map change timestamp
+                    dto.setChangedAt(history.getChangedAt());
+
+                    if (history.getChangedBy() != null) {
+                        dto.setChangedBy(modelMapper.map(history.getChangedBy(), UserDto.class));
+                    }
+                    return dto;
+                })
+                .toList();
+
+        // Attach status history to client DTO
+        returnClient.setStatusHistory(historyDtos);
+
         return returnClient;
     }
 
+
+
+    @Override
+    public List<ClientStatusHistoryDto> getClientStatusHistory(String clientId) {
+        ClientEntity client = clientRepository.findByClientId(clientId);
+        if (client == null) {
+            throw new UsernameNotFoundException("Client not found: " + clientId);
+        }
+
+        List<ClientStatusHistoryEntity> historyEntities =
+                clientStatusHistoryRepository.findByClientOrderByChangedAtDesc(client);
+
+        return historyEntities.stream().map(entity -> {
+            ClientStatusHistoryDto dto = new ClientStatusHistoryDto();
+
+            // Convert enums to display names
+            dto.setOldStatus(entity.getOldStatus() != null
+                    ? entity.getOldStatus().getDisplayName()
+                    : "N/A");
+
+            dto.setNewStatus(entity.getNewStatus() != null
+                    ? entity.getNewStatus().getDisplayName()
+                    : "N/A");
+
+            if(entity.getChangedBy() != null) {
+                dto.setChangedBy(modelMapper.map(entity.getChangedBy(), UserDto.class));
+            }
+
+            return dto;
+        }).toList();
+    }
 
     /**
      * @param userId

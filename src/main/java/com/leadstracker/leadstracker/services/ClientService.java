@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -54,4 +55,7 @@ public interface ClientService {
    Object getClientStatsForLoggedInUser(LocalDate fromDate, LocalDate toDate);
 
     void deactivateClient(String clientId);
+
+    List<ClientStatusHistoryDto> getClientStatusHistory(String clientId);
 }
+
