@@ -11,8 +11,13 @@ import com.leadstracker.leadstracker.services.ClientService;
 
 import io.micrometer.common.KeyValues;
 
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -900,6 +905,80 @@ public class ClientServiceImpl implements ClientService {
 
             return dto;
         }).toList();
+    }
+
+    /**
+     * @param response
+     */
+    @Override
+    public void exportExcel(HttpServletResponse response, String table) throws IOException {
+        switch (table) {
+            case "all-clients" -> {
+                List<ClientEntity> clientEntities = clientRepository.findAll();
+                XSSFWorkbook workbook = new XSSFWorkbook();
+                XSSFSheet sheet = workbook.createSheet("Clients");
+                XSSFRow row = sheet.createRow(0);
+
+                row.createCell(0).setCellValue("Client Name");
+                row.createCell(1).setCellValue("Status");
+                row.createCell(2).setCellValue("Date Added");
+                row.createCell(3).setCellValue("Time Overdue");
+                row.createCell(4).setCellValue("Assigned To");
+                row.createCell(5).setCellValue("Forwarded By");
+                row.createCell(6).setCellValue("Team");
+
+                int dataRowIndex = 1;
+                for(ClientEntity clientEntity : clientEntities) {
+                    XSSFRow dataRow = sheet.createRow(dataRowIndex);
+                    dataRow.createCell(0).setCellValue(clientEntity.getFirstName()
+                            + clientEntity.getLastName());
+                    dataRow.createCell(1).setCellValue(clientEntity.getClientStatus().getDisplayName());
+                    dataRow.createCell(2).setCellValue(clientEntity.getCreatedDate().toString());
+                    dataRow.createCell(3).setCellValue(clientEntity.getLastUpdated().toString());
+                    dataRow.createCell(4).setCellValue(clientEntity.getTeamLead().getFirstName()
+                            + clientEntity.getTeamLead().getLastName());
+                    dataRow.createCell(5).setCellValue(clientEntity.getCreatedBy().getFirstName()
+                            + clientEntity.getCreatedBy().getLastName());
+//            dataRow.createCell(6).setCellValue(clientEntity.getCreatedBy()
+//                    .getTeam().getName());
+                }
+
+                ServletOutputStream out = response.getOutputStream();
+                workbook.write(out);
+                workbook.close();
+                out.close();
+            }
+
+            case "team-members-under-team-lead" -> {
+                List<UserEntity> userEntities = userRepository.findAll();
+                XSSFWorkbook workbook = new XSSFWorkbook();
+                XSSFSheet sheet = workbook.createSheet("team members");
+                XSSFRow row = sheet.createRow(0);
+
+                row.createCell(0).setCellValue("Name");
+                row.createCell(1).setCellValue("ID");
+                row.createCell(2).setCellValue("Date Added");
+                row.createCell(3).setCellValue("Email");
+                row.createCell(4).setCellValue("Phone");
+
+                int dataRowIndex = 1;
+                for(UserEntity userEntity: userEntities) {
+                    XSSFRow dataRow = sheet.createRow(dataRowIndex);
+                    dataRow.createCell(0).setCellValue(userEntity.getFirstName()
+                    + userEntity.getLastName());
+                    dataRow.createCell(1).setCellValue(userEntity.getUserId());
+                    dataRow.createCell(2).setCellValue(userEntity.getCreatedDate());
+                    dataRow.createCell(3).setCellValue(userEntity.getEmail());
+                    dataRow.createCell(4).setCellValue(userEntity.getPhoneNumber());
+                    dataRowIndex++;
+                }
+                ServletOutputStream out = response.getOutputStream();
+                workbook.write(out);
+                workbook.close();
+                out.close();
+            }
+        }
+
     }
 
     /**

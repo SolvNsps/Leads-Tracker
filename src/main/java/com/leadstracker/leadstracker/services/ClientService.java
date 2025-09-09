@@ -4,11 +4,13 @@ import com.leadstracker.leadstracker.DTO.*;
 import com.leadstracker.leadstracker.response.ClientRest;
 import com.leadstracker.leadstracker.response.PaginatedResponse;
 import com.leadstracker.leadstracker.response.Statuses;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -57,5 +59,7 @@ public interface ClientService {
     void deactivateClient(String clientId);
 
     List<ClientStatusHistoryDto> getClientStatusHistory(String clientId);
+
+    void exportExcel(HttpServletResponse response, String table) throws IOException;
 }
 

@@ -14,6 +14,7 @@ import com.leadstracker.leadstracker.services.ClientService;
 import com.leadstracker.leadstracker.services.NotificationService;
 import com.leadstracker.leadstracker.services.TeamService;
 import com.leadstracker.leadstracker.services.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
@@ -32,6 +33,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.http.HttpResponse;
 import java.security.Principal;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
@@ -557,5 +559,18 @@ public class ClientController {
         ));
     }
 
+
+    //Exporting data
+    @GetMapping("/excel")
+    public void exportToExcel(HttpServletResponse response
+    ,@RequestParam(required = false) String table) throws Exception {
+//        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setContentType("application/octet-stream");
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename=client.xlsx";
+        response.setHeader(headerKey, headerValue);
+        clientService.exportExcel(response, table);
+
+    }
 }
 
