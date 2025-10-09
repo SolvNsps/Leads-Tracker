@@ -140,9 +140,16 @@ public class ClientController {
             @RequestParam(required = false, value = "limit", defaultValue = "10") int limit,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam(required = false) String name) {
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String team) {
 
-        Page<ClientDto> overdueClients = clientService.getOverdueClients(page, limit, startDate, endDate, name);
+        Statuses statusEnum = null;
+        if (status != null && !status.trim().isEmpty()) {
+            statusEnum = Statuses.fromString(status);
+        }
+
+        Page<ClientDto> overdueClients = clientService.getOverdueClients(page, limit, startDate, endDate, name, statusEnum, team);
 
         List<ClientRest> result = overdueClients.stream().map(dto -> {
             ClientRest rest = modelMapper.map(dto, ClientRest.class);

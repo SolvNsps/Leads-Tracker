@@ -1225,7 +1225,7 @@ public class ClientServiceImpl implements ClientService {
      * @return
      */
     @Override
-    public Page<ClientDto> getOverdueClients(int page, int limit, LocalDate startDate, LocalDate endDate, String name) {
+    public Page<ClientDto> getOverdueClients(int page, int limit, LocalDate startDate, LocalDate endDate, String name, Statuses status, String team) {
         Pageable pageableRequest = PageRequest.of(page, limit);
 
         List<Statuses> allowedStatuses = List.of(
@@ -1234,7 +1234,10 @@ public class ClientServiceImpl implements ClientService {
                 Statuses.AWAITING_DOCUMENTATION
         );
 
-        Page<ClientEntity> overdueClients = clientRepository.findOverdueClients(allowedStatuses, pageableRequest);
+        Page<ClientEntity> overdueClients = clientRepository
+                .findOverdueClientsByFirstNameAndLastNameAndClientStatusAndTeamNameAndActiveTrue(
+                        allowedStatuses, status, team, name, pageableRequest);
+
 
         // Filtering in-memory
         List<ClientDto> filtered = overdueClients
@@ -1253,11 +1256,6 @@ public class ClientServiceImpl implements ClientService {
                     } else {
                         return createdDate.isEqual(endDate) || createdDate.isBefore(endDate);
                     }
-                })
-                .filter(client -> {
-                    if (name == null || name.isBlank()) return true;
-                    String fullName = (client.getFirstName() + " " + client.getLastName()).toLowerCase();
-                    return fullName.contains(name.toLowerCase());
                 })
                 .map(client -> {
                     ClientDto dto = modelMapper.map(client, ClientDto.class);
@@ -1280,6 +1278,7 @@ public class ClientServiceImpl implements ClientService {
                     return dto;
                 })
                 .toList();
+
 
         // Wrapping the filtered list back into a Page
         return new PageImpl<>(filtered, pageableRequest, filtered.size());

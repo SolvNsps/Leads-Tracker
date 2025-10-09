@@ -87,11 +87,33 @@ public interface ClientRepository extends JpaRepository<ClientEntity, Integer> {
 
     List<ClientEntity> findByActiveTrue();
 
-    @Query("SELECT c FROM clients c " +
-            "WHERE c.lastUpdated IS NOT NULL " +
-            "AND FUNCTION('DATEDIFF', CURRENT_DATE, c.lastUpdated) > 5 " +
-            "AND c.clientStatus IN :statuses")
-    Page<ClientEntity> findOverdueClients(@Param("statuses") List<Statuses> statuses, Pageable pageable);
+//    @Query("SELECT c FROM clients c " +
+//            "WHERE c.lastUpdated IS NOT NULL " +
+//            "AND FUNCTION('DATEDIFF', CURRENT_DATE, c.lastUpdated) > 5 " +
+//            "AND c.clientStatus IN :statuses"  )
+//    Page<ClientEntity> findOverdueClientsByFirstNameAndLastNameAndClientStatusAndTeamNameAndActiveTrue(
+//            @Param("statuses") List<Statuses> statuses,
+//            Pageable pageable,
+//            @Param("name") String name,
+//            @Param("team") String team);
+
+    @Query("""
+    SELECT c FROM clients c
+    WHERE c.lastUpdated IS NOT NULL
+      AND FUNCTION('DATEDIFF', CURRENT_DATE, c.lastUpdated) > 5
+      AND c.clientStatus IN :statuses
+      AND (:team IS NULL OR c.createdBy.team.name = :team)
+      AND (:name IS NULL OR LOWER(CONCAT(c.firstName, ' ', c.lastName)) LIKE LOWER(CONCAT('%', :name, '%')))
+      AND (:status IS NULL OR c.clientStatus = :status)
+""")
+    Page<ClientEntity> findOverdueClientsByFirstNameAndLastNameAndClientStatusAndTeamNameAndActiveTrue(
+            @Param("statuses") List<Statuses> statuses,
+            @Param("status") Statuses status,
+            @Param("team") String team,
+            @Param("name") String name,
+            Pageable pageable);
+
+
 
     @Query("SELECT c FROM clients c " +
             "WHERE (:name IS NULL OR LOWER(c.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
