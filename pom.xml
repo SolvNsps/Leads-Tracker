@@ -108,18 +108,6 @@
 			<artifactId>aws-java-sdk-ses</artifactId>
 			<version>1.12.783</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/sesv2 -->
-<!--		<dependency>-->
-<!--			<groupId>software.amazon.awssdk</groupId>-->
-<!--			<artifactId>sesv2</artifactId>-->
-<!--			<version>2.31.78</version>-->
-<!--		</dependency>-->
-
-<!--		<dependency>-->
-<!--			<groupId>com.h2database</groupId>-->
-<!--			<artifactId>h2</artifactId>-->
-<!--			<scope>runtime</scope>-->
-<!--		</dependency>-->
 
 		<!-- https://mvnrepository.com/artifact/org.springframework.retry/spring-retry -->
 		<dependency>
@@ -147,29 +135,12 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-<!--				<configuration>-->
-<!--					<annotationProcessorPaths>-->
-<!--						<path>-->
-<!--							<groupId>org.project lombok</groupId>-->
-<!--							<artifactId>lombok</artifactId>-->
-<!--						</path>-->
-<!--					</annotationProcessorPaths>-->
-<!--&lt;!&ndash;					<source>24</source>&ndash;&gt;-->
-<!--&lt;!&ndash;					<target>24</target>&ndash;&gt;-->
-<!--&lt;!&ndash;					<compilerArgs>&#45;&#45;enable-preview</compilerArgs>&ndash;&gt;-->
-<!--				</configuration>-->
+
 			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-<!--				<configuration>-->
-<!--					<excludes>-->
-<!--						<exclude>-->
-<!--							<groupId>org.projectlombok</groupId>-->
-<!--							<artifactId>lombok</artifactId>-->
-<!--						</exclude>-->
-<!--					</excludes>-->
-<!--				</configuration>-->
+
 			</plugin>
 		</plugins>
 	</build>

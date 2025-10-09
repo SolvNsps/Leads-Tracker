@@ -977,6 +977,41 @@ public class ClientServiceImpl implements ClientService {
                 workbook.close();
                 out.close();
             }
+
+            case "all-clients-under-lead" -> {
+                List<ClientEntity> clientEntities = clientRepository.findAll();
+                XSSFWorkbook workbook = new XSSFWorkbook();
+                XSSFSheet sheet = workbook.createSheet("Clients Under Lead");
+                XSSFRow row = sheet.createRow(0);
+
+                row.createCell(0).setCellValue("Client Name");
+                row.createCell(1).setCellValue("Status");
+                row.createCell(2).setCellValue("Phone Number");
+                row.createCell(3).setCellValue("GPS Address");
+                row.createCell(4).setCellValue("Date Added");
+                row.createCell(5).setCellValue("Time Overdue");
+                row.createCell(6).setCellValue("Forwarded By");
+
+                int dataRowIndex = 1;
+                for (ClientEntity clientEntity : clientEntities) {
+                    XSSFRow dataRow = sheet.createRow(dataRowIndex);
+                    dataRow.createCell(0).setCellValue(clientEntity.getFirstName() + clientEntity.getLastName());
+                    dataRow.createCell(1).setCellValue(clientEntity.getClientStatus().getDisplayName());
+                    dataRow.createCell(2).setCellValue(clientEntity.getPhoneNumber());
+                    dataRow.createCell(3).setCellValue(clientEntity.getGpsLocation());
+                    dataRow.createCell(4).setCellValue(clientEntity.getCreatedDate());
+                    dataRow.createCell(5).setCellValue(clientEntity.getLastUpdated().toString());
+                    dataRow.createCell(5).setCellValue(clientEntity.getCreatedBy().getFirstName()
+                            + clientEntity.getCreatedBy().getLastName());
+
+                    dataRowIndex++;
+                }
+
+                ServletOutputStream out = response.getOutputStream();
+                workbook.write(out);
+                out.close();
+
+            }
         }
 
     }
