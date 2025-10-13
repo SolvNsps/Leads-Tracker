@@ -545,10 +545,10 @@ public class ClientServiceImpl implements ClientService {
     private Date[] calculateDateRange(LocalDate startDate, LocalDate endDate) {
         LocalDate today = LocalDate.now();
 
-        // If no dates provided, use last 5 days as default
+        // If no dates provided, use last month
         if (startDate == null && endDate == null) {
             endDate = today;
-            startDate = today.minusDays(4); // 5 days total
+            startDate = today.minusDays(30); // 31 days total
         }
         // If only startDate is provided
         else if (startDate != null && endDate == null) {
@@ -556,13 +556,13 @@ public class ClientServiceImpl implements ClientService {
         }
         // If only endDate is provided
         else if (startDate == null && endDate != null) {
-            startDate = endDate.minusDays(4);
+            startDate = endDate.minusDays(30);
         }
 
-        // Ensuring at least 5 days
+        // Ensuring at least 1 day
         long daysBetween = ChronoUnit.DAYS.between(startDate, endDate);
-        if (daysBetween < 4) {
-            startDate = endDate.minusDays(4);
+        if (daysBetween < 0) {
+            startDate = endDate.minusDays(0);
         }
 
         return new Date[]{
@@ -1233,6 +1233,10 @@ public class ClientServiceImpl implements ClientService {
                 Statuses.INTERESTED,
                 Statuses.AWAITING_DOCUMENTATION
         );
+
+        if (team != null && team.trim().isEmpty()) {
+            team = null;
+        }
 
         Page<ClientEntity> overdueClients = clientRepository
                 .findOverdueClientsByFirstNameAndLastNameAndClientStatusAndTeamNameAndActiveTrue(

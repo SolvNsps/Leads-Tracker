@@ -5,9 +5,11 @@ import com.leadstracker.leadstracker.entities.ClientStatusHistoryEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface ClientStatusHistoryRepository extends JpaRepository<ClientStatusHistoryEntity, Long> {
     // fetch history for a client (newest first)
     List<ClientStatusHistoryEntity> findByClientOrderByChangedAtDesc(ClientEntity client);
