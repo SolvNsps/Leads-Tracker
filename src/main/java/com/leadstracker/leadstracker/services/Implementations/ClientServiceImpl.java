@@ -287,6 +287,16 @@ public class ClientServiceImpl implements ClientService {
         response.setTeamLeadUserId(teamLead.getUserId());
         response.setTeamLeadName(teamLead.getFirstName() + " " + teamLead.getLastName());
 
+
+        // --- Team-wide client status summary ---
+        Map<String, Integer> teamStatusSummary = clients.stream()
+                .collect(Collectors.toMap(
+                        c -> c.getClientStatus().getDisplayName(),
+                        c -> 1,
+                        Integer::sum
+                ));
+        response.setClientStatus(teamStatusSummary);
+
         return response;
     }
 
